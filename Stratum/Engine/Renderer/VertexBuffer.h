@@ -8,7 +8,9 @@ BEGIN_ENGINE
 
 namespace Render
 {
-
+	/// <summary>
+	/// Vertex buffer view, requires buffer type to be set to VERTEX_BUFFER
+	/// </summary>
 	class VertexBuffer
 	{
 	public:

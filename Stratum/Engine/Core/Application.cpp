@@ -289,6 +289,8 @@ void Application::Run(std::vector<std::string> args)
 
 	m_Window->SetVSync(false);
 
+	Render::GraphicsCommandBuffer gCommandBuffer{};
+
 	while (1) {
 
 		Z_PROFILE_SCOPE("Application::Frame");
@@ -322,14 +324,19 @@ void Application::Run(std::vector<std::string> args)
 		JobManager::ExecuteMainJobs();
 		EventHandler::Process();
 
-		m_Window->Clear();
-
 		gpGlobals->deltaTime = Time::DeltaTime;
 		InternalUpdate();
 
 		OnFramePrepare();
 
 		OnFrameRender();
+
+		gCommandBuffer.Begin();
+		gCommandBuffer.SetFramebuffer(m_Window->GetFramebuffer().get());
+		gCommandBuffer.ClearBuffer(0, glm::vec4(0.0f));
+		gCommandBuffer.End();
+
+		gCommandBuffer.Submit();
 
 		m_Window->ResetViewport();
 
@@ -588,4 +595,15 @@ void Application::On2DRender()
 void Application::OnFrameRenderImGui()
 {
 	ImGui::Begin("EngineStats");
+
+	ImGui::Text("Frametime: %.2fms", gpGlobals->deltaTime * 1000.0f);
+
+	auto times = EngineStats::GetTimes();
+
+	for (auto& t : times)
+	{
+		ImGui::Text("%s: %.2fms", t.name, t.time);
+	}
+
+	ImGui::End();
 }

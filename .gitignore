@@ -1,5 +1,8 @@
 *.obj
 *.cso
 *.spv
-./.vs
+*.pdb
+/.vs
+/x64
 Stratum/x64
+LearningSDL/x64

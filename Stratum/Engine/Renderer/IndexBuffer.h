@@ -9,6 +9,9 @@ BEGIN_ENGINE
 namespace Render
 {
 
+	/// <summary>
+	/// Index buffer view, requires buffer type to be set to INDEX_BUFFER
+	/// </summary>
 	class IndexBuffer
 	{
 	public:

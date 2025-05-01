@@ -18,6 +18,11 @@ namespace Render {
 		void* pSysMem;
 		uint32_t MemPitch;
 
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="ptr">Pointer to main memory</param>
+		/// <param name="pitch">Width * bytes per pixel</param>
 		ImageResourceData(void* ptr, uint32_t pitch)
 		{
 			pSysMem = ptr;

@@ -609,9 +609,8 @@ void Render::GraphicsPipeline::SetRenderTarget(Ref<Framebuffer> rt)
     PipelineHandle = nullptr;
 }
 
-void Render::GraphicsPipeline::UpdateStaticBinding(const nvrhi::static_vector<nvrhi::BindingSetItem, 64>& setDesc)
+void Render::GraphicsPipeline::UpdateStaticBinding(const StaticBindingTable& setDesc)
 {
-    assert(ShaderDesc.UseStaticBinding);
-    ShaderDesc.StaticBindingItems = setDesc;
+    ShaderDesc.SetStaticBinding(setDesc);
     StaticBindingSet = nullptr;
 }

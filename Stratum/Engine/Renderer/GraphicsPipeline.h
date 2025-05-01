@@ -16,6 +16,9 @@
 BEGIN_ENGINE
 namespace Render {
 
+	/// <summary>
+	/// Static vector to define static bindings used by the pipeline
+	/// </summary>
 	using StaticBindingTable = nvrhi::static_vector<nvrhi::BindingSetItem, 64>;
 
 	enum class VertexType {
@@ -85,8 +88,8 @@ namespace Render {
 		RasterizerState RasterizerState;
 		StencilState StencilState;
 		ShaderVertexLayout VertexLayout;
-		uint32_t NumRenderTargets;
-		Framebuffer* RenderTarget = NULL;
+		uint32_t NumRenderTargets; // Unused
+		Framebuffer* RenderTarget = NULL; // The render target to be used with the pipeline cannot be null once SetGraphicsPipeline is set
 		ImageFormat DepthTargetFormat = ImageFormat::DEPTH16;
 
 		bool UseStaticBinding = false;
@@ -130,8 +133,19 @@ namespace Render {
 		
 		void UpdatePipeline();
 
+		/// <summary>
+		/// Updates the render target used by the pipeline
+		/// Needs to be called before any rendering occurs
+		/// </summary>
+		/// <param name="rt">The framebuffer object</param>
 		void SetRenderTarget(Ref<Framebuffer> rt);
-		void UpdateStaticBinding(const nvrhi::static_vector<nvrhi::BindingSetItem, 64>& setDesc);
+
+		/// <summary>
+		/// Used to update the static binding of a pipeline.
+		/// Once set it completely ignores state changes made by the user on the command buffer
+		/// </summary>
+		/// <param name="setDesc">The binding table</param>
+		void UpdateStaticBinding(const StaticBindingTable& setDesc);
 
 		nvrhi::GraphicsPipelineHandle PipelineHandle;
 		nvrhi::BindingLayoutHandle BindingLayout;

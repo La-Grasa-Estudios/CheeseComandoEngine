@@ -75,12 +75,6 @@ Render::Buffer::Buffer(const BufferDescription& desc)
 	{
 		bufferDesc.setFormat(desc.Format);
 		bufferDesc.setCanHaveTypedViews(true);
-
-		auto desc1 = nvrhi::SamplerDesc()
-			.setAllAddressModes(nvrhi::SamplerAddressMode::Clamp)
-			.setAllFilters(false);
-
-		Sampler = RendererContext::GetDevice()->createSampler(desc1);
 	}
 
 	Handle = RendererContext::GetDevice()->createBuffer(bufferDesc);

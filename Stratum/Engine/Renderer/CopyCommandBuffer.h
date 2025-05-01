@@ -9,6 +9,7 @@ BEGIN_ENGINE
 
 namespace Render {
 
+	// Command buffer who's only use is to copy data to the gpu
 	class CopyCommandBuffer
 	{
 	public:
