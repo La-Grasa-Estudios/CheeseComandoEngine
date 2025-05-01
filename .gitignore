@@ -1,4 +1,5 @@
 *.obj
 *.cso
 *.spv
+./.vs
 Stratum/x64
