@@ -6,6 +6,9 @@
 #include "Renderer/GraphicsCommandBuffer.h"
 #include "Renderer/ShapeProvider.h"
 
+#include "Scene/Scene.h"
+#include "Scene/Renderer3D.h"
+
 #include "VFS/ZVFS.h"
 #include "Input/Input.h"
 #include "Media/VideoDecode.h"
@@ -56,6 +59,7 @@ void Application::Run(std::vector<std::string> args)
 	m_Console.Focused();
 	
 	ZVFS::Mount("Pak");
+	ZVFS::Mount("Data", true);
 
 	VarRegistry::RegisterConsoleVar("cl", "imgui", VarType::Bool)->set(m_AppInfo.IsImGuiEnabled);
 	VarRegistry::RegisterConsoleVar("cl", "api", VarType::Int)->set((int)m_AppInfo.graphicsAPI);
@@ -113,23 +117,23 @@ void Application::Run(std::vector<std::string> args)
 			shaderPerms = "1";
 		}
 
-		GLSLToSpirV::shader_type type = GLSLToSpirV::shader_type::fragment;
+		ShaderCompiler::shader_type type = ShaderCompiler::shader_type::fragment;
 
 		if (shaderType.compare("vert") == 0) {
-			type = GLSLToSpirV::shader_type::vertex;
+			type = ShaderCompiler::shader_type::vertex;
 		}
 
 		if (shaderType.compare("geom") == 0) {
-			type = GLSLToSpirV::shader_type::geometry;
+			type = ShaderCompiler::shader_type::geometry;
 		}
 
 		if (shaderType.compare("comp") == 0) {
-			type = GLSLToSpirV::shader_type::compute;
+			type = ShaderCompiler::shader_type::compute;
 		}
 
 		int nbPerms = std::stoi(shaderPerms);
 
-		GLSLToSpirV::build_object(shaderPath.c_str(), shaderOut.c_str(), type, nbPerms);
+		ShaderCompiler::build_object(shaderPath.c_str(), shaderOut.c_str(), type, nbPerms);
 
 		};
 
@@ -205,7 +209,7 @@ void Application::Run(std::vector<std::string> args)
 	m_Window->Create(m_AppInfo.WindowedResolutionX, m_AppInfo.WindowedResolutionY);
 
 	//JobManager::Init(!m_RenderContext->IsCapabilitySupported(Render::RendererCapability::RENDERER_MULTITHREADED_CMD_LISTS) || SingleThreaded);
-	JobManager::Init(false);
+	JobManager::Init(true);
 
 	EventHandler::InvokeEvent(EventHandler::GetEventID("init_window"), this);
 
@@ -241,7 +245,8 @@ void Application::Run(std::vector<std::string> args)
 
 	EventHandler::InvokeEvent(EventHandler::GetEventID("init_input"), this);
 
-	GLSLToSpirV::build_object("shaders/ui/video.hlsl", "Data/shaders/ui/video.spv", GLSLToSpirV::shader_type::vertex, 1);
+	ShaderCompiler::build_object("shaders/video_gbar_to_rgba.hlsl", "Data/shaders/video_gbar_to_rgba.cso", ShaderCompiler::shader_type::vertex, 1);
+	ShaderCompiler::build_object("shaders/deferred_gbuffer_opaque.hlsl", "Data/shaders/deferred_gbuffer_opaque.cso", ShaderCompiler::shader_type::vertex);
 
 	Z_INFO("Printing cmdline args");
 
@@ -282,14 +287,59 @@ void Application::Run(std::vector<std::string> args)
 		}
 	}
 
+	EventHandler::InvokeEvent(EventHandler::GetEventID("post_init"), this);
+
+	m_Window->SetVSync(true);
+
+	MainLoop();
+
+	g_FinishUpdateThread.store(true);
+
+	Render::ShapeProvider::Release();
+
+	if (m_AppInfo.IsImGuiEnabled) {
+		m_RenderContext->ImGuiShutdown();
+	}
+
+	m_AudioEngine->Shutdown();
+	VarRegistry::Cleanup();
+
+	m_Window->Destroy();
+
+	m_RenderContext = NULL;
+}
+
+void Application::MainLoop()
+{
+
 	bool LogStutters = false;
 	float LastFrameDelta = 0.0f;
 
-	EventHandler::InvokeEvent(EventHandler::GetEventID("post_init"), this);
+	Render::GraphicsCommandBuffer cmdBuffer{};
 
-	m_Window->SetVSync(false);
+	Scene* scene = new Scene();;
+	Render::PipelineDescription pipelineDesc{};
 
-	Render::GraphicsCommandBuffer gCommandBuffer{};
+	pipelineDesc.ShaderPath = "shaders/deferred_gbuffer_opaque.cso";
+	pipelineDesc.BindingItems.push_back(nvrhi::BindingLayoutItem::PushConstants(0, 12));
+
+	Render::GraphicsPipeline pipeline(pipelineDesc);
+	Render::ConstantBuffer cBuffer(sizeof(glm::mat4));
+
+	pipeline.SetRenderTarget(m_Window->GetFramebuffer());
+
+	scene->InitBindlessTable(pipeline.BindingLayout);
+
+	scene->LoadModel("binbows.mdl", scene->EntityManager.CreateEntity());
+
+	Renderer3D rendererPath3D;
+
+	Render::StaticBindingTable bindingTable =
+	{
+		nvrhi::BindingSetItem::ConstantBuffer(1, cBuffer.Handle),
+	};
+
+	pipeline.UpdateStaticBinding(bindingTable);
 
 	while (1) {
 
@@ -331,14 +381,40 @@ void Application::Run(std::vector<std::string> args)
 
 		OnFrameRender();
 
-		gCommandBuffer.Begin();
-		gCommandBuffer.SetFramebuffer(m_Window->GetFramebuffer().get());
-		gCommandBuffer.ClearBuffer(0, glm::vec4(0.0f));
-		gCommandBuffer.End();
 
-		gCommandBuffer.Submit();
+		cmdBuffer.Begin();
 
-		m_Window->ResetViewport();
+		Render::Viewport viewport{};
+		viewport.width = m_Window->GetWidth();
+		viewport.height = m_Window->GetHeight();
+
+		glm::mat4 projection = glm::perspective(glm::radians(70.0f), viewport.width / (float)viewport.height, 0.01f, 100.0f);
+		glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 3.0f, -5.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4 model = glm::identity<glm::mat4>();
+
+		glm::mat4 mvp = projection * view * model;
+
+		rendererPath3D.PushPose(ViewPose(projection, view));
+
+		rendererPath3D.PreRender(scene);
+
+		cmdBuffer.RequireFramebufferState(m_Window->GetFramebuffer().get(), Render::ResourceState::Present, Render::ResourceState::RenderTarget);
+		cmdBuffer.SetFramebuffer(m_Window->GetFramebuffer().get());
+		cmdBuffer.ClearBuffer(m_Window->GetFramebuffer().get(), 0, glm::vec4(0.0f));
+		cmdBuffer.ClearDepth(m_Window->GetFramebuffer().get(), 1.0f);
+
+		cmdBuffer.SetViewport(&viewport);
+		cmdBuffer.SetPipeline(&pipeline);
+		cmdBuffer.SetBindlessDescriptorTable(scene->BindlessTable);
+
+		cmdBuffer.UpdateConstantBuffer(&cBuffer, &mvp);
+
+		rendererPath3D.Render(scene, &cmdBuffer);
+
+		cmdBuffer.End();
+		cmdBuffer.Submit();
+
+		rendererPath3D.PopPose();
 
 		if (m_AppInfo.IsImGuiEnabled) {
 
@@ -384,18 +460,7 @@ void Application::Run(std::vector<std::string> args)
 
 	}
 
-	g_FinishUpdateThread.store(true);
-
-	if (m_AppInfo.IsImGuiEnabled) {
-		m_RenderContext->ImGuiShutdown();
-	}
-
-	m_AudioEngine->Shutdown();
-	VarRegistry::Cleanup();
-
-	m_Window->Destroy();
-
-	m_RenderContext = NULL;
+	delete scene;
 }
 
 void Application::RenderStartupMedia()
@@ -413,7 +478,7 @@ void Application::RenderStartupMedia()
 
 		Render::PipelineDescription pipelineDesc;
 
-		pipelineDesc.ShaderPath = "shaders/ui/video.spv";
+		pipelineDesc.ShaderPath = "shaders/video_gbar_to_rgba.cso";
 
 		pipelineDesc.VertexLayout = Render::Vertex::GetLayout();
 
@@ -505,6 +570,7 @@ void Application::RenderStartupMedia()
 				vp.width = m_Window->GetWidth();
 				vp.height = m_Window->GetHeight();
 
+				cmdBuffer.RequireFramebufferState(m_Window->GetFramebuffer().get(), Render::ResourceState::Present, Render::ResourceState::RenderTarget);
 				cmdBuffer.SetViewport(&vp);
 				cmdBuffer.SetPipeline(&videoPipeline);
 				cmdBuffer.SetFramebuffer(m_Window->GetFramebuffer().get());
@@ -514,7 +580,9 @@ void Application::RenderStartupMedia()
 				cmdBuffer.SetVertexBuffer(fullScreenQuad->GetVertexBuffer(), 0);
 				cmdBuffer.SetIndexBuffer(fullScreenQuad->GetIndexBuffer());
 
-				cmdBuffer.Draw(3);
+				cmdBuffer.Draw(3, 0);
+
+				cmdBuffer.RequireFramebufferState(m_Window->GetFramebuffer().get(), Render::ResourceState::RenderTarget, Render::ResourceState::Present);
 
 				cmdBuffer.End();
 
@@ -594,9 +662,14 @@ void Application::On2DRender()
 
 void Application::OnFrameRenderImGui()
 {
+
+	static int frameRate = 0;
+	
+	frameRate = (frameRate + (int)(1.0f / gpGlobals->deltaTime)) / 2;
+
 	ImGui::Begin("EngineStats");
 
-	ImGui::Text("Frametime: %.2fms", gpGlobals->deltaTime * 1000.0f);
+	ImGui::Text("Frametime: %.2fms, FPS: %i", gpGlobals->deltaTime * 1000.0f, frameRate);
 
 	auto times = EngineStats::GetTimes();
 

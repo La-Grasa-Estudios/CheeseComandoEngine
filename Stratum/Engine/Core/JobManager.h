@@ -12,6 +12,8 @@ struct JobDispatchArgs
 {
     uint32_t jobIndex;
     uint32_t groupIndex;
+    bool IsFirstJobInGroup = false;
+    bool IsLastJobInGroup = false;
     void* sharedMemory;
 };
 

@@ -137,6 +137,7 @@ namespace Render {
 	};
 
 	typedef std::stringstream InmediateModeList;
+	typedef nvrhi::ResourceStates ResourceState;
 
 }
 

@@ -29,9 +29,12 @@ namespace Render {
 		GraphicsCommandBuffer();
 		~GraphicsCommandBuffer();
 
-		void Begin(); // Clears the command buffer state and opens the underlying command list
-		void End(); // Serializes the command buffer
-		void Submit(); // Submits the command buffer to the respective graphics queue
+		/// Clears the command buffer state and opens the underlying command list
+		void Begin(); 
+		/// Serializes the command buffer
+		void End(); 
+		/// Submits the command buffer to the respective graphics queue
+		void Submit(); 
 
 		/// <summary>
 		/// Sets the graphics pipeline to be used on rendering
@@ -125,27 +128,29 @@ namespace Render {
 		/// <param name="vp">The viewport</param>
 		void SetViewport(Viewport* vp);
 
-		void Draw(uint32_t count);
-		void DrawInstanced(uint32_t count, uint32_t instanceCount, uint32_t baseInstance);
+		void Draw(uint32_t count, uint32_t offset);
+		void DrawInstanced(uint32_t count, uint32_t offset, uint32_t instanceCount, uint32_t baseInstance);
 		void DrawIndirect(uint32_t count, uint64_t offsetBytes);
 
-		void DrawIndexed(uint32_t count);
-		void DrawIndexedInstanced(uint32_t count, uint32_t instanceCount, uint32_t baseInstance);
+		void DrawIndexed(uint32_t count, uint32_t offset);
+		void DrawIndexedInstanced(uint32_t count, uint32_t offset, uint32_t instanceCount, uint32_t baseInstance);
 		void DrawIndexedIndirect(uint32_t count);
 
 		/// <summary>
-		/// Clears a previously bound framebuffer
+		/// Clears the provided framebuffer
 		/// </summary>
+		/// <param name="framebuffer">The framebuffer handle</param>
 		/// <param name="index">The index of the attachment (needs to be 0 if it is the window surface)</param>
 		/// <param name="color"></param>
-		void ClearBuffer(uint32_t index, const glm::vec4 color);
+		void ClearBuffer(Framebuffer* framebuffer, uint32_t index, const glm::vec4 color);
 
 		/// <summary>
-		/// Clears a previously bound framebuffer depth attachment
+		/// Clears the provided framebuffer depth attachment
 		/// </summary>
+		/// <param name="framebuffer">The framebuffer handle</param>
 		/// <param name="depth">The depth value to be cleared to</param>
 		/// <param name="stencil">Optional: the stencil value to be set to</param>
-		void ClearDepth(float depth, uint32_t stencil = 0xFF);
+		void ClearDepth(Framebuffer* framebuffer, float depth, uint32_t stencil = 0xFF);
 
 		/// <summary>
 		/// Updates a constant buffer with the specified memory
@@ -160,6 +165,17 @@ namespace Render {
 		void ClearVertexBuffers();
 
 		nvrhi::ICommandList* GetNativeCommandList();
+
+		void RequireFramebufferState(Framebuffer* framebuffer, ResourceState before, ResourceState after = ResourceState::Present);
+		void RequireTextureState(ImageResource* pImage, ResourceState before, ResourceState after, nvrhi::TextureSubresourceSet subResources = nvrhi::AllSubresources);
+		void RequireBufferState(Buffer* pBuffer, ResourceState before, ResourceState after);
+
+		/// <summary>
+		/// Sets automatic barrier and state traking status, still here for old code or for a bit easier coding with the api
+		/// </summary>
+		/// <param name="_auto"></param>
+		void SetAutomaticBarrierPlacement(bool _auto);
+		void CommitBarriers();
 
 	private:
 
@@ -180,6 +196,8 @@ namespace Render {
 		{
 			bool operator()(const BoundBindlessTable& a, const BoundBindlessTable& b) const;
 		};
+
+		std::unordered_set<uintptr_t> mTrackedResources;
 
 		nvrhi::CommandListHandle mCommandList;
 		nvrhi::IGraphicsPipeline* mSetGraphicsPipeline;

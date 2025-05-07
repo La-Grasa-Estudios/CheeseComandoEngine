@@ -73,11 +73,13 @@ void RendererContext::initialize(ENGINE_NAMESPACE::Internal::Window* window)
         .setDimension(nvrhi::TextureDimension::Texture2D)
         .setIsTypeless(true)
         .setIsRenderTarget(true)
-        .setInitialState(nvrhi::ResourceStates::DepthWrite)
-        .setKeepInitialState(true)
+        .setInitialState(nvrhi::ResourceStates::Present)
+        .setKeepInitialState(false)
         .setClearValue(nvrhi::Color(1.0f))
+        .setDebugName("Swap Chain Depth Target")
         .setWidth(NvBackBuffers[0]->getDesc().width)
         .setHeight(NvBackBuffers[0]->getDesc().height);
+    depthDesc.isShaderResource = false;
 
     for (int i = 0; i < MaxInFlightFrames; i++)
     {
@@ -102,6 +104,9 @@ void RendererContext::initialize(ENGINE_NAMESPACE::Internal::Window* window)
 
 void RendererContext::Terminate()
 {
+    pDevice->waitForIdle();
+    pDevice->runGarbageCollection();
+
     pBackend->TerminateBackend(this);
 }
 
@@ -135,13 +140,16 @@ void RendererContext::present(Internal::Window* window)
         auto depthDesc = nvrhi::TextureDesc()
             .setFormat(nvrhi::Format::D16)
             .setIsTypeless(true)
+            .setDebugName("Swap Chain Depth Target")
             .setDimension(nvrhi::TextureDimension::Texture2D)
             .setIsRenderTarget(true)
-            .setInitialState(nvrhi::ResourceStates::DepthWrite)
-            .setKeepInitialState(true)
+            .setInitialState(nvrhi::ResourceStates::Present)
+            .setKeepInitialState(false)
             .setClearValue(nvrhi::Color(1.0f))
             .setWidth(NvBackBuffers[0]->getDesc().width)
             .setHeight(NvBackBuffers[0]->getDesc().height);
+
+        depthDesc.isShaderResource = false;
 
         for (int i = 0; i < MaxInFlightFrames; i++)
         {
@@ -158,7 +166,6 @@ void RendererContext::present(Internal::Window* window)
 
             NvFramebufferRtvs[i] = pDevice->createFramebuffer(rtvDescription);
         }
-
     }
 }
 
@@ -187,6 +194,8 @@ void RendererContext::ImGuiShutdown()
 
 void RendererContext::VideoMemoryAdd(size_t size)
 {
+    s_Context->mUsedVideoMemory.fetch_add(size);
+    return;
     if (size <= 4096)
     {
         s_Context->mUsedVideoMemory.fetch_add(4096);
@@ -197,6 +206,8 @@ void RendererContext::VideoMemoryAdd(size_t size)
 
 void RendererContext::VideoMemorySub(size_t size)
 {
+    s_Context->mUsedVideoMemory.fetch_sub(size);
+    return;
     if (size <= 4096)
     {
         s_Context->mUsedVideoMemory.fetch_sub(4096);

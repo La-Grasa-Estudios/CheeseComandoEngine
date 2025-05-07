@@ -1,6 +1,7 @@
 #pragma once
 
 #include "znmsp.h"
+#include "Core/Ref.h"
 
 #include <nvrhi/nvrhi.h>
 
@@ -33,6 +34,7 @@ namespace Render
         int32_t mIndex;
         nvrhi::IResource* mResourcePointer;
         BindlessDescriptorTable* mDescriptorTable;
+        Ref<bool> mIsTableValid;
     };
 }
 

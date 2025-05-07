@@ -44,6 +44,8 @@ void Render::GraphicsCommandBuffer::Begin()
 		mBoundTables.erase(remove);
 	}
 
+	mTrackedResources.clear();
+
 	mConstantBuffers = {};
 	mVertexBuffers = {};
 	mTextureUnits = {};
@@ -55,6 +57,7 @@ void Render::GraphicsCommandBuffer::Begin()
 	mSetDescriptorTable = nullptr;
 
 	mCommandList->open();
+	SetAutomaticBarrierPlacement(false);
 }
 
 void Render::GraphicsCommandBuffer::End()
@@ -281,18 +284,20 @@ void Render::GraphicsCommandBuffer::SetViewport(Viewport* vp)
 	mGraphicsStateDirty = true;
 }
 
-void Render::GraphicsCommandBuffer::Draw(uint32_t count)
+void Render::GraphicsCommandBuffer::Draw(uint32_t count, uint32_t offset)
 {
 	UpdateGraphicsState();
 	auto args = nvrhi::DrawArguments()
+		.setStartVertexLocation(offset)
 		.setVertexCount(count);
 	mCommandList->draw(args);
 }
 
-void Render::GraphicsCommandBuffer::DrawInstanced(uint32_t count, uint32_t instanceCount, uint32_t baseInstance)
+void Render::GraphicsCommandBuffer::DrawInstanced(uint32_t count, uint32_t offset, uint32_t instanceCount, uint32_t baseInstance)
 {
 	UpdateGraphicsState();
 	auto args = nvrhi::DrawArguments()
+		.setStartVertexLocation(offset)
 		.setInstanceCount(instanceCount)
 		.setStartInstanceLocation(baseInstance)
 		.setVertexCount(count);
@@ -305,18 +310,20 @@ void Render::GraphicsCommandBuffer::DrawIndirect(uint32_t count, uint64_t offset
 	mCommandList->drawIndirect(offsetBytes, count);
 }
 
-void Render::GraphicsCommandBuffer::DrawIndexed(uint32_t count)
+void Render::GraphicsCommandBuffer::DrawIndexed(uint32_t count, uint32_t offset)
 {
 	UpdateGraphicsState();
 	auto args = nvrhi::DrawArguments()
+		.setStartIndexLocation(offset)
 		.setVertexCount(count);
 	mCommandList->drawIndexed(args);
 }
 
-void Render::GraphicsCommandBuffer::DrawIndexedInstanced(uint32_t count, uint32_t instanceCount, uint32_t baseInstance)
+void Render::GraphicsCommandBuffer::DrawIndexedInstanced(uint32_t count, uint32_t offset, uint32_t instanceCount, uint32_t baseInstance)
 {
 	UpdateGraphicsState();
 	auto args = nvrhi::DrawArguments()
+		.setStartIndexLocation(offset)
 		.setInstanceCount(instanceCount)
 		.setStartInstanceLocation(baseInstance)
 		.setVertexCount(count);
@@ -328,27 +335,37 @@ void Render::GraphicsCommandBuffer::DrawIndexedIndirect(uint32_t count)
 	
 }
 
-void Render::GraphicsCommandBuffer::ClearBuffer(uint32_t index, const glm::vec4 color)
+void Render::GraphicsCommandBuffer::ClearBuffer(Framebuffer* framebuffer, uint32_t index, const glm::vec4 color)
 {
-	if (!mSetFramebuffer)
+	if (framebuffer->IsWindowFramebuffer())
 	{
+		nvrhi::utils::ClearColorAttachment(mCommandList, RendererContext::s_Context->NvFramebufferRtvs[RendererContext::s_Context->FrameIndex].Get(), index, nvrhi::Color(color.r, color.g, color.b, color.a));
 		return;
 	}
-	nvrhi::utils::ClearColorAttachment(mCommandList, mSetFramebuffer, index, nvrhi::Color(color.r, color.g, color.b, color.a));
+	nvrhi::utils::ClearColorAttachment(mCommandList, framebuffer->Handle, index, nvrhi::Color(color.r, color.g, color.b, color.a));
 }
 
-void Render::GraphicsCommandBuffer::ClearDepth(float depth, uint32_t stencil)
+void Render::GraphicsCommandBuffer::ClearDepth(Framebuffer* framebuffer, float depth, uint32_t stencil)
 {
-	if (!mSetFramebuffer)
+	if (framebuffer->IsWindowFramebuffer())
 	{
+		nvrhi::utils::ClearDepthStencilAttachment(mCommandList, RendererContext::s_Context->NvFramebufferRtvs[RendererContext::s_Context->FrameIndex].Get(), depth, stencil);
 		return;
 	}
-	nvrhi::utils::ClearDepthStencilAttachment(mCommandList, mSetFramebuffer, depth, stencil);
+	nvrhi::utils::ClearDepthStencilAttachment(mCommandList, framebuffer->Handle, depth, stencil);
 }
 
 void Render::GraphicsCommandBuffer::UpdateConstantBuffer(ConstantBuffer* pBuffer, void* data)
 {
-	mCommandList->setBufferState(pBuffer->Handle, nvrhi::ResourceStates::CopyDest);
+	if (!mTrackedResources.contains((uintptr_t)pBuffer->Handle.Get()))
+	{
+		mTrackedResources.insert((uintptr_t)pBuffer->Handle.Get());
+		mCommandList->beginTrackingBufferState(pBuffer->Handle, nvrhi::ResourceStates::CopyDest);
+	}
+	else
+	{
+		mCommandList->setBufferState(pBuffer->Handle, nvrhi::ResourceStates::CopyDest);
+	}
 	mCommandList->writeBuffer(pBuffer->Handle, data, pBuffer->Size);
 	mCommandList->setBufferState(pBuffer->Handle, nvrhi::ResourceStates::ConstantBuffer);
 	mCommitedAnyConstantBuffer = true;
@@ -362,6 +379,78 @@ void Render::GraphicsCommandBuffer::ClearVertexBuffers()
 nvrhi::ICommandList* Render::GraphicsCommandBuffer::GetNativeCommandList()
 {
 	return mCommandList;
+}
+
+void Render::GraphicsCommandBuffer::RequireFramebufferState(Framebuffer* framebuffer, ResourceState before, ResourceState after)
+{
+
+	nvrhi::IFramebuffer* handle = nullptr;
+
+	mCommitedAnyConstantBuffer = true;
+	if (framebuffer->IsWindowFramebuffer())
+	{
+		handle = RendererContext::s_Context->NvFramebufferRtvs[RendererContext::s_Context->FrameIndex].Get();
+	}
+	else
+	{
+		handle = framebuffer->Handle;
+	}
+
+	auto& desc = handle->getDesc();
+	bool firstTrack = false;
+
+	if (!mTrackedResources.contains((uintptr_t)handle))
+	{
+		mTrackedResources.insert((uintptr_t)handle);
+		firstTrack = true;
+	}
+
+	for (const auto& attachment : desc.colorAttachments)
+	{
+		if (firstTrack)
+			mCommandList->beginTrackingTextureState(attachment.texture, nvrhi::AllSubresources, before == ResourceState::Present ? ResourceState::Present : before);
+		mCommandList->setTextureState(attachment.texture, nvrhi::AllSubresources, after);
+	}
+
+	if (desc.depthAttachment.valid())
+	{
+		if (firstTrack)
+			mCommandList->beginTrackingTextureState(desc.depthAttachment.texture, nvrhi::AllSubresources, before == ResourceState::Present ? ResourceState::Present : before);
+		mCommandList->setTextureState(desc.depthAttachment.texture, nvrhi::AllSubresources, after == ResourceState::Present ? after : ResourceState::DepthWrite);
+
+	}
+}
+
+void Render::GraphicsCommandBuffer::RequireTextureState(ImageResource* pImage, ResourceState before, ResourceState after, nvrhi::TextureSubresourceSet subResources)
+{
+	if (!mTrackedResources.contains((uintptr_t)pImage->Handle.Get()))
+	{
+		mTrackedResources.insert((uintptr_t)pImage->Handle.Get());
+		mCommandList->beginTrackingTextureState(pImage->Handle, subResources, before);
+	}
+	mCommandList->setTextureState(pImage->Handle, subResources, after);
+	mCommitedAnyConstantBuffer = true;
+}
+
+void Render::GraphicsCommandBuffer::RequireBufferState(Buffer* pBuffer, ResourceState before, ResourceState after)
+{
+	if (!mTrackedResources.contains((uintptr_t)pBuffer->Handle.Get()))
+	{
+		mTrackedResources.insert((uintptr_t)pBuffer->Handle.Get());
+		mCommandList->beginTrackingBufferState(pBuffer->Handle, before);
+	}
+	mCommandList->setBufferState(pBuffer->Handle, after);
+	mCommitedAnyConstantBuffer = true;
+}
+
+void Render::GraphicsCommandBuffer::SetAutomaticBarrierPlacement(bool _auto)
+{
+	mCommandList->setEnableAutomaticBarriers(_auto);
+}
+
+void Render::GraphicsCommandBuffer::CommitBarriers()
+{
+	mCommandList->commitBarriers();
 }
 
 void Render::GraphicsCommandBuffer::UpdateGraphicsState()

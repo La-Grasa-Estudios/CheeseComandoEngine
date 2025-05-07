@@ -207,7 +207,7 @@ void Render::BackendInitializerD3D12::InitializeBackend(Internal::Window* pWindo
             .setHeight(swapChainDesc.Height)
             .setIsRenderTarget(true)
             .setInitialState(nvrhi::ResourceStates::Present)
-            .setKeepInitialState(true)
+            .setKeepInitialState(false)
             .setDebugName("Swap Chain Image");
 
         pContext->NvBackBuffers[i] = pContext->pDevice->createHandleForNativeTexture(nvrhi::ObjectTypes::D3D12_Resource, dxSharedData->BackBuffers[i].Get(), textureDesc);
@@ -250,6 +250,7 @@ void Render::BackendInitializerD3D12::TerminateBackend(RendererContext* pContext
         dxSharedData->BackBuffers[i].Reset();
         pContext->NvFramebufferRtvs[i] = nullptr;
         pContext->NvBackBuffers[i] = nullptr;
+        pContext->NvDepthBuffers[i] = nullptr;
         dxSharedData->CommandAllocators[i]->Release();
     }
 
@@ -331,7 +332,7 @@ void Render::BackendInitializerD3D12::Present(Internal::Window* pWindow, Rendere
                 .setHeight(size.y)
                 .setIsRenderTarget(true)
                 .setInitialState(nvrhi::ResourceStates::Present)
-                .setKeepInitialState(true)
+                .setKeepInitialState(false)
                 .setDebugName("Swap Chain Image");
 
             pContext->NvBackBuffers[i] = pContext->pDevice->createHandleForNativeTexture(nvrhi::ObjectTypes::D3D12_Resource, dxSharedData->BackBuffers[i].Get(), textureDesc);
@@ -392,7 +393,7 @@ void Render::BackendInitializerD3D12::ImGuiEndFrame(RendererContext* pContext)
 
     auto commandList = (ID3D12GraphicsCommandList*)(mCommandList->getNativeObject(nvrhi::ObjectTypes::D3D12_GraphicsCommandList));
 
-    commandList->ResourceBarrier(1, &barrier);
+    //commandList->ResourceBarrier(1, &barrier);
 
     commandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
     commandList->OMSetRenderTargets(1, &dxSharedData->BackBufferRtvs[dxSharedData->FrameIndex], FALSE, nullptr);
@@ -402,7 +403,16 @@ void Render::BackendInitializerD3D12::ImGuiEndFrame(RendererContext* pContext)
     barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
     barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 
-    commandList->ResourceBarrier(1, &barrier);
+    D3D12_RESOURCE_BARRIER barriers[2]
+    {
+        barrier,
+        barrier,
+    };
+
+    barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+    barriers[1].Transition.pResource = pContext->NvDepthBuffers[pContext->FrameIndex]->getNativeObject(nvrhi::ObjectTypes::D3D12_Resource);
+
+    commandList->ResourceBarrier(2, barriers);
 
     mCommandList->close();
 

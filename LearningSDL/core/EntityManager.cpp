@@ -1,3 +1,4 @@
+#include "EntityManager.h"
 #include "EntityManager.hpp"
 
 EntityManager::EntityManager()

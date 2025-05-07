@@ -95,13 +95,13 @@ Render::Buffer::Buffer(const BufferDescription& desc)
 		m_ResourceReady = true;
 	}
 
-	RendererContext::VideoMemoryAdd(BufferDesc.Size);
+	RendererContext::VideoMemoryAdd(RendererContext::GetDevice()->getBufferMemoryRequirements(Handle).size);
 
 }
 
 Render::Buffer::~Buffer()
 {
-	RendererContext::VideoMemorySub(BufferDesc.Size);
+	RendererContext::VideoMemorySub(RendererContext::GetDevice()->getBufferMemoryRequirements(Handle).size);
 }
 
 bool Render::Buffer::IsResourceReady()

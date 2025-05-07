@@ -6,7 +6,7 @@ using namespace Render;
 
 BindlessDescriptorTable::BindlessDescriptorTable(nvrhi::IBindingLayout* layout)
 {
-
+	*mIsTableValid = true;
 	mDescriptorTable = RendererContext::GetDevice()->createDescriptorTable(layout);
 
 	size_t capacity = mDescriptorTable->getCapacity();
@@ -19,7 +19,7 @@ BindlessDescriptorTable::BindlessDescriptorTable(nvrhi::IBindingLayout* layout)
 
 Render::BindlessDescriptorTable::~BindlessDescriptorTable()
 {
-	mIsTableValid = false;
+	*mIsTableValid = false;
 	for (auto& descriptor : mDescriptors)
 	{
 		if (descriptor.resourceHandle)

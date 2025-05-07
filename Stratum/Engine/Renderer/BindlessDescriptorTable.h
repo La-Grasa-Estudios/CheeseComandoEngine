@@ -2,6 +2,7 @@
 
 #include "znmsp.h"
 #include "BindlessDescriptorIndex.h"
+#include "Core/Ref.h"
 
 #include <unordered_map>
 #include <mutex>
@@ -17,6 +18,7 @@ namespace Render
 
 	public:
 
+        BindlessDescriptorTable() = default;
         BindlessDescriptorTable(nvrhi::IBindingLayout* layout);
         ~BindlessDescriptorTable();
 
@@ -62,7 +64,7 @@ namespace Render
         std::unordered_map<nvrhi::BindingSetItem, BindlessDescriptorIndex, BindingSetItemHasher, BindingSetItemsEqual> mAllocatedDescriptorsMap;
         std::vector<bool> mAllocatedDescriptorIndexes;
         std::vector<nvrhi::BindingSetItem> mDescriptors;
-        bool mIsTableValid = true;
+        Ref<bool> mIsTableValid = CreateRef<bool>();
 
         int32_t mSearchStart = 0;
 

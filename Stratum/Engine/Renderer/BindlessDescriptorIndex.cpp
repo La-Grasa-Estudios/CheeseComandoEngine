@@ -10,12 +10,13 @@ BindlessDescriptorIndex::BindlessDescriptorIndex(BindlessDescriptorTable* pTable
 	mResourcePointer->AddRef();
 
 	mDescriptorTable = pTable;
+	mIsTableValid = mDescriptorTable->mIsTableValid;
 	mIndex = index;
 }
 
 void BindlessDescriptorIndex::Release()
 {
-	if (!mDescriptorTable->mIsTableValid)
+	if (!mIsTableValid || !*mIsTableValid)
 	{
 		return;
 	}

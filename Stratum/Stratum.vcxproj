@@ -162,7 +162,11 @@
     <ClInclude Include="Engine\DevTools\md5.h" />
     <ClInclude Include="Engine\DevTools\ShaderCompiler.h" />
     <ClInclude Include="Engine\DevTools\ShaderCompiler\ShaderPreprocessor.h" />
+    <ClInclude Include="Engine\Entity\Common.h" />
     <ClInclude Include="Engine\Entity\ComponentManager.h" />
+    <ClInclude Include="Engine\Entity\Components.h" />
+    <ClInclude Include="Engine\Entity\ECS.h" />
+    <ClInclude Include="Engine\Entity\EntityManager.h" />
     <ClInclude Include="Engine\EntryPoint.h" />
     <ClInclude Include="Engine\Event\EventHandler.h" />
     <ClInclude Include="Engine\Input\Input.h" />
@@ -237,6 +241,10 @@
     <ClInclude Include="Engine\Renderer\TextureSampler.h" />
     <ClInclude Include="Engine\Renderer\Vertex.h" />
     <ClInclude Include="Engine\Renderer\VertexBuffer.h" />
+    <ClInclude Include="Engine\Scene\Renderer3D.h" />
+    <ClInclude Include="Engine\Scene\RendererCommon.h" />
+    <ClInclude Include="Engine\Scene\Scene.h" />
+    <ClInclude Include="Engine\Scene\SceneResources.h" />
     <ClInclude Include="Engine\Sound\adpcm-lib\adpcm.h" />
     <ClInclude Include="Engine\Sound\adpcm-lib\wave.h" />
     <ClInclude Include="Engine\Sound\AudioEngine.h" />
@@ -263,6 +271,7 @@
     <ClInclude Include="Engine\Util\DoubleBufferResource.h" />
     <ClInclude Include="Engine\Util\Globals.h" />
     <ClInclude Include="Engine\Util\HeapArray.h" />
+    <ClInclude Include="Engine\Util\Optional.h" />
     <ClInclude Include="Engine\Util\PathUtils.h" />
     <ClInclude Include="Engine\Util\ShaderReflection.h" />
     <ClInclude Include="Engine\Util\StackAllocator.h" />
@@ -330,6 +339,8 @@
     <ClCompile Include="Engine\DevTools\md5.cpp" />
     <ClCompile Include="Engine\DevTools\ShaderCompiler.cpp" />
     <ClCompile Include="Engine\DevTools\ShaderCompiler\ShaderPreprocessor.cpp" />
+    <ClCompile Include="Engine\Entity\Components.cpp" />
+    <ClCompile Include="Engine\Entity\EntityManager.cpp" />
     <ClCompile Include="Engine\Event\EventHandler.cpp" />
     <ClCompile Include="Engine\Input\Input.cpp" />
     <ClCompile Include="Engine\Media\VideoDecode.cpp" />
@@ -360,6 +371,10 @@
     <ClCompile Include="Engine\Renderer\TextureSampler.cpp" />
     <ClCompile Include="Engine\Renderer\Vertex.cpp" />
     <ClCompile Include="Engine\Renderer\VertexBuffer.cpp" />
+    <ClCompile Include="Engine\Scene\Renderer3D.cpp" />
+    <ClCompile Include="Engine\Scene\RendererCommon.cpp" />
+    <ClCompile Include="Engine\Scene\Scene.cpp" />
+    <ClCompile Include="Engine\Scene\SceneResources.cpp" />
     <ClCompile Include="Engine\Sound\adpcm-lib\adpcm.cpp" />
     <ClCompile Include="Engine\Sound\adpcm-lib\wave.cpp" />
     <ClCompile Include="Engine\Sound\AudioEngine.cpp" />

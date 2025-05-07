@@ -1,4 +1,5 @@
 #include "Time.h"
+#include "Logger.h"
 
 #include <chrono>
 
@@ -19,6 +20,11 @@ void Time::BeginProfile()
 void Time::EndProfile()
 {
 	DeltaTime = (float)(nanoTime() - now) / 1000.0F / 1000.0F / 1000.0F;
+	if (DeltaTime * 1000.0f > 100.0f)
+	{
+		Z_WARN("Frametime got over 100ms! ({}ms), clamping to 100ms", DeltaTime * 1000.0f);
+		DeltaTime = 100.0f / 1000.0f;
+	}
 	GlobalTime += DeltaTime;
 }
 

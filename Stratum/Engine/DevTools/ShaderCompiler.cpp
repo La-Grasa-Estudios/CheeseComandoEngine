@@ -162,7 +162,7 @@ static ShaderReflectionResourceDimension ConvertD3DDimensionToEngine(D3D_SRV_DIM
 	}
 }
 
-std::vector<uint8_t> GLSLToSpirV::GetShaderBinary(RefBinaryStream& ss, ShaderPreprocessor& processor, const char* input, GLSLToSpirV::shader_type type, int permIndex, std::vector<std::string> defines, std::vector<shaderbinding_t>& shaderBindings, Render::RendererAPI targetApi)
+std::vector<uint8_t> ShaderCompiler::GetShaderBinary(RefBinaryStream& ss, ShaderPreprocessor& processor, const char* input, ShaderCompiler::shader_type type, int permIndex, std::vector<std::string> defines, std::vector<shaderbinding_t>& shaderBindings, Render::RendererAPI targetApi)
 {
 
 	using namespace Microsoft::WRL;
@@ -175,20 +175,20 @@ std::vector<uint8_t> GLSLToSpirV::GetShaderBinary(RefBinaryStream& ss, ShaderPre
 
 	switch (type)
 	{
-	case GLSLToSpirV::shader_type::fragment:
+	case ShaderCompiler::shader_type::fragment:
 		stage.append("PIXEL");
-		shaderTarget = L"ps_6_6";
+		shaderTarget = L"ps_6_5";
 		break;
-	case GLSLToSpirV::shader_type::vertex:
+	case ShaderCompiler::shader_type::vertex:
 		stage.append("VERTEX");
-		shaderTarget = L"vs_6_6";
+		shaderTarget = L"vs_6_5";
 		break;
 		stage.append("GEOMETRY");
-		shaderTarget = L"gs_6_6";
+		shaderTarget = L"gs_6_5";
 		break;
-	case GLSLToSpirV::shader_type::compute:
+	case ShaderCompiler::shader_type::compute:
 		stage.append("COMPUTE");
-		shaderTarget = L"cs_6_6";
+		shaderTarget = L"cs_6_5";
 		break;
 	default:
 		break;
@@ -405,7 +405,7 @@ std::vector<uint8_t> GLSLToSpirV::GetShaderBinary(RefBinaryStream& ss, ShaderPre
 	return std::vector<uint8_t>();
 }
 
-bool GLSLToSpirV::build_object(const char* input, const char* output, shader_type type, int nbPermutations)
+bool ShaderCompiler::build_object(const char* input, const char* output, shader_type type, int nbPermutations)
 {
 	RefBinaryStream ss = ENGINE_NAMESPACE::ZVFS::GetFile(input);
 

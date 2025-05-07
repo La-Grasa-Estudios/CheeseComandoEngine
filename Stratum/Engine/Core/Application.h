@@ -53,6 +53,8 @@ public:
 	Application(ApplicationInfo& appInfo);
 
 	void Run(std::vector<std::string> args);
+
+	void MainLoop();
 	void RenderStartupMedia();
 
 	void InternalUpdate();

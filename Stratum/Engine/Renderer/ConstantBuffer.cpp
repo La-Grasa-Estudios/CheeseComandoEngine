@@ -17,7 +17,7 @@ Render::ConstantBuffer::ConstantBuffer(size_t size, void* defaultData)
 		.setByteSize(size)
 		.setIsConstantBuffer(true)
 		.setMaxVersions(16)
-		.setKeepInitialState(!isStatic)
+		.setKeepInitialState(false)
 		.setCpuAccess(RendererContext::get_api() == RendererAPI::DX11 ? nvrhi::CpuAccessMode::Write : nvrhi::CpuAccessMode::None)
 		.setInitialState(isStatic ? nvrhi::ResourceStates::ConstantBuffer : nvrhi::ResourceStates::CopyDest)
 		.setDebugName("Constant Buffer");

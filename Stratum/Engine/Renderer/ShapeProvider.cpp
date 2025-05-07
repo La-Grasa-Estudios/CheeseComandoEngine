@@ -264,3 +264,8 @@ Ref<Render::Mesh> Render::ShapeProvider::GenerateFullScreenQuad()
 
 	return g_FullScreenQuad;
 }
+
+void Render::ShapeProvider::Release()
+{
+	g_FullScreenQuad = NULL;
+}

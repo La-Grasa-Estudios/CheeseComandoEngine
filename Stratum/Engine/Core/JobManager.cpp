@@ -110,6 +110,8 @@ void JobManager::Dispatch(uint32_t jobCount, uint32_t groupSize, const std::func
             // Inside the group, loop through all job indices and execute job for each index:
             for (uint64_t i = groupJobOffset; i < groupJobEnd; ++i)
             {
+                args.IsFirstJobInGroup = i == groupJobOffset;
+                args.IsLastJobInGroup = i == groupJobEnd;
                 args.jobIndex = i;
                 job(args);
             }

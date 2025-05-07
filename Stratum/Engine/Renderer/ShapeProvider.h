@@ -15,6 +15,7 @@ namespace Render
 		static Ref<Mesh> GenerateBox(const glm::vec3& halfExtents);
 		static Ref<Mesh> GenerateQuad(const glm::vec2& size);
 		static Ref<Mesh> GenerateFullScreenQuad();
+		static void Release();
 
 	};
 }

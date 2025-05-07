@@ -18,7 +18,7 @@
 
 BEGIN_ENGINE
 
-class GLSLToSpirV {
+class ShaderCompiler {
 
 public:
 
@@ -34,7 +34,7 @@ public:
 		"D3D",
 	};
 
-	static std::vector<uint8_t> GetShaderBinary(RefBinaryStream& ss, ShaderPreprocessor& processor, const char* input, GLSLToSpirV::shader_type type, int permIndex, std::vector<std::string> defines, std::vector<shaderbinding_t>& shaderBindings, Render::RendererAPI targetApi);
+	static std::vector<uint8_t> GetShaderBinary(RefBinaryStream& ss, ShaderPreprocessor& processor, const char* input, ShaderCompiler::shader_type type, int permIndex, std::vector<std::string> defines, std::vector<shaderbinding_t>& shaderBindings, Render::RendererAPI targetApi);
 
 	static bool build_object(const char* input, const char* output, shader_type type, int nbPermutations = 1);
 
