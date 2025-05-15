@@ -101,7 +101,7 @@ void Render::BackendInitializerD3D12::InitializeBackend(Internal::Window* pWindo
         // is favored.
         if ((dxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
             SUCCEEDED(D3D12CreateDevice(dxgiAdapter1.Get(),
-                D3D_FEATURE_LEVEL_12_0, __uuidof(ID3D12Device), nullptr)) &&
+                D3D_FEATURE_LEVEL_11_1, __uuidof(ID3D12Device), nullptr)) &&
             dxgiAdapterDesc1.DedicatedVideoMemory > maxDedicatedVideoMemory)
         {
             maxDedicatedVideoMemory = dxgiAdapterDesc1.DedicatedVideoMemory;
@@ -125,7 +125,7 @@ void Render::BackendInitializerD3D12::InitializeBackend(Internal::Window* pWindo
     debugInterface->EnableDebugLayer();
 #endif
 
-    D3D12CreateDevice(dxgiAdapter4.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&dxSharedData->Device));
+    D3D12CreateDevice(dxgiAdapter4.Get(), D3D_FEATURE_LEVEL_11_1, IID_PPV_ARGS(&dxSharedData->Device));
 
     // Enable debug messages in debug mode.
 #if defined(_DEBUG)
@@ -393,7 +393,7 @@ void Render::BackendInitializerD3D12::ImGuiEndFrame(RendererContext* pContext)
 
     auto commandList = (ID3D12GraphicsCommandList*)(mCommandList->getNativeObject(nvrhi::ObjectTypes::D3D12_GraphicsCommandList));
 
-    //commandList->ResourceBarrier(1, &barrier);
+    commandList->ResourceBarrier(1, &barrier);
 
     commandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
     commandList->OMSetRenderTargets(1, &dxSharedData->BackBufferRtvs[dxSharedData->FrameIndex], FALSE, nullptr);
@@ -412,7 +412,7 @@ void Render::BackendInitializerD3D12::ImGuiEndFrame(RendererContext* pContext)
     barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_DEPTH_WRITE;
     barriers[1].Transition.pResource = pContext->NvDepthBuffers[pContext->FrameIndex]->getNativeObject(nvrhi::ObjectTypes::D3D12_Resource);
 
-    commandList->ResourceBarrier(2, barriers);
+    commandList->ResourceBarrier(1, barriers);
 
     mCommandList->close();
 

@@ -6,6 +6,15 @@
 BEGIN_ENGINE
 
 namespace Render {
+
+	struct FrustumAABB
+	{
+		glm::vec3 Min;
+		glm::vec3 Max;
+
+		FrustumAABB(const glm::vec3& min, const glm::vec3& max);
+	};
+
 	class Frustum
 	{
 	public:

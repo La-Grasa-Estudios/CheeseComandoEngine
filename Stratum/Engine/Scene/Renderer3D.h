@@ -3,6 +3,8 @@
 #include "Scene.h"
 #include "RendererCommon.h"
 
+#include "Post/PostProcessingStack.h"
+
 #include <stack>
 
 BEGIN_ENGINE
@@ -47,25 +49,48 @@ struct Visibility
 	void CullQueue(const ViewPose& viewPose, RenderQueue& queue);
 };
 
+class Renderer2D;
+
 class Renderer3D
 {
 public:
 
-	void PushPose(const ViewPose& pose);
-	void PopPose();
+	Renderer3D();
 
-	ViewPose* GetTopPose();
+	void SetScene(Scene* scene);
+	void SetViewPose(const ViewPose& pose);
 
 	void PreRender(Scene* scene);
-	void Render(Scene* scene, Render::GraphicsCommandBuffer* pCmdBuffer);
+	void Render(Scene* scene, Render::Framebuffer* pOutput);
 
 	void BindGraphicsCommonResources(Render::GraphicsCommandBuffer* pCmdBuffer);
 
 	RenderQueue mainVisRenderQueue;
+	Render::PostProcessingStack PostProcessingStack;
 
 private:
 
-	std::stack<ViewPose> mViewPoses;
+	void InitializePipelines();
+	void ResizeRenderBuffers(glm::ivec2 renderResolution);
+
+	Render::GraphicsCommandBuffer mCommandBuffer;
+
+	Ref<Render::GraphicsPipeline> mStaticOpaquePipeline;
+	Ref<Render::GraphicsPipeline> mDynamicOpaquePipeline;
+
+	Ref<Render::ConstantBuffer> mPerFrameCB;
+
+	bool mRequiresGBufferRenderState = false;
+	Ref<Render::ImageResource> mRtColorBuffer;
+	Ref<Render::ImageResource> mRtNormalBuffer;
+	Ref<Render::ImageResource> mRtRoughnessMetalness;
+	Ref<Render::ImageResource> mRtDepthBuffer;
+
+	Ref<Render::Framebuffer> mRtGbuffer;
+
+	Ref<Renderer2D> mRenderPath2D;
+
+	ViewPose mViewPose;
 
 };
 

@@ -22,6 +22,7 @@ public:
 	ECS::ComponentManager<NameComponent> Names;
 	ECS::ComponentManager<TransformComponent> Transforms;
 	ECS::ComponentManager<MeshRendererComponent> Renderers;
+	ECS::ComponentManager<SpriteRendererComponent> SpriteRenderers;
 
 	void LoadModel(const std::string& path, const ECS::edict_t edict);
 

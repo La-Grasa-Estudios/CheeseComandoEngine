@@ -2,6 +2,7 @@
 
 #include "Core/Logger.h"
 #include "Core/Timer.h"
+#include "Core/Time.h"
 
 #include "Util/StackAllocator.h"
 #include "BindlessDescriptorTable.h"
@@ -17,6 +18,7 @@ Render::GraphicsCommandBuffer::GraphicsCommandBuffer()
 	nvrhi::CommandListParameters params{};
 	params.queueType = nvrhi::CommandQueue::Graphics;
 	mCommandList = RendererContext::GetDevice()->createCommandList(params);
+	mTimerQuery = RendererContext::GetDevice()->createTimerQuery();
 }
 
 Render::GraphicsCommandBuffer::~GraphicsCommandBuffer()
@@ -57,6 +59,25 @@ void Render::GraphicsCommandBuffer::Begin()
 	mSetDescriptorTable = nullptr;
 
 	mCommandList->open();
+
+	if (mIsTimeQueryAvailable)
+	{
+		RendererContext::GetDevice()->resetTimerQuery(mTimerQuery);
+		mCommandList->beginTimerQuery(mTimerQuery);
+		mIsTimeQueryActive = true;
+		mIsTimeQueryAvailable = false;
+	}
+	else
+	{
+		if (RendererContext::GetDevice()->pollTimerQuery(mTimerQuery))
+		{
+			mTotalExecutionTime = RendererContext::GetDevice()->getTimerQueryTime(mTimerQuery);
+			mIsTimeQueryAvailable = true;
+		}
+	}
+
+	Time::PushGPU(mTotalExecutionTime);
+
 	SetAutomaticBarrierPlacement(false);
 }
 
@@ -65,6 +86,12 @@ void Render::GraphicsCommandBuffer::End()
 	if (mCommitedAnyConstantBuffer)
 	{
 		mCommandList->commitBarriers();
+	}
+
+	if (mIsTimeQueryActive)
+	{
+		mCommandList->endTimerQuery(mTimerQuery);
+		mIsTimeQueryActive = false;
 	}
 	mCommandList->close();
 }
@@ -347,6 +374,10 @@ void Render::GraphicsCommandBuffer::ClearBuffer(Framebuffer* framebuffer, uint32
 
 void Render::GraphicsCommandBuffer::ClearDepth(Framebuffer* framebuffer, float depth, uint32_t stencil)
 {
+	if (mCommitedAnyConstantBuffer)
+	{
+		CommitBarriers();
+	}
 	if (framebuffer->IsWindowFramebuffer())
 	{
 		nvrhi::utils::ClearDepthStencilAttachment(mCommandList, RendererContext::s_Context->NvFramebufferRtvs[RendererContext::s_Context->FrameIndex].Get(), depth, stencil);
@@ -414,10 +445,11 @@ void Render::GraphicsCommandBuffer::RequireFramebufferState(Framebuffer* framebu
 
 	if (desc.depthAttachment.valid())
 	{
+		if (before == ResourceState::RenderTarget)
+			before = ResourceState::DepthWrite;
 		if (firstTrack)
 			mCommandList->beginTrackingTextureState(desc.depthAttachment.texture, nvrhi::AllSubresources, before == ResourceState::Present ? ResourceState::Present : before);
 		mCommandList->setTextureState(desc.depthAttachment.texture, nvrhi::AllSubresources, after == ResourceState::Present ? after : ResourceState::DepthWrite);
-
 	}
 }
 
@@ -451,6 +483,11 @@ void Render::GraphicsCommandBuffer::SetAutomaticBarrierPlacement(bool _auto)
 void Render::GraphicsCommandBuffer::CommitBarriers()
 {
 	mCommandList->commitBarriers();
+}
+
+float Render::GraphicsCommandBuffer::GetTimeQuery()
+{
+	return mTotalExecutionTime;
 }
 
 void Render::GraphicsCommandBuffer::UpdateGraphicsState()

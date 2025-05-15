@@ -56,14 +56,9 @@ void Time::ClearGPU()
 	GPUTime = 0.0F;
 }
 
-void Time::BeginGPU()
+void Time::PushGPU(float time)
 {
-	now_gpu = nanoTime();
-}
-
-void Time::EndGPU()
-{
-	GPUTime = (float)(nanoTime() - now_gpu) / 1000.0F / 1000.0F / 1000.0F;
+	GPUTime += time;
 }
 
 void Time::ClearUpdate()

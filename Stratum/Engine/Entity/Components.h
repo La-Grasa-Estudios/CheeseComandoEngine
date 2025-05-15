@@ -55,4 +55,33 @@ struct MeshRendererComponent
 	int32_t IndexBufferDescriptorIndex = -1;
 };
 
+struct SpriteRendererComponent
+{
+
+	struct SpriteRect
+	{
+		glm::ivec2 position;
+		glm::ivec2 size;
+	};
+
+	enum SpriteRenderLayer
+	{
+		LAYER_BG2,
+		LAYER_BG1,
+		LAYER_BG0,
+		LAYER_FG,
+		LAYER_FG0,
+		LAYER_FG1,
+		LAYER_FG2,
+	};
+
+	SpriteRenderLayer RenderLayer = LAYER_FG;
+	SpriteRect Rect;
+
+	glm::vec2 Center = glm::vec2(0.0f);
+
+	int32_t TextureHandle = -1;
+
+};
+
 END_ENGINE

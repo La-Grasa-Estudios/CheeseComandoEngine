@@ -4,6 +4,8 @@
 
 #include <vector>
 #include <mutex>
+#include <unordered_map>
+#include <string_view>
 
 #include "Renderer/BindlessDescriptorIndex.h"
 
@@ -15,6 +17,7 @@ namespace Render
 	class Mesh;
 	class Material;
 	class BindlessDescriptorTable;
+	class ImageResource;
 }
 
 typedef int32_t DescriptorHandle;
@@ -48,6 +51,9 @@ public:
 
 	bool IsMaterialDirty(DescriptorHandle handle);
 
+	DescriptorHandle LoadTextureImage(const std::string& path);
+	Render::ImageResource* GetImageHandle(const DescriptorHandle handle);
+
 private:
 
 	struct BindlessBufferIndex
@@ -77,6 +83,9 @@ private:
 	std::vector<int32_t> mBuffersRefCount;
 	std::vector<BindlessBufferIndex> mBufferIndexes;
 	uint32_t mBuffersSearchStart = 0;
+
+	std::unordered_map<DescriptorHandle, Ref<Render::ImageResource>> mTextures;
+	std::unordered_map<std::string, DescriptorHandle> mTextureCache;
 
 	Render::BindlessDescriptorTable* mDescriptorTable;
 

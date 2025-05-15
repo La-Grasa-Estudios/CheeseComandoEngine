@@ -17,6 +17,7 @@ struct ViewPose
 	glm::mat4 InverseViewMatrix;
 	glm::mat4 InverseProjectionViewMatrix;
 
+	ViewPose() = default;
 	ViewPose(const glm::mat4& Proj, const glm::mat4& View);
 };
 

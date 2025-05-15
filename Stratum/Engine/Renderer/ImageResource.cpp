@@ -22,7 +22,7 @@ Render::ImageResource::ImageResource(const ImageDescription& desc)
 
 	textureDesc.setIsRenderTarget(desc.AllowFramebufferUsage);
 
-	textureDesc.setInitialState(nvrhi::ResourceStates::Common);
+	textureDesc.setInitialState(nvrhi::ResourceStates::ShaderResource);
 	textureDesc.setKeepInitialState(false);
 
 	textureDesc.setDebugName("Image");
@@ -37,12 +37,12 @@ Render::ImageResource::ImageResource(const ImageDescription& desc)
 		if (desc.IsDepthFormat())
 		{
 			textureDesc.setIsTypeless(true);
-			textureDesc.setInitialState(nvrhi::ResourceStates::DepthWrite);
+			//textureDesc.setInitialState(nvrhi::ResourceStates::DepthWrite);
 			textureDesc.setDebugName("Image Depth Target");
 		}
 		else
 		{
-			textureDesc.setInitialState(nvrhi::ResourceStates::RenderTarget);
+			//textureDesc.setInitialState(nvrhi::ResourceStates::RenderTarget);
 		}
 	}
 
@@ -63,7 +63,7 @@ Render::ImageResource::ImageResource(const ImageDescription& desc)
 
 	if (!desc.Immutable)
 	{
-		textureDesc.setKeepInitialState(true);
+		//textureDesc.setKeepInitialState(true);
 	}
 
 	Handle = RendererContext::GetDevice()->createTexture(textureDesc);

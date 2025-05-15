@@ -216,6 +216,8 @@ std::vector<uint8_t> ShaderCompiler::GetShaderBinary(RefBinaryStream& ss, Shader
 		L"-T", shaderTarget,            // Target.
 		L"-I", L"Engine/Include",            // Target.
 		L"-Zi",                      // Enable debug information (slim format)
+		L"-O3",                      // Enable debug information (slim format)
+		L"-all_resources_bound",                      // Enable debug information (slim format)
 		L"-Qembed_debug",                      // Enable debug information (slim format)
 	};
 

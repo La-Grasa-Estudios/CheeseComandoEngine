@@ -289,7 +289,7 @@ void Application::Run(std::vector<std::string> args)
 
 	EventHandler::InvokeEvent(EventHandler::GetEventID("post_init"), this);
 
-	m_Window->SetVSync(true);
+	m_Window->SetVSync(false);
 
 	MainLoop();
 
@@ -311,35 +311,17 @@ void Application::Run(std::vector<std::string> args)
 
 void Application::MainLoop()
 {
+	m_Window->SetVSync(true);
 
 	bool LogStutters = false;
 	float LastFrameDelta = 0.0f;
 
-	Render::GraphicsCommandBuffer cmdBuffer{};
-
 	Scene* scene = new Scene();;
-	Render::PipelineDescription pipelineDesc{};
-
-	pipelineDesc.ShaderPath = "shaders/deferred_gbuffer_opaque.cso";
-	pipelineDesc.BindingItems.push_back(nvrhi::BindingLayoutItem::PushConstants(0, 12));
-
-	Render::GraphicsPipeline pipeline(pipelineDesc);
-	Render::ConstantBuffer cBuffer(sizeof(glm::mat4));
-
-	pipeline.SetRenderTarget(m_Window->GetFramebuffer());
-
-	scene->InitBindlessTable(pipeline.BindingLayout);
-
-	scene->LoadModel("binbows.mdl", scene->EntityManager.CreateEntity());
-
 	Renderer3D rendererPath3D;
 
-	Render::StaticBindingTable bindingTable =
-	{
-		nvrhi::BindingSetItem::ConstantBuffer(1, cBuffer.Handle),
-	};
+	rendererPath3D.SetScene(scene);
 
-	pipeline.UpdateStaticBinding(bindingTable);
+	scene->LoadModel("binbows.mdl", scene->EntityManager.CreateEntity());
 
 	while (1) {
 
@@ -359,6 +341,7 @@ void Application::MainLoop()
 		}
 
 		Time::BeginProfile();
+		Time::ClearGPU();
 
 #ifndef TRACY_ENABLE
 		if (!m_Window->IsWindowActive()) {
@@ -381,42 +364,17 @@ void Application::MainLoop()
 
 		OnFrameRender();
 
-
-		cmdBuffer.Begin();
-
-		Render::Viewport viewport{};
-		viewport.width = m_Window->GetWidth();
-		viewport.height = m_Window->GetHeight();
-
-		glm::mat4 projection = glm::perspective(glm::radians(70.0f), viewport.width / (float)viewport.height, 0.01f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(70.0f), m_Window->GetWidth() / (float)m_Window->GetHeight(), 0.01f, 100.0f);
 		glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 3.0f, -5.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		glm::mat4 model = glm::identity<glm::mat4>();
 
-		glm::mat4 mvp = projection * view * model;
-
-		rendererPath3D.PushPose(ViewPose(projection, view));
+		rendererPath3D.SetViewPose(ViewPose(projection, view));
 
 		rendererPath3D.PreRender(scene);
 
-		cmdBuffer.RequireFramebufferState(m_Window->GetFramebuffer().get(), Render::ResourceState::Present, Render::ResourceState::RenderTarget);
-		cmdBuffer.SetFramebuffer(m_Window->GetFramebuffer().get());
-		cmdBuffer.ClearBuffer(m_Window->GetFramebuffer().get(), 0, glm::vec4(0.0f));
-		cmdBuffer.ClearDepth(m_Window->GetFramebuffer().get(), 1.0f);
+		rendererPath3D.Render(scene, m_Window->GetFramebuffer().get());
 
-		cmdBuffer.SetViewport(&viewport);
-		cmdBuffer.SetPipeline(&pipeline);
-		cmdBuffer.SetBindlessDescriptorTable(scene->BindlessTable);
-
-		cmdBuffer.UpdateConstantBuffer(&cBuffer, &mvp);
-
-		rendererPath3D.Render(scene, &cmdBuffer);
-
-		cmdBuffer.End();
-		cmdBuffer.Submit();
-
-		rendererPath3D.PopPose();
-
-		if (m_AppInfo.IsImGuiEnabled) {
+		if (m_AppInfo.IsImGuiEnabled)
+		{
 
 			m_RenderContext->ImGuiBeginFrame();
 
@@ -482,7 +440,6 @@ void Application::RenderStartupMedia()
 
 		pipelineDesc.VertexLayout = Render::Vertex::GetLayout();
 
-		pipelineDesc.NumRenderTargets = 1;
 		pipelineDesc.RenderTarget = m_Window->GetFramebuffer().get();
 
 		pipelineDesc.RasterizerState.DepthTest = false;
@@ -554,7 +511,11 @@ void Application::RenderStartupMedia()
 					{
 						auto cmd = cmdBuffer.GetNativeCommandList();
 
+						cmdBuffer.RequireTextureState(surface.get(), Render::ResourceState::ShaderResource, Render::ResourceState::CopyDest);
+						cmdBuffer.CommitBarriers();
 						cmd->writeTexture(surface->Handle, 0, 0, frame->native()->data[0], params.width * 4);
+						cmdBuffer.RequireTextureState(surface.get(), Render::ResourceState::CopyDest, Render::ResourceState::ShaderResource);
+						cmdBuffer.CommitBarriers();
 
 						firstFrameReady = true;
 
@@ -660,6 +621,8 @@ void Application::On2DRender()
 {
 }
 
+#undef min
+
 void Application::OnFrameRenderImGui()
 {
 
@@ -669,7 +632,12 @@ void Application::OnFrameRenderImGui()
 
 	ImGui::Begin("EngineStats");
 
-	ImGui::Text("Frametime: %.2fms, FPS: %i", gpGlobals->deltaTime * 1000.0f, frameRate);
+	float dtms = gpGlobals->deltaTime * 1000.0f;
+	float gpms = Time::GPUTime.load() * 1000.0f;
+
+	int gpuUsage = glm::min((int)((gpms / dtms) * 100.0f), 100);
+
+	ImGui::Text("Frametime: %.2fms, GPU: %.2fms Usage: %i%%, FPS: %i", dtms, gpms, gpuUsage, frameRate);
 
 	auto times = EngineStats::GetTimes();
 

@@ -177,6 +177,8 @@ namespace Render {
 		void SetAutomaticBarrierPlacement(bool _auto);
 		void CommitBarriers();
 
+		float GetTimeQuery();
+
 	private:
 
 		void UpdateGraphicsState();
@@ -198,6 +200,11 @@ namespace Render {
 		};
 
 		std::unordered_set<uintptr_t> mTrackedResources;
+		nvrhi::TimerQueryHandle mTimerQuery;
+		bool mIsTimeQueryAvailable = true;
+		bool mIsTimeQueryActive = false;
+
+		float mTotalExecutionTime = 0.0f;
 
 		nvrhi::CommandListHandle mCommandList;
 		nvrhi::IGraphicsPipeline* mSetGraphicsPipeline;

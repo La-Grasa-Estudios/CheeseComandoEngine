@@ -18,7 +18,7 @@ public:
 	inline static float FixedDeltaTime = 1.0F / 50.0F;
 
 	inline static float CPUTime = 0.0F;
-	inline static float GPUTime = 0.0F;
+	inline static std::atomic<float> GPUTime = 0.0F;
 	inline static float UpdateTime = 0.0F;
 
 	static long nanoTime();
@@ -34,8 +34,7 @@ public:
 	static void EndCPU();
 
 	static void ClearGPU();
-	static void BeginGPU();
-	static void EndGPU();
+	static void PushGPU(float time);
 
 	static void ClearUpdate();
 	static void BeginUpdate();

@@ -555,7 +555,31 @@
     <ClInclude Include="Engine\Scene\RendererCommon.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Util\Optional.h">
+    <ClInclude Include="Engine\Scene\Post\Passes\BloomPass.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Scene\Post\Passes\LuminancePass.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Scene\Post\Passes\Outputs.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Scene\Post\Passes\TonemapPass.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Scene\Post\PostProcessingCommon.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Scene\Post\PostProcessingPass.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Scene\Post\PostProcessingStack.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Scene\Renderer2D.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Scene\SpriteBatch.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>
@@ -864,6 +888,21 @@
       <Filter>Archivos de origen</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Scene\RendererCommon.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Scene\Post\Passes\BloomPass.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Scene\Post\Passes\LuminancePass.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Scene\Post\Passes\TonemapPass.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Scene\Post\PostProcessingPass.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Scene\Post\PostProcessingStack.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>

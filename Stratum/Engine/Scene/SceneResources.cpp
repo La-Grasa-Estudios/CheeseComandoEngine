@@ -3,8 +3,9 @@
 #include "Renderer/Buffer.h"
 #include "Renderer/Mesh.h"
 #include "Renderer/Material.h"
-
 #include "Renderer/BindlessDescriptorTable.h"
+
+#include "Asset/TextureLoader.h"
 
 using namespace ENGINE_NAMESPACE;
 
@@ -209,6 +210,35 @@ bool SceneResources::IsMaterialDirty(DescriptorHandle handle)
 	}
 
 	return false;
+}
+
+DescriptorHandle SceneResources::LoadTextureImage(const std::string& path)
+{
+	if (auto t = mTextureCache.find(path); t != mTextureCache.end())
+	{
+		return t->second;
+	}
+
+	auto texture = Render::TextureLoader::LoadFileToImage(path, NULL);
+
+	if (texture)
+	{
+		auto handle = mDescriptorTable->AllocateDescriptor(nvrhi::BindingSetItem::Texture_SRV(0, texture->Handle));
+		mTextureCache[path] = handle;
+		mTextures[handle] = texture;
+		return handle;
+	}
+
+	return -1;
+}
+
+Render::ImageResource* SceneResources::GetImageHandle(const DescriptorHandle handle)
+{
+	if (auto a = mTextures.find(handle); a != mTextures.end())
+	{
+		return a->second.get();
+	}
+	return nullptr;
 }
 
 int32_t SceneResources::AllocateBufferHandle()
