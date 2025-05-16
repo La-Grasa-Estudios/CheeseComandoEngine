@@ -21,6 +21,7 @@ public:
 
 	void Seek(uint32_t samplePosition) override;
 	uint32_t Position() override;
+	float PositionF() override;
 
 private:
 

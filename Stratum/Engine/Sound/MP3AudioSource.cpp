@@ -116,6 +116,7 @@ void MP3AudioSource::UpdateSource()
     {
         m_AudioBuffer->Clear();
         mp3dec_ex_seek(&m_Mp3DecCtx, m_SeekTo * m_Mp3DecCtx.info.channels);
+        m_Position = m_SeekTo;
         m_SeekTo = -1;
     }
 
@@ -157,7 +158,7 @@ void MP3AudioSource::UpdateSource()
         if (m_SeekTo != -1)
         {
             mp3dec_ex_seek(&m_Mp3DecCtx, m_SeekTo * m_Mp3DecCtx.info.channels);
-            m_Position = m_SeekTo;
+            m_Position = m_SeekTo * m_Mp3DecCtx.info.channels;
             m_SeekTo = -1;
         }
 
@@ -185,6 +186,11 @@ void MP3AudioSource::Seek(uint32_t samplePosition)
 uint32_t MP3AudioSource::Position()
 {
     return m_Position;
+}
+
+float MP3AudioSource::PositionF()
+{
+    return ((int)m_Position - (int)m_Mp3DecCtx.info.hz / 4) / (float)m_Mp3DecCtx.info.hz;
 }
 
 void MP3AudioSource::Commit(void* ptr, size_t size, size_t frameDivider, size_t nbChannels, size_t sampleRate)

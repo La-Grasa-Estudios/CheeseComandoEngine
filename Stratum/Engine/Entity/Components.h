@@ -20,9 +20,9 @@ struct TransformComponent
 {
 	ECS::edict_t Parent = ECS::C_INVALID_ENTITY;
 
-	glm::vec3 Position = glm::vec3(1.0f);
-	glm::vec3 Scale;
-	glm::quat Rotation;
+	glm::vec3 Position = glm::vec3(0.0f);
+	glm::vec3 Scale = glm::vec3(1.0f);
+	glm::quat Rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 
 	glm::mat4 ModelMatrix = glm::identity<glm::mat4>();
 	glm::mat4 InverseBindMatrix = glm::identity<glm::mat4>();
@@ -79,9 +79,98 @@ struct SpriteRendererComponent
 	SpriteRect Rect;
 
 	glm::vec2 Center = glm::vec2(0.0f);
+	glm::vec2 Rotation = glm::vec2(0.0f);
 
 	int32_t TextureHandle = -1;
 
+};
+
+struct SpriteAnimator
+{
+	struct AnimationFrame
+	{
+		SpriteRendererComponent::SpriteRect Rect;
+		glm::ivec2 Offset;
+	};
+
+	struct Animation
+	{
+		std::vector<AnimationFrame> rects;
+		uint32_t FrameIndex = 0;
+		float FrameRate = 1.0f;
+		float Accumulator = 0.0f;
+		bool IsLooping = false;
+		bool PlayOnIdle = false;
+		bool TransitionToDefault = true;
+		std::string NextState;
+
+		Animation& SetFrameRate(float fps)
+		{
+			FrameRate = fps;
+			return *this;
+		}
+
+		Animation& SetLoop(bool loop)
+		{
+			IsLooping = loop;
+			return *this;
+		}
+
+		Animation& SetTransitionToDefault(bool transition)
+		{
+			TransitionToDefault = transition;
+			return *this;
+		}
+
+		Animation& SetAnimateOnIdle(bool idle)
+		{
+			PlayOnIdle = idle;
+			return *this;
+		}
+
+		Animation& SetNextState(const std::string& state)
+		{
+			NextState = state;
+			return *this;
+		}
+
+		Animation& SetFrames(std::vector<AnimationFrame> rects)
+		{
+			this->rects = rects;
+			return *this;
+		}
+	};
+
+	std::string CurrentAnimation = "";
+	std::string DefaultAnimation = "";
+
+	std::unordered_map<std::string, Animation> AnimationMap;
+
+	void SetState(const std::string& state)
+	{
+		CurrentAnimation = state;
+		if (auto a = AnimationMap.find(state); a != AnimationMap.end())
+		{
+			if (!a->second.PlayOnIdle)
+			{
+				a->second.Accumulator = 0.0f;
+				a->second.FrameIndex = 0;
+			}
+		}
+	}
+
+	AnimationFrame GetCurrentRect()
+	{
+		if (CurrentAnimation.empty())
+			return {};
+
+		if (auto a = AnimationMap.find(CurrentAnimation); a != AnimationMap.end())
+		{
+			return a->second.rects[a->second.FrameIndex];
+		} 
+
+		return {};
+	}
 };
 
 END_ENGINE

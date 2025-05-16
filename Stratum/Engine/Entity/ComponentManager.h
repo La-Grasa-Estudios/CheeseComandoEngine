@@ -11,14 +11,20 @@ BEGIN_ENGINE
 namespace ECS
 {
 
+	class ComponentManager_Interface
+	{
+	public:
+		virtual void Init(EntityManager* pManager) = 0;
+	};
+
 	template<typename Component>
-	class ComponentManager
+	class ComponentManager : public ComponentManager_Interface
 	{
 	public:
 
 		ComponentManager() = default;
 
-		ComponentManager(EntityManager* pManager)
+		void Init(EntityManager* pManager)
 		{
 			memset(mAllocatedArray.data(), 0, sizeof(mAllocatedArray));
 			memset(mComponentArray.data(), 0, sizeof(Component) * C_MAX_ENTITIES);
@@ -33,20 +39,19 @@ namespace ECS
 		Component& Create(edict_t edict)
 		{
 			mAllocatedArray[edict - 1] = true;
-			mComponentArray[edict - 1] = {};
 
 			mLookup[edict] = mEntities.size();
 			mEntities.push_back(edict);
 
-			new (&mComponentArray[edict]) Component();
+			new (&mComponentArray[edict - 1]) Component();
 
-			return mComponentArray[edict];
+			return mComponentArray[edict - 1];
 		}
 
 		Component& Get(edict_t edict)
 		{
 			assert(HasComponent(edict));
-			return mComponentArray[edict];
+			return mComponentArray[edict - 1];
 		}
 
 		void Remove(edict_t edict)
@@ -61,6 +66,14 @@ namespace ECS
 				const size_t index = el->second;
 
 				mEntities.erase(mEntities.begin() + index);
+
+				for (auto& kp : mLookup)
+				{
+					if (kp.second > index)
+					{
+						kp.second -= 1;
+					}
+				}
 
 				mLookup.erase(edict);
 

@@ -1,4 +1,6 @@
 #pragma once
 
 #include "AudioEngine.h"
-#include "BRSTMAudioSource.h"
+#include "SngAudioSource.h"
+#include "WaveAudioSource.h"
+#include "MP3AudioSource.h"

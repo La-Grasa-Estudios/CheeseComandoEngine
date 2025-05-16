@@ -126,6 +126,7 @@ namespace Render {
 		void BlitTexture(void* src, void* dst, int slice = 0);
 
 		void RegisterBackBufferPipeline(GraphicsPipeline* pField);
+		void RemoveBackBufferPipeline(GraphicsPipeline* pField);
 
 		static RendererAPI get_api() {
 			return s_Api;

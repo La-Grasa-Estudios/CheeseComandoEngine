@@ -13,16 +13,19 @@ SpriteBatch::SpriteBatch(SceneResources* pResources)
 
 	const glm::vec2 size = glm::vec2(1.0f);
 
-	float quadVertices[24] = {
-		// lower-right triangle
-	   -size.x, -size.y, 0.0f, 0.0f,
-		 size.x,  size.y, 1.0f, 1.0f,
-		 size.x, -size.y, 1.0f, 0.0f
-		// upper-left triangle
-		-size.x, -size.y, 0.0f, 0.0f, // position, texcoord
-		-size.x,  size.y, 0.0f, 1.0f,
-		 size.x,  size.y, 1.0f, 1.0f,
+	float quadVertices[12] = {
+		-size.x, size.y, // (0,0) = 0
+		-size.x, -size.y, // (0,1) = 1
+		 size.x, - size.y, // (1,1) = 2
+		-size.x, size.y, // (0,0) = 3
+		 size.x, -size.y, // (1,1) = 4
+	     size.x, size.y, // (1,0) = 5
 	};
+
+	// (0,0) = 0, 0
+	// (0,1) = 0, 1
+	// (1,0) = 1, 0
+	// (1,1) = 1, 1
 
 	Render::BufferDescription quadDesc{};
 
@@ -55,6 +58,9 @@ void SpriteBatch::DrawSprite(const glm::mat4& transform, SpriteRendererComponent
 	renderable.texture = texture;
 	renderable.transform = spriteTransform;
 
+	renderable.uvs[0] = glm::vec4(0, 0, 1, 0);
+	renderable.uvs[1] = glm::vec4(1, 0, 1, 1);
+
 	if (texture != -1)
 	{
 		auto textureHandle = mResources->GetImageHandle(texture);
@@ -63,7 +69,17 @@ void SpriteBatch::DrawSprite(const glm::mat4& transform, SpriteRendererComponent
 		{
 			auto size = glm::vec2(textureHandle->GetSize());
 
-			renderable.uvs = { glm::vec2(rect.position) / size, glm::vec2(rect.position + rect.size) / size };
+			float x0 = rect.position.x / size.x;
+			float y0 = rect.position.y / size.y;
+			float x1 = (rect.position.x + rect.size.x) / size.x;
+			float y1 = (rect.position.y + rect.size.y) / size.y;
+
+			renderable.uvs[0] = { glm::vec2{ x0, y0 }, glm::vec2{ x0, y1 } };
+			renderable.uvs[1] = { glm::vec2{ x1, y0 }, glm::vec2{ x1, y1 } };
+
+		}
+		else
+		{
 			renderable.texture = -1;
 		}
 	}
@@ -85,7 +101,7 @@ void SpriteBatch::End(Render::GraphicsCommandBuffer* pCmdBuffer)
 	{
 
 		pCmdBuffer->PushConstants(&renderable, sizeof(SpriteRenderable));
-		pCmdBuffer->DrawIndexed(4, 0);
+		pCmdBuffer->Draw(6, 0);
 
 	}
 

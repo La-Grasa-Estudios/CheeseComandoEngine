@@ -262,7 +262,7 @@ size_t SpfFileStream::read(void* buffer, size_t size)
 	{
 		m_PakStream->seekg(filePointer);
 	}
-	size_t readed = m_PakStream->read(buffer, size);
+	size_t readed = std::min(m_PakStream->read(buffer, size), size);
 
 	for (int i = 0; i < readed; i++)
 	{

@@ -16,6 +16,8 @@ public:
 	~Scene();
 
 	void InitBindlessTable(nvrhi::IBindingLayout* bindingLayout);
+	void UpdateSystems();
+	void PostUpdate();
 
 	ECS::EntityManager EntityManager;
 
@@ -23,14 +25,29 @@ public:
 	ECS::ComponentManager<TransformComponent> Transforms;
 	ECS::ComponentManager<MeshRendererComponent> Renderers;
 	ECS::ComponentManager<SpriteRendererComponent> SpriteRenderers;
+	ECS::ComponentManager<SpriteAnimator> SpriteAnimators;
 
 	void LoadModel(const std::string& path, const ECS::edict_t edict);
 
 	SceneResources Resources;
 	Ref<Render::BindlessDescriptorTable> BindlessTable;
 
+	void RegisterCustomComponent(ECS::ComponentManager_Interface* pInterface, const std::string& name);
+	
+	template<typename T>
+	ECS::ComponentManager<T>* GetComponentManager(const std::string& name)
+	{
+		if (!mCustomComponents.contains(name))
+			return NULL;
+		return reinterpret_cast<ECS::ComponentManager<T>*>(mCustomComponents[name]);
+	}
+
 private:
 
+	void UpdateTransforms();
+	void UpdateAnimators();
+
+	std::unordered_map<std::string, ECS::ComponentManager_Interface*> mCustomComponents;
 
 };
 

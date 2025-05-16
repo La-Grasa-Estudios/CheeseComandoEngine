@@ -40,6 +40,8 @@ std::atomic_bool g_FinishUpdateThread;
 
 Ref<Render::RendererContext> g_RenderContext;
 
+Renderer3D* g_RendererPath3D;
+
 Application::Application(ApplicationInfo& appInfo)
 {
 	this->m_AppInfo = appInfo;
@@ -248,6 +250,8 @@ void Application::Run(std::vector<std::string> args)
 	ShaderCompiler::build_object("shaders/video_gbar_to_rgba.hlsl", "Data/shaders/video_gbar_to_rgba.cso", ShaderCompiler::shader_type::vertex, 1);
 	ShaderCompiler::build_object("shaders/deferred_gbuffer_opaque.hlsl", "Data/shaders/deferred_gbuffer_opaque.cso", ShaderCompiler::shader_type::vertex);
 
+	ShaderCompiler::build_object("shaders/2d/2d_sprite.hlsl", "Data/shaders/2d/2d_sprite.cso", ShaderCompiler::shader_type::vertex);
+
 	Z_INFO("Printing cmdline args");
 
 	bool EnableVids = true;
@@ -273,6 +277,8 @@ void Application::Run(std::vector<std::string> args)
 	RenderStartupMedia();
 
 	EventHandler::InvokeEvent(EventHandler::GetEventID("late_init"), this);
+
+	g_RendererPath3D = new Renderer3D();
 
 	if (!m_Window->CloseRequested())
 	{
@@ -311,17 +317,14 @@ void Application::Run(std::vector<std::string> args)
 
 void Application::MainLoop()
 {
-	m_Window->SetVSync(true);
+
+
+	m_Window->SetVSync(m_AppInfo.VSyncEnabled);
 
 	bool LogStutters = false;
 	float LastFrameDelta = 0.0f;
 
-	Scene* scene = new Scene();;
-	Renderer3D rendererPath3D;
-
-	rendererPath3D.SetScene(scene);
-
-	scene->LoadModel("binbows.mdl", scene->EntityManager.CreateEntity());
+	//scene->LoadModel("binbows.mdl", scene->EntityManager.CreateEntity());
 
 	while (1) {
 
@@ -360,6 +363,23 @@ void Application::MainLoop()
 		gpGlobals->deltaTime = Time::DeltaTime;
 		InternalUpdate();
 
+		if (mCurrentScene)
+		{
+			Z_PROFILE_SCOPE("Scene::Update");
+			mCurrentScene->UpdateSystems();
+		}
+
+		{
+			Z_PROFILE_SCOPE("Application::FrameUpdate");
+			OnFrameUpdate();
+		}
+
+		if (mCurrentScene)
+		{
+			Z_PROFILE_SCOPE("Scene::PostUpdate");
+			mCurrentScene->PostUpdate();
+		}
+
 		OnFramePrepare();
 
 		OnFrameRender();
@@ -367,11 +387,13 @@ void Application::MainLoop()
 		glm::mat4 projection = glm::perspective(glm::radians(70.0f), m_Window->GetWidth() / (float)m_Window->GetHeight(), 0.01f, 100.0f);
 		glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 3.0f, -5.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-		rendererPath3D.SetViewPose(ViewPose(projection, view));
+		g_RendererPath3D->SetViewPose(ViewPose(projection, view));
 
-		rendererPath3D.PreRender(scene);
-
-		rendererPath3D.Render(scene, m_Window->GetFramebuffer().get());
+		if (mCurrentScene)
+		{
+			g_RendererPath3D->PreRender(mCurrentScene);
+			g_RendererPath3D->Render(mCurrentScene, m_Window->GetFramebuffer().get());
+		}
 
 		if (m_AppInfo.IsImGuiEnabled)
 		{
@@ -418,7 +440,8 @@ void Application::MainLoop()
 
 	}
 
-	delete scene;
+	Cleanup();
+	SetScene(NULL);
 }
 
 void Application::RenderStartupMedia()
@@ -585,10 +608,27 @@ void Application::RenderStartupMedia()
 
 void Application::InternalUpdate()
 {
-	Z_PROFILE_SCOPE("Application::Update");
+	Z_PROFILE_SCOPE("Application::InternalUpdate");
 	gpGlobals->gametic++;
-	OnFrameUpdate();
 	Input::Update();
+}
+
+void Application::SetScene(Scene* scene)
+{
+	if (mCurrentScene && scene)
+	{
+		JobManager::Wait();
+		Render::RendererContext::GetDevice()->waitForIdle();
+		delete mCurrentScene;
+	}
+
+	mCurrentScene = scene;
+	gpGlobals->gametic = 0;
+
+	if (scene)
+	{
+		g_RendererPath3D->SetScene(scene);
+	}
 }
 
 void Application::OnEarlyInit()
@@ -647,4 +687,8 @@ void Application::OnFrameRenderImGui()
 	}
 
 	ImGui::End();
+}
+
+void Application::Cleanup()
+{
 }

@@ -4,6 +4,8 @@
 #include "Core/NormByte.h"
 #include "Core/Logger.h"
 
+#include "Util/Globals.h"
+
 #include "VFS/ZVFS.h"
 
 #include "Asset/AssetModel.h"
@@ -15,18 +17,37 @@ using namespace ENGINE_NAMESPACE;
 
 Scene::Scene()
 {
-	
+	Names.Init(&EntityManager);
+	Transforms.Init(&EntityManager);
+	Renderers.Init(&EntityManager);
+	SpriteRenderers.Init(&EntityManager);
+	SpriteAnimators.Init(&EntityManager);
 }
 
 Scene::~Scene()
 {
-	
+	EntityManager.DestroyAll();
+	for (auto p : mCustomComponents)
+	{
+		delete p.second;
+	}
 }
 
 void Scene::InitBindlessTable(nvrhi::IBindingLayout* bindingLayout)
 {
 	BindlessTable = CreateRef<Render::BindlessDescriptorTable>(bindingLayout);
 	Resources = { BindlessTable.get() };
+}
+
+void Scene::UpdateSystems()
+{
+	UpdateTransforms();
+	UpdateAnimators();
+}
+
+void Scene::PostUpdate()
+{
+	UpdateTransforms();
 }
 
 void Scene::LoadModel(const std::string& path, const ECS::edict_t edict)
@@ -189,4 +210,88 @@ void Scene::LoadModel(const std::string& path, const ECS::edict_t edict)
 	rendererComponent.VertexBufferDescriptorIndex = Resources.CreateBufferHandle(vb);
 	rendererComponent.IndexBufferDescriptorIndex = Resources.CreateBufferHandle(ib);
 	
+}
+
+void Scene::RegisterCustomComponent(ECS::ComponentManager_Interface* pInterface, const std::string& name)
+{
+	pInterface->Init(&EntityManager);
+	mCustomComponents[name] = pInterface;
+}
+
+void Scene::UpdateTransforms()
+{
+	auto& transforms = Transforms.GetEntities();
+
+	for (auto entity : transforms)
+	{
+		auto& transform = Transforms.Get(entity);
+
+		if (transform.IsDirty)
+		{
+			glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), transform.Position);
+			model *= glm::mat4_cast(transform.Rotation);
+			model = glm::scale(model, transform.Scale);
+			transform.ModelMatrix = model;
+
+			transform.IsDirty = false;
+		}
+	}
+}
+
+void Scene::UpdateAnimators()
+{
+
+	auto& animators = SpriteAnimators.GetEntities();
+
+	for (auto entity : animators)
+	{
+		auto& anim = SpriteAnimators.Get(entity);
+
+		for (auto& kp : anim.AnimationMap)
+		{
+			if (kp.second.PlayOnIdle)
+			{
+				kp.second.Accumulator += gpGlobals->deltaTime;
+			}
+		}
+
+		for (auto& kp : anim.AnimationMap)
+		{
+			while (kp.second.Accumulator >= 1.0f / kp.second.FrameRate)
+			{
+				kp.second.FrameIndex += 1;
+				kp.second.Accumulator -= 1.0f / kp.second.FrameRate;
+			}
+
+			if (!kp.second.IsLooping)
+			{
+				kp.second.FrameIndex = glm::min(kp.second.FrameIndex, (uint32_t)kp.second.rects.size() - 1);
+			}
+			else
+			{
+				kp.second.FrameIndex = kp.second.FrameIndex % kp.second.rects.size();
+			}
+		}
+
+		if (anim.CurrentAnimation.empty())
+			continue;
+
+		if (auto a = anim.AnimationMap.find(anim.CurrentAnimation); a != anim.AnimationMap.end())
+		{
+			if (!a->second.PlayOnIdle)
+			{
+				a->second.Accumulator += gpGlobals->deltaTime;
+			}
+
+			if (!a->second.IsLooping && a->second.FrameIndex >= a->second.rects.size() - 1)
+			{
+				if (!a->second.NextState.empty())
+					anim.SetState(a->second.NextState);
+				else if (a->second.TransitionToDefault)
+					anim.SetState(anim.DefaultAnimation);
+			}
+		}
+
+	}
+
 }

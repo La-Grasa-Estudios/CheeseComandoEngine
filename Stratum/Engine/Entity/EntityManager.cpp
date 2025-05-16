@@ -39,6 +39,17 @@ void ECS::EntityManager::DestroyEntity(edict_t entity)
 	mSearchStart = std::min(mSearchStart, entity - 1);
 }
 
+void ECS::EntityManager::DestroyAll()
+{
+	for (edict_t i = 0; i < C_MAX_ENTITIES; i++)
+	{
+		if (mValidEntities[i])
+		{
+			DestroyEntity(i+1);
+		}
+	}
+}
+
 bool ECS::EntityManager::IsValid(edict_t entity)
 {
 	return entity != C_INVALID_ENTITY && mValidEntities[entity - 1];

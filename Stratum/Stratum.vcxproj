@@ -324,6 +324,12 @@
     <ClInclude Include="Engine\VFS\zlib\zlib_streambuf.h" />
     <ClInclude Include="Engine\VFS\ZVFS.h" />
     <ClInclude Include="Engine\znmsp.h" />
+    <ClInclude Include="ProjectJavos\ChartInfo.h" />
+    <ClInclude Include="ProjectJavos\ChartLoader.h" />
+    <ClInclude Include="ProjectJavos\Components.h" />
+    <ClInclude Include="ProjectJavos\Conductor.h" />
+    <ClInclude Include="ProjectJavos\JavosApp.h" />
+    <ClInclude Include="ProjectJavos\SparrowReader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Asset\ShaderPermutationFile.cpp" />
@@ -384,10 +390,12 @@
     <ClCompile Include="Engine\Scene\Post\Passes\TonemapPass.cpp" />
     <ClCompile Include="Engine\Scene\Post\PostProcessingPass.cpp" />
     <ClCompile Include="Engine\Scene\Post\PostProcessingStack.cpp" />
+    <ClCompile Include="Engine\Scene\Renderer2D.cpp" />
     <ClCompile Include="Engine\Scene\Renderer3D.cpp" />
     <ClCompile Include="Engine\Scene\RendererCommon.cpp" />
     <ClCompile Include="Engine\Scene\Scene.cpp" />
     <ClCompile Include="Engine\Scene\SceneResources.cpp" />
+    <ClCompile Include="Engine\Scene\SpriteBatch.cpp" />
     <ClCompile Include="Engine\Sound\adpcm-lib\adpcm.cpp" />
     <ClCompile Include="Engine\Sound\adpcm-lib\wave.cpp" />
     <ClCompile Include="Engine\Sound\AudioEngine.cpp" />
@@ -432,7 +440,11 @@
     <ClCompile Include="Engine\VFS\zlib\ozlibstream.cpp" />
     <ClCompile Include="Engine\VFS\ZVFS.cpp" />
     <ClCompile Include="Engine\Win32Libs.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="ProjectJavos\ChartLoader.cpp" />
+    <ClCompile Include="ProjectJavos\Conductor.cpp" />
+    <ClCompile Include="ProjectJavos\JavosApp.cpp" />
+    <ClCompile Include="ProjectJavos\main.cpp" />
+    <ClCompile Include="ProjectJavos\SparrowReader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Engine\Renderer\DX12\directx\d3d12.idl" />

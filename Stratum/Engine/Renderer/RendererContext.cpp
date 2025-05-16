@@ -248,6 +248,19 @@ void RendererContext::RegisterBackBufferPipeline(GraphicsPipeline* pField)
     swapChainPipelines.push_back(pField);
 }
 
+void RendererContext::RemoveBackBufferPipeline(GraphicsPipeline* pField)
+{
+    int32_t index = -1;
+    for (int i = 0; i < swapChainPipelines.size(); i++)
+    {
+        if (swapChainPipelines[i] == pField)
+            index = i;
+    }
+
+    if (index != -1)
+        swapChainPipelines.erase(swapChainPipelines.begin() + index);
+}
+
 void DebugCallbackLogger::message(nvrhi::MessageSeverity severity, const char* messageText)
 {
     Z_WARN(messageText);

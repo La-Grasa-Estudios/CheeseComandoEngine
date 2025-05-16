@@ -19,6 +19,9 @@ namespace ECS
 
 		edict_t CreateEntity();
 		void DestroyEntity(edict_t entity);
+
+		void DestroyAll();
+
 		bool IsValid(edict_t entity);
 
 		void RegisterRemoval(const EntityRemovalEvent& func);

@@ -43,6 +43,7 @@ public:
 
 	virtual void Seek(uint32_t samplePosition);
 	virtual uint32_t Position();
+	virtual float PositionF() { return 0.0f; }
 
 	virtual void UpdateSource() {}
 	virtual void AttachToNode(ma_node* pNode, uint32_t index, uint32_t inputIndex);

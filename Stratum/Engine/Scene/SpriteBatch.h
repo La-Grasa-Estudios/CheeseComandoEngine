@@ -25,10 +25,10 @@ public:
 	void DrawSprite(const glm::mat4& transform, SpriteRendererComponent::SpriteRect& rect, glm::vec2 center, DescriptorHandle texture);
 	void End(Render::GraphicsCommandBuffer* pCmdBuffer);
 
-	struct alignas(16) SpriteRenderable
+	struct SpriteRenderable
 	{
 		glm::mat4 transform;
-		glm::vec4 uvs;
+		glm::vec4 uvs[2];
 		DescriptorHandle texture;
 	};
 

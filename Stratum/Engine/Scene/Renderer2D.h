@@ -13,6 +13,7 @@ namespace Render
 	class Framebuffer;
 	class GraphicsPipeline;
 	class ConstantBuffer;
+	class TextureSampler;
 }
 
 class SpriteBatch;
@@ -64,6 +65,8 @@ private:
 
 	Ref<Render::GraphicsCommandBuffer> mCmdBuffer;
 	Ref<Render::ConstantBuffer> mPerFrameData;
+
+	Ref<Render::TextureSampler> mBilinearSampler;
 	
 	RenderQueue2D mRenderQueues[8];
 

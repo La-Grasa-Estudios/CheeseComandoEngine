@@ -6,6 +6,8 @@
 #include "Renderer/BindlessDescriptorTable.h"
 
 #include "Asset/TextureLoader.h"
+#include <Core/Timer.h>
+#include <Core/Logger.h>
 
 using namespace ENGINE_NAMESPACE;
 
@@ -220,6 +222,25 @@ DescriptorHandle SceneResources::LoadTextureImage(const std::string& path)
 	}
 
 	auto texture = Render::TextureLoader::LoadFileToImage(path, NULL);
+
+#ifdef _DEBUG
+	Timer timer;
+	bool DidWait = false;
+#endif
+	while (!texture->IsResourceReady())
+	{
+		std::this_thread::yield();
+#ifdef _DEBUG
+		DidWait = true;
+#endif
+	}
+
+#ifdef _DEBUG
+	if (DidWait)
+	{
+		Z_WARN("CPU Thread stalled for {}ms waiting for resource to be in a ready state! Resource Pointer: {}", timer.GetMillis(), (void*)texture.get());
+	}
+#endif
 
 	if (texture)
 	{

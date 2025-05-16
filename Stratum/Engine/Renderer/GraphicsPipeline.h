@@ -139,6 +139,7 @@ namespace Render {
 		/// </summary>
 		/// <param name="rt">The framebuffer object</param>
 		void SetRenderTarget(Ref<Framebuffer> rt);
+		void SetRenderTarget(Framebuffer* rt);
 
 		/// <summary>
 		/// Used to update the static binding of a pipeline.

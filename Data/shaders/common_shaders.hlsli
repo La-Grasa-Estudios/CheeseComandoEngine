@@ -3,6 +3,8 @@ static const uint LIGHT_SPOT = 0;
 static const uint LIGHT_POINT = 1;
 static const uint LIGHT_DIRECTIONAL = 2;
 static const uint LIGHT_AREA = 3;
+
+static const uint TEXTURES_BIND_SPACE = 2;
 #else
 typedef uint32_t uint;
 #endif

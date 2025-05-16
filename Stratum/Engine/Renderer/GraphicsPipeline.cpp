@@ -397,7 +397,8 @@ Render::GraphicsPipeline::GraphicsPipeline(PipelineDescription desc)
 
 Render::GraphicsPipeline::~GraphicsPipeline()
 {
-    
+    if (ShaderDesc.RenderTarget && ShaderDesc.RenderTarget->IsWindowFramebuffer())
+        RendererContext::s_Context->RemoveBackBufferPipeline(this);
 }
 
 void Render::GraphicsPipeline::UpdatePipeline()
@@ -574,6 +575,15 @@ void Render::GraphicsPipeline::UpdatePipeline()
     renderState.depthStencilState.frontFaceStencil.passOp = (nvrhi::StencilOp)desc.StencilState.FrontFace.StencilPassOp;
 
     renderState.blendState.alphaToCoverageEnable = false;
+    for (int i = 0; i < 8; i++)
+    {
+        renderState.blendState.targets[i].blendEnable = desc.BlendState.BlendStates[i].EnableBlend;
+        renderState.blendState.targets[i].srcBlend = (nvrhi::BlendFactor)desc.BlendState.BlendStates[i].SrcBlend;
+        renderState.blendState.targets[i].destBlend = (nvrhi::BlendFactor)desc.BlendState.BlendStates[i].DestBlend;
+        renderState.blendState.targets[i].blendOp = (nvrhi::BlendOp)desc.BlendState.BlendStates[i].BlendOperator;
+        renderState.blendState.targets[i].srcBlendAlpha = (nvrhi::BlendFactor)desc.BlendState.BlendStates[i].SrcBlendAlpha;
+        renderState.blendState.targets[i].destBlendAlpha = (nvrhi::BlendFactor)desc.BlendState.BlendStates[i].DestBlendAlpha;
+    }
 
     auto pipelineDesc = nvrhi::GraphicsPipelineDesc()
         .setInputLayout(inputLayout)
@@ -605,7 +615,12 @@ void Render::GraphicsPipeline::UpdatePipeline()
 
 void Render::GraphicsPipeline::SetRenderTarget(Ref<Framebuffer> rt)
 {
-    ShaderDesc.RenderTarget = rt.get();
+    SetRenderTarget(rt.get());
+}
+
+void Render::GraphicsPipeline::SetRenderTarget(Framebuffer* rt)
+{
+    ShaderDesc.RenderTarget = rt;
     PipelineHandle = nullptr;
 }
 

@@ -92,6 +92,8 @@ private:
 
 	ViewPose mViewPose;
 
+	nvrhi::BindingLayoutHandle mBindlessLayout = NULL;
+
 };
 
 END_ENGINE

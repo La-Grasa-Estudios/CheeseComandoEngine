@@ -1,4 +1,5 @@
 #include "Renderer3D.h"
+#include "Renderer2D.h"
 
 #include "Core/JobManager.h"
 
@@ -6,7 +7,6 @@
 #include "Renderer/Frustum.h"
 
 #include "Scene/Scene.h"
-
 
 using namespace ENGINE_NAMESPACE;
 
@@ -37,11 +37,23 @@ Renderer3D::Renderer3D()
 	mCommandBuffer = {};
 
 	InitializePipelines();
+
+	mRenderPath2D = CreateRef<Renderer2D>();
 }
 
 void Renderer3D::SetScene(Scene* scene)
 {
-	scene->InitBindlessTable(mDynamicOpaquePipeline->BindingLayout);
+
+	auto desc = nvrhi::BindlessLayoutDesc()
+		.addRegisterSpace(nvrhi::BindingLayoutItem::RawBuffer_SRV(1))
+		.addRegisterSpace(nvrhi::BindingLayoutItem::Texture_SRV(2))
+		.setFirstSlot(0)
+		.setVisibility(nvrhi::ShaderType::All);
+
+	if (!mBindlessLayout)
+		mBindlessLayout = Render::RendererContext::GetDevice()->createBindlessLayout(desc);
+
+	scene->InitBindlessTable(mBindlessLayout);
 }
 
 void Renderer3D::SetViewPose(const ViewPose& pose)
@@ -71,12 +83,15 @@ void Renderer3D::PreRender(Scene* scene)
 
 	}
 
+	mRenderPath2D->PreRender(scene);
+
 }
 
 void Renderer3D::Render(Scene* scene, Render::Framebuffer* pOutput)
 {
 	using namespace Render;
 
+	mRenderPath2D->Render(scene, pOutput);
 	ResizeRenderBuffers(pOutput->GetSize());
 
 	Render::Viewport viewport{};
@@ -124,6 +139,8 @@ void Renderer3D::Render(Scene* scene, Render::Framebuffer* pOutput)
 
 	mCommandBuffer.End();
 	mCommandBuffer.Submit();
+
+	mRenderPath2D->Submit();
 }
 
 void Renderer3D::InitializePipelines()

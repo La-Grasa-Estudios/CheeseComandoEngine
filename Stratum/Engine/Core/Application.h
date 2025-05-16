@@ -37,12 +37,13 @@ struct ApplicationInfo {
 
 };
 
+class Scene;
+
 /// <summary>
 /// Base App Class
 /// Override the
-/// OnInit(), OnFrameUpdate() and OnFrameRender() methods
+/// OnEarlyInit(), OnInit(), OnFrameUpdate() and OnFrameRender() methods
 /// </summary> 
-
 class Application {
 
 public:
@@ -59,6 +60,12 @@ public:
 
 	void InternalUpdate();
 
+	/// <summary>
+	/// Sets the current scene and takes ownership of the scene object
+	/// </summary>
+	/// <param name="scene"></param>
+	void SetScene(Scene* scene);
+
 	virtual void OnEarlyInit();
 	virtual void OnInit();
 	virtual void OnFrameUpdate();
@@ -69,6 +76,7 @@ public:
 
 	virtual void On2DRender();
 	virtual void OnFrameRenderImGui();
+	virtual void Cleanup();
 
 protected:
 
@@ -80,6 +88,8 @@ protected:
 	Ref<AudioEngine> m_AudioEngine;
 
 	Console m_Console{};
+
+	Scene* mCurrentScene = nullptr;
 
 private:
 
