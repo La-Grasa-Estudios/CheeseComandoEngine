@@ -26,6 +26,21 @@ namespace Internal {
 		WINDOW_IMGUI,
 	};
 
+	class Window;
+
+	class VideoDisplayMode
+	{
+		friend Window;
+
+	public:
+
+		uint32_t PixelFormat;
+		uint32_t Width;
+		uint32_t Height;
+		uint32_t RefreshRate;
+
+	};
+
 	class Window
 	{
 
@@ -57,8 +72,11 @@ namespace Internal {
 		void SetName(const char* name);
 		void SetIcon(int count, WindowIcon* icons);
 		void SetVSync(bool vsync);
+		void SetFullScreen(bool fs, VideoDisplayMode* dp = NULL);
 
 		void SetInfo(WindowEnum param, bool val);
+
+		std::vector<VideoDisplayMode> GetDisplayModes();
 
 	private:
 
@@ -70,6 +88,7 @@ namespace Internal {
 		bool m_IsWindowFocused = false;
 		bool m_IsImGuiEnabled = false;
 		bool m_ShouldClose = false;
+		bool m_IsWindowFullScreen = false;
 		SDL_Window* m_Window;
 		SDL_Surface* m_Surface;
 		Render::RendererContext* m_Context;

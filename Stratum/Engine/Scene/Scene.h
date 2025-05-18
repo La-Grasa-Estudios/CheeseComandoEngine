@@ -7,6 +7,23 @@
 
 BEGIN_ENGINE
 
+class Scene;
+
+/// <summary>
+/// Represents a system that needs updating every frame
+/// Override the following methods to interact with the scene
+/// void Update()
+/// void PostUpdate()
+/// void Init()
+/// </summary>
+class ISceneSystem
+{
+public:
+	virtual void Init(Scene* scene) = 0;
+	virtual void Update(Scene* scene) = 0;
+	virtual void PostUpdate(Scene* scene) = 0;
+};
+
 class Scene
 {
 
@@ -33,7 +50,8 @@ public:
 	Ref<Render::BindlessDescriptorTable> BindlessTable;
 
 	void RegisterCustomComponent(ECS::ComponentManager_Interface* pInterface, const std::string& name);
-	
+	void RegisterCustomSystem(ISceneSystem* pSystem);
+
 	template<typename T>
 	ECS::ComponentManager<T>* GetComponentManager(const std::string& name)
 	{
@@ -48,6 +66,7 @@ private:
 	void UpdateAnimators();
 
 	std::unordered_map<std::string, ECS::ComponentManager_Interface*> mCustomComponents;
+	std::vector<ISceneSystem*> mSystems;
 
 };
 

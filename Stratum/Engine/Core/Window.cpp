@@ -56,6 +56,7 @@ void Window::Create(int width, int height)
 	}
 	if (this->FullScreen) {
 		flags |= SDL_WINDOW_FULLSCREEN;
+		m_IsWindowFullScreen = true;
 	}
 
 	m_Window = SDL_CreateWindow(this->m_Name, width, height, flags);
@@ -65,37 +66,12 @@ void Window::Create(int width, int height)
 		return;
 	}
 
-	//glfwSetWindowSizeCallback(m_Window, window_size_callback);
-	//glfwSetKeyCallback(m_Window, key_callback);
-	//glfwSetMouseButtonCallback(m_Window, mouse_callback);
-
 	m_Context->initialize(this);
 
 	Render::FramebufferDesc framebufferDesc;
 	framebufferDesc.IsWindowSurfaceFb = true;
 
 	m_Framebuffer = CreateRef<Render::Framebuffer>(framebufferDesc);
-	
-	/*
-	IMGUI_CHECKVERSION();
-
-	ImGui::CreateContext();
-	ImGui::StyleColorsDark();
-
-	ImGuiIO& io = ImGui::GetIO();
-
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-
-	m_Context->ImGuiInit(this);
-
-	while (1)
-	{
-		Clear();
-
-		Update();
-	}
-	*/
 
 }
 
@@ -237,6 +213,29 @@ void Internal::Window::SetVSync(bool vsync)
 	m_Context->set_vsync(vsync);
 }
 
+void Internal::Window::SetFullScreen(bool fs, VideoDisplayMode* dp)
+{
+	if (m_IsWindowFullScreen != fs)
+	{
+		m_IsWindowFullScreen = fs;
+
+		if (dp)
+		{
+			auto displayId = SDL_GetDisplayForWindow(m_Window);
+
+			auto mode = SDL_GetClosestFullscreenDisplayMode(displayId, dp->Width, dp->Height, dp->RefreshRate, SDL_FALSE);;
+						
+			SDL_SetWindowFullscreenMode(m_Window, mode);
+		}
+		else
+		{
+			SDL_SetWindowFullscreenMode(m_Window, NULL);
+		}
+
+		SDL_SetWindowFullscreen(m_Window, (SDL_bool)m_IsWindowFullScreen);
+	}
+}
+
 void Internal::Window::SetInfo(WindowEnum param, bool val)
 {
 	switch (param)
@@ -255,4 +254,22 @@ void Internal::Window::SetInfo(WindowEnum param, bool val)
 	default:
 		break;
 	}
+}
+
+std::vector<VideoDisplayMode> Internal::Window::GetDisplayModes()
+{
+	auto displayId = SDL_GetDisplayForWindow(m_Window);
+
+	int count;
+	auto modes = SDL_GetFullscreenDisplayModes(displayId, &count);
+
+	std::vector<VideoDisplayMode> modesArray;
+
+	for (int i = 0; i < count; i++)
+	{
+		VideoDisplayMode mode{ modes[i]->format, modes[i]->w, modes[i]->h, modes[i]->refresh_rate };
+		modesArray.push_back(mode);
+	}
+
+	return modesArray;
 }

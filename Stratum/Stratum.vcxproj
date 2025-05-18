@@ -329,6 +329,7 @@
     <ClInclude Include="ProjectJavos\Components.h" />
     <ClInclude Include="ProjectJavos\Conductor.h" />
     <ClInclude Include="ProjectJavos\JavosApp.h" />
+    <ClInclude Include="ProjectJavos\Player.h" />
     <ClInclude Include="ProjectJavos\SparrowReader.h" />
   </ItemGroup>
   <ItemGroup>
@@ -444,6 +445,7 @@
     <ClCompile Include="ProjectJavos\Conductor.cpp" />
     <ClCompile Include="ProjectJavos\JavosApp.cpp" />
     <ClCompile Include="ProjectJavos\main.cpp" />
+    <ClCompile Include="ProjectJavos\Player.cpp" />
     <ClCompile Include="ProjectJavos\SparrowReader.cpp" />
   </ItemGroup>
   <ItemGroup>

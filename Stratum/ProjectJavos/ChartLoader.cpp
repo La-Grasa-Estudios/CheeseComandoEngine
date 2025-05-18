@@ -41,7 +41,7 @@ Javos::Chart Javos::ChartLoader::LoadChart(const std::string& path)
 				ChartNote note;
 				note.time = notes[0] / 1000.0f;
 				note.noteType = notes[1];
-				note.holdTime = notes[2];
+				note.holdTime = notes[2] / 1000.0f;
 				note.mustHitSection = sec.mustHitSection;
 				sec.notes.push_back(note);
 

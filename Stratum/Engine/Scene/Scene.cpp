@@ -31,6 +31,10 @@ Scene::~Scene()
 	{
 		delete p.second;
 	}
+	for (auto p : mSystems)
+	{
+		delete p;
+	}
 }
 
 void Scene::InitBindlessTable(nvrhi::IBindingLayout* bindingLayout)
@@ -43,11 +47,19 @@ void Scene::UpdateSystems()
 {
 	UpdateTransforms();
 	UpdateAnimators();
+	for (int i = 0; i < mSystems.size(); i++)
+	{
+		mSystems[i]->Update(this);
+	}
 }
 
 void Scene::PostUpdate()
 {
 	UpdateTransforms();
+	for (int i = 0; i < mSystems.size(); i++)
+	{
+		mSystems[i]->PostUpdate(this);
+	}
 }
 
 void Scene::LoadModel(const std::string& path, const ECS::edict_t edict)
@@ -216,6 +228,12 @@ void Scene::RegisterCustomComponent(ECS::ComponentManager_Interface* pInterface,
 {
 	pInterface->Init(&EntityManager);
 	mCustomComponents[name] = pInterface;
+}
+
+void Scene::RegisterCustomSystem(ISceneSystem* pSystem)
+{
+	pSystem->Init(this);
+	mSystems.push_back(pSystem);
 }
 
 void Scene::UpdateTransforms()
