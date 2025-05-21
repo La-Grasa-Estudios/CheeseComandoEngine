@@ -1,6 +1,5 @@
 *.obj
 *.cso
-*.spv
 *.pdb
 /.vs
 /x64
