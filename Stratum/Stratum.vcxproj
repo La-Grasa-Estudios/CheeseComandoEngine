@@ -70,6 +70,12 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\Bin\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\Bin\</OutDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -328,6 +334,7 @@
     <ClInclude Include="ProjectJavos\ChartLoader.h" />
     <ClInclude Include="ProjectJavos\Components.h" />
     <ClInclude Include="ProjectJavos\Conductor.h" />
+    <ClInclude Include="ProjectJavos\GameState.h" />
     <ClInclude Include="ProjectJavos\JavosApp.h" />
     <ClInclude Include="ProjectJavos\Player.h" />
     <ClInclude Include="ProjectJavos\SparrowReader.h" />
@@ -441,6 +448,7 @@
     <ClCompile Include="Engine\VFS\zlib\ozlibstream.cpp" />
     <ClCompile Include="Engine\VFS\ZVFS.cpp" />
     <ClCompile Include="Engine\Win32Libs.cpp" />
+    <ClCompile Include="ProjectJavos\ChartInfo.cpp" />
     <ClCompile Include="ProjectJavos\ChartLoader.cpp" />
     <ClCompile Include="ProjectJavos\Conductor.cpp" />
     <ClCompile Include="ProjectJavos\JavosApp.cpp" />

@@ -29,10 +29,22 @@ namespace Javos
 		float speed = 1.0f;
 		std::string song;
 	};
+	struct ChartEvent
+	{
+		float EventTime;
+		std::string EventName;
+		std::string Arg1;
+		std::string Arg2;
+		bool Triggered = false;
 
+		float castFloat(std::string token);
+		int32_t castInteger(std::string token);
+		bool castBoolean(std::string token);
+	};
 	struct Chart
 	{
 		ChartInfo info;
+		std::vector<ChartEvent> events;
 		std::vector<ChartSection> sections;
 	};
 }

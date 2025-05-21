@@ -1,0 +1,10 @@
+{
+  "root": true,
+  "hlsl.preprocessorDefinitions": {
+    "STAGE_VERTEX": "",
+    "STAGE_PIXEL": ""
+  },
+  "hlsl.additionalIncludeDirectories": [
+    ".\\Include"
+  ]
+}

@@ -17,6 +17,8 @@ BEGIN_ENGINE
 /// Recommended to memset this with 0 bytes
 /// </summary>
 
+class Renderer3D;
+class Renderer2D;
 
 struct ApplicationInfo {
 
@@ -86,6 +88,7 @@ protected:
 	Ref<Render::RendererContext> m_RenderContext;
 
 	Ref<AudioEngine> m_AudioEngine;
+	Ref<Renderer3D> m_RenderPath3D;
 
 	Console m_Console{};
 

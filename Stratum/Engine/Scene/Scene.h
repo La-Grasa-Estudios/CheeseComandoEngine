@@ -43,6 +43,7 @@ public:
 	ECS::ComponentManager<MeshRendererComponent> Renderers;
 	ECS::ComponentManager<SpriteRendererComponent> SpriteRenderers;
 	ECS::ComponentManager<SpriteAnimator> SpriteAnimators;
+	ECS::ComponentManager<GuiAnchorComponent> GuiAnchors;
 
 	void LoadModel(const std::string& path, const ECS::edict_t edict);
 
@@ -60,10 +61,13 @@ public:
 		return reinterpret_cast<ECS::ComponentManager<T>*>(mCustomComponents[name]);
 	}
 
+	glm::vec2 VirtualScreenSize = {};
+
 private:
 
 	void UpdateTransforms();
 	void UpdateAnimators();
+	void UpdateGuiAnchors();
 
 	std::unordered_map<std::string, ECS::ComponentManager_Interface*> mCustomComponents;
 	std::vector<ISceneSystem*> mSystems;

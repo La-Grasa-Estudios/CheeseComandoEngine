@@ -22,13 +22,14 @@ public:
 	SpriteBatch(SceneResources* pResources);
 
 	void Begin();
-	void DrawSprite(const glm::mat4& transform, SpriteRendererComponent::SpriteRect& rect, glm::vec2 center, DescriptorHandle texture);
+	void DrawSprite(const glm::mat4& transform, SpriteRendererComponent::SpriteRect& rect, glm::vec2 center, const glm::vec4& color, DescriptorHandle texture);
 	void End(Render::GraphicsCommandBuffer* pCmdBuffer);
 
 	struct SpriteRenderable
 	{
 		glm::mat4 transform;
 		glm::vec4 uvs[2];
+		glm::vec4 Color;
 		DescriptorHandle texture;
 	};
 

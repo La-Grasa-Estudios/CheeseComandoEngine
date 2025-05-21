@@ -5,6 +5,7 @@ using namespace ENGINE_NAMESPACE;
 ECS::EntityManager::EntityManager()
 {
 	memset(mValidEntities.data(), 0, sizeof(mValidEntities));
+	MaxEntities = C_MAX_ENTITIES;
 }
 
 ECS::edict_t ECS::EntityManager::CreateEntity()
@@ -22,6 +23,7 @@ ECS::edict_t ECS::EntityManager::CreateEntity()
 	if (slot != -1)
 	{
 		mValidEntities[slot] = true;
+		LiveEntities += 1;
 		return slot + 1;
 	}
 	return 0;
@@ -35,6 +37,7 @@ void ECS::EntityManager::DestroyEntity(edict_t entity)
 	{
 		mRemovals[i](entity);
 	}
+	LiveEntities -= 1;
 	mValidEntities[entity - 1] = false;
 	mSearchStart = std::min(mSearchStart, entity - 1);
 }

@@ -4,5 +4,7 @@
 *.pdb
 /.vs
 /x64
+/x64/Debug
+/StratumUpdater
 Stratum/x64
 LearningSDL/x64

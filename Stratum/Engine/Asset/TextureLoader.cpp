@@ -248,7 +248,7 @@ ImageDescription CreateFromBC7Data(TextureCreationBC7 bc7, const ITextureDescrip
 	imageDesc.Height = height;
 	imageDesc.MipLevels = 1;
 	imageDesc.ArraySize = 1;
-	imageDesc.Format = ImageFormat::BC7_UNORM;
+	imageDesc.Format = bc7Encoded ? ImageFormat::BC7_UNORM : ImageFormat::RGBA8_UNORM;
 
 	imageDesc.DefaultData = { ImageResourceData(buffer, width * 4) };
 

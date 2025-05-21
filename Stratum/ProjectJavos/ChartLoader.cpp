@@ -50,6 +50,25 @@ Javos::Chart Javos::ChartLoader::LoadChart(const std::string& path)
 			chart.sections.push_back(sec);
 		}
 
+		if (song.contains("events"))
+		{
+			auto events = song["events"];
+
+			for (auto event : events)
+			{
+				float time = event[0] / 1000.0f;
+				for (auto actualRealEvent : event[1])
+				{
+					ChartEvent event{};
+					event.EventTime = time;
+					event.EventName = actualRealEvent[0];
+					event.Arg1 = actualRealEvent[1];
+					event.Arg2 = actualRealEvent[2];
+					chart.events.push_back(event);
+				}
+			}
+		}
+
 	}
 	catch (const std::exception& e)
 	{

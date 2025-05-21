@@ -190,7 +190,7 @@ uint32_t MP3AudioSource::Position()
 
 float MP3AudioSource::PositionF()
 {
-    return ((int)m_Position - (int)m_Mp3DecCtx.info.hz / 4) / (float)m_Mp3DecCtx.info.hz;
+    return max(((int)m_Position - (int)m_Mp3DecCtx.info.hz / 4) / (float)m_Mp3DecCtx.info.hz, 0.0f);
 }
 
 void MP3AudioSource::Commit(void* ptr, size_t size, size_t frameDivider, size_t nbChannels, size_t sampleRate)

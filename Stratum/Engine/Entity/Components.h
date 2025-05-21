@@ -81,7 +81,11 @@ struct SpriteRendererComponent
 	glm::vec2 Center = glm::vec2(0.0f);
 	glm::vec2 Rotation = glm::vec2(0.0f);
 
+	glm::vec4 SpriteColor = glm::vec4(1.0f);
+
 	int32_t TextureHandle = -1;
+	bool Enabled = true;
+	bool IsGui = false; // Makes the sprite render to a second view
 
 };
 
@@ -164,13 +168,32 @@ struct SpriteAnimator
 		if (CurrentAnimation.empty())
 			return {};
 
-		if (auto a = AnimationMap.find(CurrentAnimation); a != AnimationMap.end())
+		if (auto a = AnimationMap.find(CurrentAnimation); AnimationMap.contains(CurrentAnimation))
 		{
 			return a->second.rects[a->second.FrameIndex];
 		} 
 
 		return {};
 	}
+};
+
+enum class GuiAnchorPoint
+{
+	CENTER,
+	TOP,
+	DOWN,
+	LEFT,
+	RIGHT,
+	TOP_LEFT,
+	TOP_RIGHT,
+	DOWN_LEFT,
+	DOWN_RIGHT,
+};
+
+struct GuiAnchorComponent
+{
+	glm::vec2 Position = {};
+	GuiAnchorPoint AnchorPoint = GuiAnchorPoint::CENTER;
 };
 
 END_ENGINE

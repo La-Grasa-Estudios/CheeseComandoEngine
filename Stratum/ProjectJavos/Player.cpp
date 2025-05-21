@@ -6,9 +6,10 @@
 #include <Util/Globals.h>
 #include <Event/EventHandler.h>
 
-Javos::PlayerSystem::PlayerSystem(Conductor* conductor)
+Javos::PlayerSystem::PlayerSystem(Conductor* conductor, GameState* gameState)
 {
 	mConductor = conductor;
+	mGameState = gameState;
 	mScene = nullptr;
 }
 
@@ -17,7 +18,7 @@ void Javos::PlayerSystem::Init(Stratum::Scene* scene)
 	mScene = scene;
 	scene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<PlayerComponent>(), "player_component");
 
-	Stratum::EventHandler::RegisterListener([this](void* sender, void** args, uint32_t argc) 
+	auto animationListener = [this](void* sender, void** args, uint32_t argc)
 		{
 			auto playerManager = mScene->GetComponentManager<PlayerComponent>("player_component");
 			auto& entities = playerManager->GetEntities();
@@ -26,6 +27,7 @@ void Javos::PlayerSystem::Init(Stratum::Scene* scene)
 			for (auto edict : entities)
 			{
 				auto& animator = mScene->SpriteAnimators.Get(edict);
+
 				const char* animations[4] =
 				{
 					"left",
@@ -37,11 +39,15 @@ void Javos::PlayerSystem::Init(Stratum::Scene* scene)
 				animator.SetState(animations[noteType]);
 			}
 
-		}, Stratum::EventHandler::GetEventID("hit_note"), true);
+		};
+
+	Stratum::EventHandler::RegisterListener(animationListener, Stratum::EventHandler::GetEventID("hit_note"), true);
+	Stratum::EventHandler::RegisterListener(animationListener, Stratum::EventHandler::GetEventID("sustain_note"), true);
 }
 
 void Javos::PlayerSystem::Update(Stratum::Scene* scene)
 {
+
 	auto playerManager = scene->GetComponentManager<PlayerComponent>("player_component");
 	auto& entities = playerManager->GetEntities();
 
@@ -49,25 +55,8 @@ void Javos::PlayerSystem::Update(Stratum::Scene* scene)
 	{
 		auto& playerEntity = playerManager->Get(edict);
 
-		uint32_t doBopEveryNBeat = 4;
-
 		auto& transform = mScene->Transforms.Get(edict);
 		auto& sprite = mScene->SpriteRenderers.Get(edict);
-
-		if (mConductor->BeatCount >= 325 && mConductor->BeatCount < 392)
-		{
-			doBopEveryNBeat = 2;
-		}
-
-		if (mConductor->BeatCount >= 654 && mConductor->BeatCount < 682)
-		{
-			doBopEveryNBeat = 99999999;
-		}
-
-		if (mConductor->BeatCount >= 682 && mConductor->BeatCount < 810)
-		{
-			doBopEveryNBeat = 2;
-		}
 
 		if (mConductor->BeatCount >= 339 && mConductor->BeatCountF < 340.2f)
 		{
@@ -86,7 +75,7 @@ void Javos::PlayerSystem::Update(Stratum::Scene* scene)
 
 		if (mConductor->BeatCount == 959 - 4)
 		{
-			transform.SetScale(glm::vec3(0.25f));
+			transform.SetScale(glm::vec3(1.0f));
 		}
 
 		if (mConductor->BeatCountF >= 963.9f - 4 && mConductor->BeatCountF < 964.5f - 4)
@@ -98,7 +87,7 @@ void Javos::PlayerSystem::Update(Stratum::Scene* scene)
 
 		if (mConductor->BeatCount == 966 - 4)
 		{
-			transform.SetScale(glm::vec3(0.25f));
+			transform.SetScale(glm::vec3(1.0f));
 		}
 
 		if (mConductor->BeatCountF >= 967.47f - 4)
@@ -115,12 +104,12 @@ void Javos::PlayerSystem::Update(Stratum::Scene* scene)
 
 		if (glm::abs(mConductor->BeatCountF - 340.5f) <= 0.2f)
 		{
-			transform.SetScale(glm::vec3(0.25f));
+			transform.SetScale(glm::vec3(1.0f));
 		}
 
 		if (mConductor->BeatCountF <= 2.0f)
 		{
-			transform.SetScale(glm::vec3(0.25f));
+			transform.SetScale(glm::vec3(1.0f));
 		}
 
 		if (mConductor->BeatCount == 355)
@@ -131,12 +120,12 @@ void Javos::PlayerSystem::Update(Stratum::Scene* scene)
 		if (mConductor->BeatCount == 356)
 		{
 			sprite.Center = glm::vec2(0.0f, 1.0f);
-			transform.SetScale(glm::vec3(0.25f));
+			transform.SetScale(glm::vec3(1.0f));
 		}
 
 		auto& animator = mScene->SpriteAnimators.Get(edict);
 
-		if (mConductor->BeatCount % doBopEveryNBeat == 0)
+		if ((mConductor->BeatCount + mGameState->BeatOffset) % mGameState->DoBeatEveryNthBeat == 0)
 		{
 			playerEntity.doBeat = true;
 		}
@@ -168,17 +157,17 @@ void Javos::PlayerSystem::Update(Stratum::Scene* scene)
 
 		if (animator.CurrentAnimation.compare("left") == 0)
 		{
-			transform.SetPosition(playerEntity.Position + glm::vec3(-7, 0.0f, 0.0f));
+			transform.SetPosition(playerEntity.Position + glm::vec3(-7*5, 0.0f, 0.0f));
 		}
 
 		if (animator.CurrentAnimation.compare("right") == 0)
 		{
-			transform.SetPosition(playerEntity.Position + glm::vec3(20, 0.0f, 0.0f));
+			transform.SetPosition(playerEntity.Position + glm::vec3(20*5, 0.0f, 0.0f));
 		}
 
 		if (animator.CurrentAnimation.compare("down") == 0)
 		{
-			transform.SetPosition(playerEntity.Position + glm::vec3(0.0f, -20.0f, 0.0f));
+			transform.SetPosition(playerEntity.Position + glm::vec3(0.0f, -20.0f*5, 0.0f));
 		}
 
 	}
@@ -201,14 +190,16 @@ Stratum::ECS::edict_t Javos::PlayerSystem::CreatePlayer()
 
 	player.bfEntity = sprite;
 
-	transform.SetScale(glm::vec3(0.25f));
+	transform.SetScale(glm::vec3(1.0f));
 
 	renderer.Rect.position = glm::vec2(0.0f);
 	renderer.Rect.size = glm::vec2(1024.0f);
 	renderer.Center = glm::vec2(0.0f, 1.0f);
 	renderer.RenderLayer = renderer.LAYER_BG2;
 
+#ifndef _DEBUG
 	renderer.TextureHandle = mScene->Resources.LoadTextureImage("textures/BOYFRIEND.DDS");
+#endif
 
 	Stratum::SpriteAnimator::Animation idleAnimation = Stratum::SpriteAnimator::Animation()
 		.SetFrameRate(15)

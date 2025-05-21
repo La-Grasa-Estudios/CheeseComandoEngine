@@ -26,6 +26,9 @@ namespace ECS
 
 		void RegisterRemoval(const EntityRemovalEvent& func);
 			
+		uint32_t LiveEntities = 0;
+		uint32_t MaxEntities = 0;
+
 	private:
 
 		std::vector<EntityRemovalEvent> mRemovals;

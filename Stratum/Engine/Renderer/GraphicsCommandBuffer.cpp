@@ -393,10 +393,7 @@ void Render::GraphicsCommandBuffer::UpdateConstantBuffer(ConstantBuffer* pBuffer
 		mTrackedResources.insert((uintptr_t)pBuffer->Handle.Get());
 		mCommandList->beginTrackingBufferState(pBuffer->Handle, nvrhi::ResourceStates::CopyDest);
 	}
-	else
-	{
-		mCommandList->setBufferState(pBuffer->Handle, nvrhi::ResourceStates::CopyDest);
-	}
+	mCommandList->setBufferState(pBuffer->Handle, nvrhi::ResourceStates::CopyDest);
 	mCommandList->writeBuffer(pBuffer->Handle, data, pBuffer->Size);
 	mCommandList->setBufferState(pBuffer->Handle, nvrhi::ResourceStates::ConstantBuffer);
 	mCommitedAnyConstantBuffer = true;

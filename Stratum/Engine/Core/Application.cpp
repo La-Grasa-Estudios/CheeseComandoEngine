@@ -8,6 +8,7 @@
 
 #include "Scene/Scene.h"
 #include "Scene/Renderer3D.h"
+#include "Scene/Renderer2D.h"
 
 #include "VFS/ZVFS.h"
 #include "Input/Input.h"
@@ -39,8 +40,6 @@ std::binary_semaphore g_WaitForUpdateFinish(0);
 std::atomic_bool g_FinishUpdateThread;
 
 Ref<Render::RendererContext> g_RenderContext;
-
-Renderer3D* g_RendererPath3D;
 
 Application::Application(ApplicationInfo& appInfo)
 {
@@ -278,7 +277,7 @@ void Application::Run(std::vector<std::string> args)
 
 	EventHandler::InvokeEvent(EventHandler::GetEventID("late_init"), this);
 
-	g_RendererPath3D = new Renderer3D();
+	m_RenderPath3D = CreateRef<Renderer3D>();
 
 	if (!m_Window->CloseRequested())
 	{
@@ -318,13 +317,10 @@ void Application::Run(std::vector<std::string> args)
 void Application::MainLoop()
 {
 
-
 	m_Window->SetVSync(m_AppInfo.VSyncEnabled);
 
 	bool LogStutters = false;
 	float LastFrameDelta = 0.0f;
-
-	//scene->LoadModel("binbows.mdl", scene->EntityManager.CreateEntity());
 
 	while (1) {
 
@@ -366,6 +362,7 @@ void Application::MainLoop()
 		if (mCurrentScene)
 		{
 			Z_PROFILE_SCOPE("Scene::Update");
+			mCurrentScene->VirtualScreenSize = m_RenderPath3D->RenderPath2D->VirtualScreenSize;
 			mCurrentScene->UpdateSystems();
 		}
 
@@ -387,12 +384,12 @@ void Application::MainLoop()
 		glm::mat4 projection = glm::perspective(glm::radians(70.0f), m_Window->GetWidth() / (float)m_Window->GetHeight(), 0.01f, 100.0f);
 		glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 3.0f, -5.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-		g_RendererPath3D->SetViewPose(ViewPose(projection, view));
+		m_RenderPath3D->SetViewPose(ViewPose(projection, view));
 
 		if (mCurrentScene)
 		{
-			g_RendererPath3D->PreRender(mCurrentScene);
-			g_RendererPath3D->Render(mCurrentScene, m_Window->GetFramebuffer().get());
+			m_RenderPath3D->PreRender(mCurrentScene);
+			m_RenderPath3D->Render(mCurrentScene, m_Window->GetFramebuffer().get());
 		}
 
 		if (m_AppInfo.IsImGuiEnabled)
@@ -442,6 +439,8 @@ void Application::MainLoop()
 
 	Cleanup();
 	SetScene(NULL);
+
+	m_RenderPath3D = NULL;
 }
 
 void Application::RenderStartupMedia()
@@ -627,7 +626,7 @@ void Application::SetScene(Scene* scene)
 
 	if (scene)
 	{
-		g_RendererPath3D->SetScene(scene);
+		m_RenderPath3D->SetScene(scene);
 	}
 }
 

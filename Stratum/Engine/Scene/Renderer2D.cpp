@@ -15,6 +15,9 @@ Renderer2D::Renderer2D()
 	mPerFrameData = CreateRef<Render::ConstantBuffer>(sizeof(PerFrameData));
 	mCmdBuffer = CreateRef<Render::GraphicsCommandBuffer>();
 
+	mMainCamera = {};
+	mGuiCamera = {};
+
 	Render::PipelineDescription pipelineDesc{};
 
 	pipelineDesc.ShaderPath = "shaders/2d/2d_sprite.cso";
@@ -50,7 +53,12 @@ void Renderer2D::PreRender(Scene* scene)
 	auto& entities = scene->SpriteRenderers.GetEntities();
 
 	for (int i = 0; i < 8; i++)
+	{
 		mRenderQueues[i].Clear();
+		mAlphaRenderQueues[i].Clear();
+		mGuiRenderQueues[i].Clear();
+		mAlphaGuiRenderQueues[i].Clear();
+	}
 
 	for (auto entity : entities)
 	{
@@ -60,6 +68,8 @@ void Renderer2D::PreRender(Scene* scene)
 
 		auto& transform = scene->Transforms.Get(entity);
 		auto& renderer = scene->SpriteRenderers.Get(entity);
+
+		if (!renderer.Enabled) continue;
 
 		RenderQueue2D::RenderInstance instance{};
 
@@ -75,8 +85,26 @@ void Renderer2D::PreRender(Scene* scene)
 		}
 
 		instance.transform = glm::rotate(instance.transform, glm::radians(renderer.Rotation.x), glm::vec3(0.0f, 0.0f, 1.0f));
+		instance.color = renderer.SpriteColor;
 
-		mRenderQueues[renderer.RenderLayer].Push(instance);
+		if (!renderer.IsGui)
+		{
+			if (instance.color.a < 0.99f)
+			{
+				mAlphaRenderQueues[renderer.RenderLayer].Push(instance);
+			}
+			else
+			{
+				mRenderQueues[renderer.RenderLayer].Push(instance);
+			}
+		}
+		else
+		{
+			if (instance.color.a < 0.99f)
+				mAlphaGuiRenderQueues[renderer.RenderLayer].Push(instance);
+			else
+				mGuiRenderQueues[renderer.RenderLayer].Push(instance);
+		}
 	}
 
 }
@@ -85,27 +113,25 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 {
 	Z_PROFILE_SCOPE("Renderer2D::Render");
 
-	mSpriteBatch->Begin();
 
 	if (mMainPipeline->ShaderDesc.RenderTarget != pOutput)
 		mMainPipeline->SetRenderTarget(pOutput);
 
-	for (int i = 0; i < 8; i++)
-	{
-		for (int j = 0; j < mRenderQueues[i].instances.size(); j++)
-		{
-			auto& instance = mRenderQueues[i].instances[j];
+	float scaledWidth = pOutput->GetSize().x;
+	float scaledHeight = pOutput->GetSize().y;
 
-			mSpriteBatch->DrawSprite(instance.transform, instance.rect, instance.center, instance.texture);
-		}
-	}
+	int scaleFactor = 1;
+	int k = 1000;
 
-	glm::vec2 size = glm::vec2(pOutput->GetSize()) / 3.0f;
+	for (; scaleFactor < k && scaledWidth / (scaleFactor + 1) >= 320 && scaledHeight / (scaleFactor + 1) >= 240; scaleFactor++) {}
 
-	glm::mat4 proj = glm::ortho(-size.x, size.x, -size.y, size.y);
-	glm::mat4 view = glm::identity<glm::mat4>();
+	scaledWidth = scaledWidth / (float)scaleFactor;
+	scaledHeight = scaledHeight / (float)scaleFactor;
+	int screenWidth = (int)glm::ceil(scaledWidth);
+	int screenHeight = (int)glm::ceil(scaledHeight);
 
-	glm::mat4 projView = proj * view;
+	glm::vec2 size = (glm::vec2(scaledWidth, scaledHeight) / 2.0f) * 9.0f;
+	VirtualScreenSize = size;
 
 	Render::Viewport viewport{};
 
@@ -118,7 +144,6 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 
 	mCmdBuffer->ClearBuffer(pOutput, 0, glm::vec4(0.0f));
 
-	mCmdBuffer->UpdateConstantBuffer(mPerFrameData.get(), &projView);
 	mCmdBuffer->CommitBarriers();
 	mCmdBuffer->SetFramebuffer(pOutput);
 	mCmdBuffer->SetPipeline(mMainPipeline.get());
@@ -127,7 +152,11 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 	mCmdBuffer->SetTextureSampler(mBilinearSampler.get(), 0);
 	mCmdBuffer->SetBindlessDescriptorTable(scene->BindlessTable);
 
-	mSpriteBatch->End(mCmdBuffer.get());
+	RenderCamera(&mMainCamera, mRenderQueues, scene, pOutput);
+	RenderCamera(&mMainCamera, mAlphaRenderQueues, scene, pOutput);
+
+	RenderCamera(&mGuiCamera, mGuiRenderQueues, scene, pOutput);
+	RenderCamera(&mGuiCamera, mAlphaGuiRenderQueues, scene, pOutput);
 
 	mCmdBuffer->RequireFramebufferState(pOutput, Render::ResourceState::RenderTarget, Render::ResourceState::Present);
 	mCmdBuffer->End();
@@ -136,4 +165,63 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 void Renderer2D::Submit()
 {
 	mCmdBuffer->Submit();
+}
+
+void Renderer2D::SetCameraPosition(const glm::vec2& position)
+{
+	mMainCamera.Position = position;
+}
+
+void Renderer2D::SetGuiCameraPosition(const glm::vec2& position)
+{
+	mGuiCamera.Position = position;
+}
+
+void Renderer2D::SetCameraZoom(const glm::vec2& zoom)
+{
+	mMainCamera.Zoom = zoom;
+}
+
+void Renderer2D::SetGuiCameraZoom(const glm::vec2& zoom)
+{
+	mGuiCamera.Zoom = zoom;
+}
+
+void Renderer2D::SetCameraRotation(float rotation)
+{
+	mMainCamera.Rotation = rotation;
+}
+
+void Renderer2D::SetGuiCameraRotation(float rotation)
+{
+	mGuiCamera.Rotation = rotation;
+}
+
+void Renderer2D::RenderCamera(Camera2D* camera, RenderQueue2D* renderQueues, Scene* scene, Render::Framebuffer* pOutput)
+{
+	mSpriteBatch->Begin();
+
+	for (int i = 0; i < 8; i++)
+	{
+		for (int j = 0; j < renderQueues[i].instances.size(); j++)
+		{
+			auto& instance = renderQueues[i].instances[j];
+
+			mSpriteBatch->DrawSprite(instance.transform, instance.rect, instance.center, instance.color, instance.texture);
+		}
+	}
+
+	glm::mat4 proj = glm::ortho(-VirtualScreenSize.x, VirtualScreenSize.x, -VirtualScreenSize.y, VirtualScreenSize.y);
+	glm::mat4 view = glm::identity<glm::mat4>();
+
+	view = glm::translate(view, glm::vec3(-camera->Position, 0.0f));
+	view = glm::rotate(view, glm::radians(camera->Rotation), glm::vec3(0.0f, 0.0f, 1.0f));
+	view = glm::scale(view, glm::vec3(camera->Zoom, 1.0f));
+
+	glm::mat4 projView = proj * view;
+
+	mCmdBuffer->UpdateConstantBuffer(mPerFrameData.get(), &projView);
+	mCmdBuffer->CommitBarriers();
+
+	mSpriteBatch->End(mCmdBuffer.get());
 }

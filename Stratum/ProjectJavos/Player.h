@@ -2,6 +2,8 @@
 
 #include <Scene/Scene.h>
 
+#include "GameState.h"
+
 namespace Javos
 {
 	class Conductor;
@@ -19,7 +21,7 @@ namespace Javos
 	{
 	public:
 		
-		PlayerSystem(Conductor* conductor);
+		PlayerSystem(Conductor* conductor, GameState* gameState);
 		void Init(Stratum::Scene* scene) override;
 		void Update(Stratum::Scene* scene) override;
 		void PostUpdate(Stratum::Scene* scene) override;
@@ -29,6 +31,7 @@ namespace Javos
 
 		Stratum::Scene* mScene;
 		Conductor* mConductor;
+		GameState* mGameState;
 
 	};
 }

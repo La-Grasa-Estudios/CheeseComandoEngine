@@ -38,7 +38,7 @@ Renderer3D::Renderer3D()
 
 	InitializePipelines();
 
-	mRenderPath2D = CreateRef<Renderer2D>();
+	RenderPath2D = CreateRef<Renderer2D>();
 }
 
 void Renderer3D::SetScene(Scene* scene)
@@ -83,7 +83,7 @@ void Renderer3D::PreRender(Scene* scene)
 
 	}
 
-	mRenderPath2D->PreRender(scene);
+	RenderPath2D->PreRender(scene);
 
 }
 
@@ -91,7 +91,7 @@ void Renderer3D::Render(Scene* scene, Render::Framebuffer* pOutput)
 {
 	using namespace Render;
 
-	mRenderPath2D->Render(scene, pOutput);
+	RenderPath2D->Render(scene, pOutput);
 	ResizeRenderBuffers(pOutput->GetSize());
 
 	Render::Viewport viewport{};
@@ -140,7 +140,7 @@ void Renderer3D::Render(Scene* scene, Render::Framebuffer* pOutput)
 	mCommandBuffer.End();
 	mCommandBuffer.Submit();
 
-	mRenderPath2D->Submit();
+	RenderPath2D->Submit();
 }
 
 void Renderer3D::InitializePipelines()

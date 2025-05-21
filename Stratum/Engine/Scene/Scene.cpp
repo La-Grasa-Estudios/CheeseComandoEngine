@@ -22,6 +22,7 @@ Scene::Scene()
 	Renderers.Init(&EntityManager);
 	SpriteRenderers.Init(&EntityManager);
 	SpriteAnimators.Init(&EntityManager);
+	GuiAnchors.Init(&EntityManager);
 }
 
 Scene::~Scene()
@@ -55,6 +56,7 @@ void Scene::UpdateSystems()
 
 void Scene::PostUpdate()
 {
+	UpdateGuiAnchors();
 	UpdateTransforms();
 	for (int i = 0; i < mSystems.size(); i++)
 	{
@@ -312,4 +314,59 @@ void Scene::UpdateAnimators()
 
 	}
 
+}
+
+void Scene::UpdateGuiAnchors()
+{
+	auto& anchors = GuiAnchors.GetEntities();
+
+	for (auto entity : anchors)
+	{
+
+		if (!Transforms.HasComponent(entity))
+			continue;
+
+		auto& anchor = GuiAnchors.Get(entity);
+		auto& transform = Transforms.Get(entity);
+
+		glm::vec3 Position = glm::vec3(anchor.Position, 0.0f);
+
+		if (anchor.AnchorPoint == GuiAnchorPoint::TOP)
+		{
+			Position = glm::vec3(anchor.Position.x, VirtualScreenSize.y - anchor.Position.y, 1.0f);
+		}
+		if (anchor.AnchorPoint == GuiAnchorPoint::DOWN)
+		{
+			Position = glm::vec3(anchor.Position.x, VirtualScreenSize.y + anchor.Position.y, 1.0f);
+		}
+
+		if (anchor.AnchorPoint == GuiAnchorPoint::LEFT)
+		{
+			Position = glm::vec3(VirtualScreenSize.x + anchor.Position.x, VirtualScreenSize.y, 1.0f);
+		}
+		if (anchor.AnchorPoint == GuiAnchorPoint::RIGHT)
+		{
+			Position = glm::vec3(VirtualScreenSize.x - anchor.Position.x, VirtualScreenSize.y, 1.0f);
+		}
+
+		if (anchor.AnchorPoint == GuiAnchorPoint::TOP_LEFT)
+		{
+			Position = glm::vec3(VirtualScreenSize.x + anchor.Position.x, VirtualScreenSize.y - anchor.Position.y, 1.0f);
+		}
+		if (anchor.AnchorPoint == GuiAnchorPoint::TOP_RIGHT)
+		{
+			Position = glm::vec3(VirtualScreenSize.x - anchor.Position.x, VirtualScreenSize.y - anchor.Position.y, 1.0f);
+		}
+
+		if (anchor.AnchorPoint == GuiAnchorPoint::DOWN_LEFT)
+		{
+			Position = glm::vec3(VirtualScreenSize.x + anchor.Position.x, VirtualScreenSize.y + anchor.Position.y, 1.0f);
+		}
+		if (anchor.AnchorPoint == GuiAnchorPoint::DOWN_RIGHT)
+		{
+			Position = glm::vec3(VirtualScreenSize.x - anchor.Position.x, VirtualScreenSize.y + anchor.Position.y, 1.0f);
+		}
+
+		transform.SetPosition(Position);
+	}
 }

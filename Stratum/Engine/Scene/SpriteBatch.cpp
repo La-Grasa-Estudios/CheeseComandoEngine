@@ -44,7 +44,7 @@ void SpriteBatch::Begin()
 	mRenderQueue.clear();
 }
 
-void SpriteBatch::DrawSprite(const glm::mat4& transform, SpriteRendererComponent::SpriteRect& rect, glm::vec2 center, DescriptorHandle texture)
+void SpriteBatch::DrawSprite(const glm::mat4& transform, SpriteRendererComponent::SpriteRect& rect, glm::vec2 center, const glm::vec4& color, DescriptorHandle texture)
 {
 
 	auto spriteTransform = glm::translate(glm::identity<glm::mat4>(), glm::vec3(center * glm::vec2(rect.size), 0.0f));
@@ -60,6 +60,8 @@ void SpriteBatch::DrawSprite(const glm::mat4& transform, SpriteRendererComponent
 
 	renderable.uvs[0] = glm::vec4(0, 0, 1, 0);
 	renderable.uvs[1] = glm::vec4(1, 0, 1, 1);
+
+	renderable.Color = color;
 
 	if (texture != -1)
 	{

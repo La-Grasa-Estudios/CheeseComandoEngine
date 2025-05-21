@@ -68,6 +68,8 @@ public:
 	RenderQueue mainVisRenderQueue;
 	Render::PostProcessingStack PostProcessingStack;
 
+	Ref<Renderer2D> RenderPath2D;
+
 private:
 
 	void InitializePipelines();
@@ -87,8 +89,6 @@ private:
 	Ref<Render::ImageResource> mRtDepthBuffer;
 
 	Ref<Render::Framebuffer> mRtGbuffer;
-
-	Ref<Renderer2D> mRenderPath2D;
 
 	ViewPose mViewPose;
 
