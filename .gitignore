@@ -1,5 +1,4 @@
 *.obj
-*.cso
 *.pdb
 /.vs
 /x64
