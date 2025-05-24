@@ -108,3 +108,8 @@ void SpriteBatch::End(Render::GraphicsCommandBuffer* pCmdBuffer)
 	}
 
 }
+
+void SpriteBatch::SetResources(SceneResources* pRsc)
+{
+	mResources = pRsc;
+}

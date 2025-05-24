@@ -34,6 +34,11 @@ namespace ECS
 				{
 					this->Remove(edict);
 				});
+
+			for (int i = 0; i < C_MAX_ENTITIES; i++)
+			{
+				new (&mComponentArray[i]) Component();
+			}
 		}
 
 		Component& Create(edict_t edict)

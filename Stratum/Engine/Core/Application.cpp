@@ -362,6 +362,12 @@ void Application::MainLoop()
 		if (mCurrentScene)
 		{
 			Z_PROFILE_SCOPE("Scene::Update");
+
+			if (mCurrentScene->NextScenePtr)
+			{
+				SetScene(mCurrentScene->NextScenePtr);
+			}
+
 			mCurrentScene->VirtualScreenSize = m_RenderPath3D->RenderPath2D->VirtualScreenSize;
 			mCurrentScene->UpdateSystems();
 		}

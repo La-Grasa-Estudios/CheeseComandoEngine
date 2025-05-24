@@ -50,6 +50,11 @@ void Scene::UpdateSystems()
 	UpdateAnimators();
 	for (int i = 0; i < mSystems.size(); i++)
 	{
+		if (!mSystems[i]->mInitialized)
+		{
+			mSystems[i]->Init(this);
+			mSystems[i]->mInitialized = true;
+		}
 		mSystems[i]->Update(this);
 	}
 }
@@ -240,10 +245,20 @@ void Scene::RegisterCustomComponent(ECS::ComponentManager_Interface* pInterface,
 	mCustomComponents[name] = pInterface;
 }
 
-void Scene::RegisterCustomSystem(ISceneSystem* pSystem)
+void Scene::RegisterCustomSystem(ISceneSystem* pSystem, bool initImmediately)
 {
-	pSystem->Init(this);
 	mSystems.push_back(pSystem);
+
+	if (initImmediately)
+	{
+		pSystem->Init(this);
+		pSystem->mInitialized = true;
+	}
+}
+
+void Scene::SwapScene(Scene* scene)
+{
+	NextScenePtr = scene;
 }
 
 void Scene::UpdateTransforms()

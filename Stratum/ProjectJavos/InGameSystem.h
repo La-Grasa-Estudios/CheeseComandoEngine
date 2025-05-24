@@ -14,7 +14,7 @@ namespace Javos
 	public:
 
 		InGameSystem(const LoadChartParams& params);
-		~InGameSystem();
+		~InGameSystem() override;
 
 		void Init(Stratum::Scene* scene) final;
 		void Update(Stratum::Scene* scene) final;

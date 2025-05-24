@@ -341,6 +341,7 @@
     <ClInclude Include="ProjectJavos\JavosApp.h" />
     <ClInclude Include="ProjectJavos\Player.h" />
     <ClInclude Include="ProjectJavos\SparrowReader.h" />
+    <ClInclude Include="ProjectJavos\StageEditorSystem.h" />
     <ClInclude Include="ProjectJavos\StageInfo.h" />
   </ItemGroup>
   <ItemGroup>
@@ -461,6 +462,7 @@
     <ClCompile Include="ProjectJavos\main.cpp" />
     <ClCompile Include="ProjectJavos\Player.cpp" />
     <ClCompile Include="ProjectJavos\SparrowReader.cpp" />
+    <ClCompile Include="ProjectJavos\StageEditorSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Engine\Renderer\DX12\directx\d3d12.idl" />

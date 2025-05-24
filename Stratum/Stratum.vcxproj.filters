@@ -618,6 +618,9 @@
     <ClInclude Include="ProjectJavos\Common.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
+    <ClInclude Include="ProjectJavos\StageEditorSystem.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Asset\ShaderPermutationFile.cpp">
@@ -969,6 +972,9 @@
       <Filter>Archivos de origen</Filter>
     </ClCompile>
     <ClCompile Include="ProjectJavos\InGameSystem.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="ProjectJavos\StageEditorSystem.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>

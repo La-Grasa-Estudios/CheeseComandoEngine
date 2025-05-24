@@ -5,7 +5,12 @@
 #include "Conductor.h"
 #include "Player.h"
 
+#include "StageEditorSystem.h"
+
+#include <Core/EngineStats.h>
+#include <Core/Time.h>
 #include <Core/Window.h>
+
 #include <Util/Globals.h>
 #include <Event/EventHandler.h>
 #include <Input/Input.h>
@@ -13,8 +18,7 @@
 #include <Scene/Renderer2D.h>
 
 #include <Thirdparty/imgui/imgui.h>
-#include <Core/EngineStats.h>
-#include <Core/Time.h>
+
 
 Javos::GameState gGameState;
 
@@ -49,8 +53,8 @@ void Javos::InGameSystem::Init(Stratum::Scene* scene)
 
 	PlayerSystem* playerSystem;
 
-	mScene->RegisterCustomSystem(mConductor);
-	mScene->RegisterCustomSystem(playerSystem = new PlayerSystem(mConductor, &gGameState));
+	mScene->RegisterCustomSystem(mConductor, true);
+	mScene->RegisterCustomSystem(playerSystem = new PlayerSystem(mConductor, &gGameState), true);
 
 	mConductor->LoadChart(mScene, mLoadParams.ChartPath);
 
@@ -129,6 +133,15 @@ void Javos::InGameSystem::Update(Stratum::Scene* scene)
 	{
 		static bool fs = false;
 		scene->Window->SetFullScreen(fs = !fs);
+	}
+
+	if (Stratum::Input::GetKeyDown(KeyCode::NUMBER_7))
+	{
+		auto editor = new Stratum::Scene();
+
+		editor->RegisterCustomSystem(new StageEditorSystem(""));
+
+		scene->SwapScene(editor);
 	}
 
 	float bpmPerSecond = 1.0f / (mConductor->chart.info.bpm / 60.0f);

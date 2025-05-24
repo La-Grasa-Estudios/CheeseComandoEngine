@@ -25,6 +25,8 @@ public:
 	void DrawSprite(const glm::mat4& transform, SpriteRendererComponent::SpriteRect& rect, glm::vec2 center, const glm::vec4& color, DescriptorHandle texture);
 	void End(Render::GraphicsCommandBuffer* pCmdBuffer);
 
+	void SetResources(SceneResources* pRsc);
+
 	struct SpriteRenderable
 	{
 		glm::mat4 transform;

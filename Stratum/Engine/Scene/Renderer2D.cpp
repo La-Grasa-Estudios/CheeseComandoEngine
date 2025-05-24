@@ -51,6 +51,7 @@ void Renderer2D::PreRender(Scene* scene)
 	if (!mSpriteBatch)
 		mSpriteBatch = CreateRef<SpriteBatch>(&scene->Resources);
 
+	mSpriteBatch->SetResources(&scene->Resources);
 
 	mRenderQueue.Clear();
 	mGuiRenderQueue.Clear();

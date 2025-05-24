@@ -20,10 +20,16 @@ class Scene;
 class ISceneSystem
 {
 public:
+	friend Scene;
+
+	virtual ~ISceneSystem() {};
+
 	virtual void Init(Scene* scene) = 0;
 	virtual void Update(Scene* scene) = 0;
 	virtual void PostUpdate(Scene* scene) = 0;
 	virtual void RenderImGui(Scene* scene) {};
+private:
+	bool mInitialized = false;
 };
 
 class AudioEngine;
@@ -62,7 +68,9 @@ public:
 	Ref<Render::BindlessDescriptorTable> BindlessTable;
 
 	void RegisterCustomComponent(ECS::ComponentManager_Interface* pInterface, const std::string& name);
-	void RegisterCustomSystem(ISceneSystem* pSystem);
+	void RegisterCustomSystem(ISceneSystem* pSystem, bool initImmediately = false);
+
+	void SwapScene(Scene* scene);
 
 	template<typename T>
 	ECS::ComponentManager<T>* GetComponentManager(const std::string& name)
@@ -79,6 +87,7 @@ public:
 
 	Internal::Window* Window;
 	
+	Scene* NextScenePtr = 0;
 
 private:
 
