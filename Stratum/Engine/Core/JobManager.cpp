@@ -33,6 +33,7 @@ inline void poll()
 
 void JobManager::Init(bool isSerial)
 {
+    isSerial = false;
     if (s_Instance) return;
 
     JobSystem::isSerial = isSerial;

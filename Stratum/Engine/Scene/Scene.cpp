@@ -64,6 +64,14 @@ void Scene::PostUpdate()
 	}
 }
 
+void Scene::RenderImGui()
+{
+	for (int i = 0; i < mSystems.size(); i++)
+	{
+		mSystems[i]->RenderImGui(this);
+	}
+}
+
 void Scene::LoadModel(const std::string& path, const ECS::edict_t edict)
 {
 

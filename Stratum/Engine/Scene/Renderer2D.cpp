@@ -7,6 +7,7 @@
 
 #include "SpriteBatch.h"
 
+#include "Core/JobManager.h"
 
 using namespace ENGINE_NAMESPACE;
 
@@ -50,15 +51,25 @@ void Renderer2D::PreRender(Scene* scene)
 	if (!mSpriteBatch)
 		mSpriteBatch = CreateRef<SpriteBatch>(&scene->Resources);
 
+
+	mRenderQueue.Clear();
+	mGuiRenderQueue.Clear();
+
 	auto& entities = scene->SpriteRenderers.GetEntities();
 
-	for (int i = 0; i < 8; i++)
+	struct AABB
 	{
-		mRenderQueues[i].Clear();
-		mAlphaRenderQueues[i].Clear();
-		mGuiRenderQueues[i].Clear();
-		mAlphaGuiRenderQueues[i].Clear();
-	}
+		float x0;
+		float y0;
+		float x1;
+		float y1;
+		bool Overlap(const AABB& other) const
+		{
+			return other.x1 > x0 && other.x0 < x1 && other.y1 > y0 && other.y0;
+		}
+	};
+
+	AABB screenAABB = { -VirtualScreenSize.x, -VirtualScreenSize.y, VirtualScreenSize.x, VirtualScreenSize.y };
 
 	for (auto entity : entities)
 	{
@@ -71,48 +82,56 @@ void Renderer2D::PreRender(Scene* scene)
 
 		if (!renderer.Enabled) continue;
 
+		glm::vec2 position = transform.Position;
+		glm::vec2 size = glm::vec2(renderer.Rect.size) * glm::vec2(transform.Scale);
+
+		AABB instanceAABB = { position.x - size.x, position.y - size.y, position.x + size.x, position.y + size.y };
+
+		if (!screenAABB.Overlap(instanceAABB))
+			continue;
+
 		RenderQueue2D::RenderInstance instance{};
 
 		instance.center = renderer.Center;
 		instance.rect = renderer.Rect;
 		instance.texture = renderer.TextureHandle;
+		instance.zIndex = renderer.RenderLayer;
 		instance.transform = transform.ModelMatrix;
 
 		if (scene->SpriteAnimators.HasComponent(entity))
 		{
-			instance.rect = scene->SpriteAnimators.Get(entity).GetCurrentRect().Rect;
+			auto frame = scene->SpriteAnimators.Get(entity).GetCurrentRect();
+			instance.rect = frame.Rect;
 			instance.transform = glm::translate(instance.transform, glm::vec3(-scene->SpriteAnimators.Get(entity).GetCurrentRect().Offset, 0.0f));
+			if (frame.Rotated)
+				instance.transform = glm::rotate(instance.transform, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		}
+
 
 		instance.transform = glm::rotate(instance.transform, glm::radians(renderer.Rotation.x), glm::vec3(0.0f, 0.0f, 1.0f));
 		instance.color = renderer.SpriteColor;
 
 		if (!renderer.IsGui)
 		{
-			if (instance.color.a < 0.99f)
-			{
-				mAlphaRenderQueues[renderer.RenderLayer].Push(instance);
-			}
-			else
-			{
-				mRenderQueues[renderer.RenderLayer].Push(instance);
-			}
+			mRenderQueue.Push(instance);
 		}
 		else
 		{
-			if (instance.color.a < 0.99f)
-				mAlphaGuiRenderQueues[renderer.RenderLayer].Push(instance);
-			else
-				mGuiRenderQueues[renderer.RenderLayer].Push(instance);
+			mGuiRenderQueue.Push(instance);
 		}
 	}
+
+	JobManager::Execute([&] { mRenderQueue.Sort(); });
+	JobManager::Execute([&] { mGuiRenderQueue.Sort(); });
+
 
 }
 
 void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 {
-	Z_PROFILE_SCOPE("Renderer2D::Render");
+	JobManager::Wait();
 
+	Z_PROFILE_SCOPE("Renderer2D::Render");
 
 	if (mMainPipeline->ShaderDesc.RenderTarget != pOutput)
 		mMainPipeline->SetRenderTarget(pOutput);
@@ -123,14 +142,14 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 	int scaleFactor = 1;
 	int k = 1000;
 
-	for (; scaleFactor < k && scaledWidth / (scaleFactor + 1) >= 320 && scaledHeight / (scaleFactor + 1) >= 240; scaleFactor++) {}
+	for (; scaleFactor < k && scaledWidth / (scaleFactor + 1) >= 320 && scaledHeight / (scaleFactor + 1) >= 180; scaleFactor++) {}
 
 	scaledWidth = scaledWidth / (float)scaleFactor;
 	scaledHeight = scaledHeight / (float)scaleFactor;
 	int screenWidth = (int)glm::ceil(scaledWidth);
 	int screenHeight = (int)glm::ceil(scaledHeight);
 
-	glm::vec2 size = (glm::vec2(scaledWidth, scaledHeight) / 2.0f) * 9.0f;
+	glm::vec2 size = (glm::vec2(scaledWidth, scaledHeight) / 2.0f) * 11.0f;
 	VirtualScreenSize = size;
 
 	Render::Viewport viewport{};
@@ -152,11 +171,8 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 	mCmdBuffer->SetTextureSampler(mBilinearSampler.get(), 0);
 	mCmdBuffer->SetBindlessDescriptorTable(scene->BindlessTable);
 
-	RenderCamera(&mMainCamera, mRenderQueues, scene, pOutput);
-	RenderCamera(&mMainCamera, mAlphaRenderQueues, scene, pOutput);
-
-	RenderCamera(&mGuiCamera, mGuiRenderQueues, scene, pOutput);
-	RenderCamera(&mGuiCamera, mAlphaGuiRenderQueues, scene, pOutput);
+	RenderCamera(&mMainCamera, &mRenderQueue, scene, pOutput);
+	RenderCamera(&mGuiCamera, &mGuiRenderQueue, scene, pOutput);
 
 	mCmdBuffer->RequireFramebufferState(pOutput, Render::ResourceState::RenderTarget, Render::ResourceState::Present);
 	mCmdBuffer->End();
@@ -197,18 +213,15 @@ void Renderer2D::SetGuiCameraRotation(float rotation)
 	mGuiCamera.Rotation = rotation;
 }
 
-void Renderer2D::RenderCamera(Camera2D* camera, RenderQueue2D* renderQueues, Scene* scene, Render::Framebuffer* pOutput)
+void Renderer2D::RenderCamera(Camera2D* camera, RenderQueue2D* renderQueue, Scene* scene, Render::Framebuffer* pOutput)
 {
 	mSpriteBatch->Begin();
 
-	for (int i = 0; i < 8; i++)
+	for (int j = 0; j < renderQueue->instances.size(); j++)
 	{
-		for (int j = 0; j < renderQueues[i].instances.size(); j++)
-		{
-			auto& instance = renderQueues[i].instances[j];
+		auto& instance = renderQueue->instances[j];
 
-			mSpriteBatch->DrawSprite(instance.transform, instance.rect, instance.center, instance.color, instance.texture);
-		}
+		mSpriteBatch->DrawSprite(instance.transform, instance.rect, instance.center, instance.color, instance.texture);
 	}
 
 	glm::mat4 proj = glm::ortho(-VirtualScreenSize.x, VirtualScreenSize.x, -VirtualScreenSize.y, VirtualScreenSize.y);

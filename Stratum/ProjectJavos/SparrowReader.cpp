@@ -37,6 +37,7 @@ std::vector<Stratum::SpriteAnimator::AnimationFrame> Javos::SparrowReader::readX
 			int index_width = s.find("width=");
 			int index_height = s.find("height=");
 			size_t index_offset_x = s.find("frameX=");
+			size_t index_rotated = s.find("rotated=");
 
 			std::string xPos = deleteSeparator(s.substr(index_x+2, 5), '"');
 			std::string yPos = deleteSeparator(s.substr(index_y+2, 5), '"');
@@ -56,6 +57,14 @@ std::vector<Stratum::SpriteAnimator::AnimationFrame> Javos::SparrowReader::readX
 			{
 				std::string xOff = deleteSeparator(s.substr(index_offset_x + 7, 12 - 7), '"');
 				frame.Offset = glm::ivec2(std::atoi(xOff.c_str()), 0);
+			}
+			if (index_rotated != std::string::npos)
+			{
+				std::string rotated = deleteSeparator(s.substr(index_rotated + 8, 6), '"');
+				if (rotated.compare("true") == 0)
+				{
+					frame.Rotated = true;
+				}
 			}
 
 			frames.push_back(frame);

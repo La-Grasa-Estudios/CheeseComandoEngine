@@ -64,18 +64,7 @@ struct SpriteRendererComponent
 		glm::ivec2 size;
 	};
 
-	enum SpriteRenderLayer
-	{
-		LAYER_BG2,
-		LAYER_BG1,
-		LAYER_BG0,
-		LAYER_FG,
-		LAYER_FG0,
-		LAYER_FG1,
-		LAYER_FG2,
-	};
-
-	SpriteRenderLayer RenderLayer = LAYER_FG;
+	int32_t RenderLayer = 0;
 	SpriteRect Rect;
 
 	glm::vec2 Center = glm::vec2(0.0f);
@@ -95,6 +84,7 @@ struct SpriteAnimator
 	{
 		SpriteRendererComponent::SpriteRect Rect;
 		glm::ivec2 Offset;
+		bool Rotated = false; // Sparrow V2 Compatibility
 	};
 
 	struct Animation

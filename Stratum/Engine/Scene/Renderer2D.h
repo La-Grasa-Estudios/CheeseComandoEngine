@@ -5,6 +5,8 @@
 
 #include "znmsp.h"
 
+#include <algorithm>
+
 BEGIN_ENGINE
 
 namespace Render
@@ -26,8 +28,20 @@ struct RenderQueue2D
 		glm::mat4 transform;
 		glm::vec2 center;
 		glm::vec4 color;
+		uint32_t zIndex;
 		SpriteRendererComponent::SpriteRect rect;
 		DescriptorHandle texture;
+
+		constexpr bool operator >(const RenderInstance& other) const
+		{
+			return zIndex > other.zIndex;
+		}
+
+		constexpr bool operator <(const RenderInstance& other) const
+		{
+			return zIndex < other.zIndex;
+		}
+
 	};
 
 	std::vector<RenderInstance> instances;
@@ -36,6 +50,12 @@ struct RenderQueue2D
 	{
 		instances.push_back(instance);
 	}
+
+	void Sort()
+	{
+		std::sort(instances.begin(), instances.end(), std::less<RenderInstance>());
+	}
+
 	void Clear()
 	{
 		instances.clear();
@@ -78,7 +98,7 @@ public:
 
 private:
 
-	void RenderCamera(Camera2D* camera, RenderQueue2D* renderQueues, Scene* scene, Render::Framebuffer* pOutput);
+	void RenderCamera(Camera2D* camera, RenderQueue2D* renderQueue, Scene* scene, Render::Framebuffer* pOutput);
 
 	Ref<SpriteBatch> mSpriteBatch;
 	Ref<Render::GraphicsPipeline> mMainPipeline;
@@ -88,11 +108,8 @@ private:
 
 	Ref<Render::TextureSampler> mBilinearSampler;
 	
-	RenderQueue2D mRenderQueues[8];
-	RenderQueue2D mGuiRenderQueues[8];
-
-	RenderQueue2D mAlphaRenderQueues[8];
-	RenderQueue2D mAlphaGuiRenderQueues[8];
+	RenderQueue2D mRenderQueue;
+	RenderQueue2D mGuiRenderQueue;
 
 	Camera2D mMainCamera;
 	Camera2D mGuiCamera;

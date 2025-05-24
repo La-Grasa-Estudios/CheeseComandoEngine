@@ -21,6 +21,11 @@ static const int BAD_TIME_WINDOW = 130;
 
 std::array<Stratum::ECS::edict_t, 4> noteButtons;
 
+const int32_t NOTE_BUTTON_LAYER = 0;
+const int32_t NOTE_HOLD_LAYER = 5;
+const int32_t NOTE_LAYER = 10;
+const int32_t NOTE_EFFECT_LAYER = 15;
+
 Javos::Conductor::Conductor()
 {
 	mHitNoteEvent = Stratum::EventHandler::GetEventID("hit_note");
@@ -81,12 +86,12 @@ void Javos::Conductor::Init(Stratum::Scene* scene)
 
 		anchor.AnchorPoint = Stratum::GuiAnchorPoint::TOP;
 
-		sprite.RenderLayer = Stratum::SpriteRendererComponent::LAYER_BG2;
+		sprite.RenderLayer = NOTE_BUTTON_LAYER;
 		sprite.Rect = rects[i];
 		sprite.TextureHandle = scene->Resources.LoadTextureImage("textures/NOTE_assets.DDS");
 		sprite.IsGui = true;
 
-		anchor.Position = { i * 384.0f + (600.0f), 384.0f };
+		anchor.Position = { i * 384.0f + (250.0f), 320.0f };
 
 		animator.AnimationMap["default"] = defaultAnimations[i];
 		animator.AnimationMap["hold"] = holdAnimations[i];
@@ -145,7 +150,7 @@ void Javos::Conductor::Init(Stratum::Scene* scene)
 	for (int i = 0; i < 4; i++)
 	{
 		auto anim = Stratum::SpriteAnimator::Animation()
-			.SetFrameRate(16)
+			.SetFrameRate(24)
 			.SetLoop(false)
 			.SetNextState("destroy")
 			.SetFrames(SparrowReader::readXML(coverFileNames[i], coverNames[i], true));
@@ -167,15 +172,15 @@ void Javos::Conductor::Init(Stratum::Scene* scene)
 		auto& anchor = scene->GuiAnchors.Create(coverEntity);
 
 		anchor.AnchorPoint = Stratum::GuiAnchorPoint::TOP;
-		anchor.Position = { i * 384.0f + (600.0f), 384.0f };
+		anchor.Position = { i * 384.0f + (250.0f), 320.0f };
 
 		coverSprite.Enabled = false;
 		coverSprite.TextureHandle = handle;
-		coverSprite.RenderLayer = Stratum::SpriteRendererComponent::LAYER_FG;
+		coverSprite.RenderLayer = NOTE_EFFECT_LAYER;
 		coverSprite.IsGui = true;
 		
 		auto anim = Stratum::SpriteAnimator::Animation()
-			.SetFrameRate(16)
+			.SetFrameRate(24)
 			.SetFrames(SparrowReader::readXML(coverFileNames[i], coverStrumNames[i], true))
 			.SetAnimateOnIdle(true)
 			.SetLoop(true);
@@ -190,7 +195,7 @@ void Javos::Conductor::Init(Stratum::Scene* scene)
 	for (int i = 0; i < 8; i++)
 	{
 		auto anim = Stratum::SpriteAnimator::Animation()
-			.SetFrameRate(16)
+			.SetFrameRate(24)
 			.SetLoop(false)
 			.SetNextState("destroy")
 			.SetFrames(SparrowReader::readXML("textures/noteSplashes.xml", splashesName[i], true));
@@ -496,7 +501,7 @@ void Javos::Conductor::Update(Stratum::Scene* scene)
 				}
 				else
 				{
-					Z_WARN("Event: [{}] has not handlers registered! ignoring.", event.EventName);
+					Z_WARN("Event: [{}] has not handlers registered! ignoring {}, {}.", event.EventName, event.Arg1, event.Arg2);
 				}
 				event.Triggered = true;
 			}
@@ -540,7 +545,7 @@ void Javos::Conductor::SpawnNote(Stratum::Scene* scene, ChartNote note)
 	auto& sprite = scene->SpriteRenderers.Create(entity);
 
 	sprite.IsGui = true;
-	sprite.RenderLayer = Stratum::SpriteRendererComponent::LAYER_BG0;
+	sprite.RenderLayer = NOTE_LAYER;
 	
 	if (l == 0)
 	{
@@ -599,14 +604,14 @@ void Javos::Conductor::SpawnNote(Stratum::Scene* scene, ChartNote note)
 
 		noteSprite.Rect = rects[l];
 		noteSprite.TextureHandle = scene->Resources.LoadTextureImage("textures/NOTE_hold_assets.png");
-		noteSprite.RenderLayer = Stratum::SpriteRendererComponent::LAYER_BG1;
+		noteSprite.RenderLayer = NOTE_HOLD_LAYER;
 		noteSprite.Center = { 0.0f, -1.0f };
 		noteSprite.IsGui = true;
 
 		noteEndSprite.Rect = endRects[l];
 		noteEndSprite.Center = noteSprite.Center;
 		noteEndSprite.TextureHandle = noteSprite.TextureHandle;
-		noteEndSprite.RenderLayer = Stratum::SpriteRendererComponent::LAYER_BG1;
+		noteEndSprite.RenderLayer = NOTE_HOLD_LAYER;
 		noteEndSprite.IsGui = true;
 
 		noteHold.NoteType = l;
@@ -630,7 +635,7 @@ void Javos::Conductor::SpawnNoteSplash(Stratum::Scene* scene, uint32_t noteType)
 	effectManager->Create(entity);
 
 	sprite.TextureHandle = scene->Resources.LoadTextureImage("textures/noteSplashes.png");
-	sprite.RenderLayer = Stratum::SpriteRendererComponent::LAYER_FG;
+	sprite.RenderLayer = NOTE_EFFECT_LAYER;
 	sprite.IsGui = true;
 
 	uint32_t offset = (rand() % 2) * 4;
@@ -660,7 +665,7 @@ void Javos::Conductor::SpawnSustainCover(Stratum::Scene* scene, uint32_t noteTyp
 	};
 
 	sprite.TextureHandle = scene->Resources.LoadTextureImage(coverImageNames[noteType]);
-	sprite.RenderLayer = Stratum::SpriteRendererComponent::LAYER_FG;
+	sprite.RenderLayer = NOTE_EFFECT_LAYER;
 	sprite.IsGui = true;
 
 	animator.AnimationMap["coverEnd"] = mNoteCoverEndAnimations[noteType];

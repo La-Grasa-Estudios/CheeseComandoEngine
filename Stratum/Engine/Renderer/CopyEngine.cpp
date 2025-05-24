@@ -104,9 +104,9 @@ void CopyEngine::UpdateCopying()
 			Z_INFO_DEBUG("Resource: {} is ready", (void*)res.pResourceReady);
 
 			*res.pResourceReady = true;
-			
-			std::scoped_lock lock(s_StagingLock);
-			s_CopyCommandLists.push(res.commandList);
+
+			//std::scoped_lock lock(s_StagingLock);
+			//s_CopyCommandLists.push(res.commandList);
 
 			s_CopyingTasks.erase(s_CopyingTasks.begin() + i);
 			i--;

@@ -401,6 +401,11 @@ void Application::MainLoop()
 
 			OnFrameRenderImGui();
 
+			if (mCurrentScene)
+			{
+				mCurrentScene->RenderImGui();
+			}
+
 			ImGui::Render();
 
 			m_RenderContext->ImGuiEndFrame();
@@ -627,6 +632,9 @@ void Application::SetScene(Scene* scene)
 	if (scene)
 	{
 		m_RenderPath3D->SetScene(scene);
+		scene->AudioEngine = m_AudioEngine.get();
+		scene->Window = m_Window.get();
+		scene->RenderPath3D = m_RenderPath3D.get();
 	}
 }
 

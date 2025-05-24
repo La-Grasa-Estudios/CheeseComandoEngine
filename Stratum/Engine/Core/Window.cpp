@@ -50,7 +50,7 @@ void Window::Create(int width, int height)
 
 	s_instance = this;
 
-	uint32_t flags = SDL_WINDOW_RESIZABLE;
+	uint32_t flags = 0;
 	if (this->StartMaximized) {
 		flags |= SDL_WINDOW_MAXIMIZED;
 	}
@@ -58,6 +58,8 @@ void Window::Create(int width, int height)
 		flags |= SDL_WINDOW_FULLSCREEN;
 		m_IsWindowFullScreen = true;
 	}
+
+
 
 	m_Window = SDL_CreateWindow(this->m_Name, width, height, flags);
 	if (!m_Window)

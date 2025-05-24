@@ -15,6 +15,7 @@ class Scene;
 /// void Update()
 /// void PostUpdate()
 /// void Init()
+/// void RenderImGui() - optional -
 /// </summary>
 class ISceneSystem
 {
@@ -22,7 +23,16 @@ public:
 	virtual void Init(Scene* scene) = 0;
 	virtual void Update(Scene* scene) = 0;
 	virtual void PostUpdate(Scene* scene) = 0;
+	virtual void RenderImGui(Scene* scene) {};
 };
+
+class AudioEngine;
+class Renderer3D;
+
+namespace Internal
+{
+	class Window;
+}
 
 class Scene
 {
@@ -35,6 +45,7 @@ public:
 	void InitBindlessTable(nvrhi::IBindingLayout* bindingLayout);
 	void UpdateSystems();
 	void PostUpdate();
+	void RenderImGui();
 
 	ECS::EntityManager EntityManager;
 
@@ -62,6 +73,12 @@ public:
 	}
 
 	glm::vec2 VirtualScreenSize = {};
+
+	AudioEngine* AudioEngine;
+	Renderer3D* RenderPath3D;
+
+	Internal::Window* Window;
+	
 
 private:
 

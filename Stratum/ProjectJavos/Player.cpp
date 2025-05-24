@@ -195,7 +195,7 @@ Stratum::ECS::edict_t Javos::PlayerSystem::CreatePlayer()
 	renderer.Rect.position = glm::vec2(0.0f);
 	renderer.Rect.size = glm::vec2(1024.0f);
 	renderer.Center = glm::vec2(0.0f, 1.0f);
-	renderer.RenderLayer = renderer.LAYER_BG2;
+	renderer.RenderLayer = 0;
 
 #ifndef _DEBUG
 	renderer.TextureHandle = mScene->Resources.LoadTextureImage("textures/BOYFRIEND.DDS");

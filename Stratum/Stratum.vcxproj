@@ -332,12 +332,16 @@
     <ClInclude Include="Engine\znmsp.h" />
     <ClInclude Include="ProjectJavos\ChartInfo.h" />
     <ClInclude Include="ProjectJavos\ChartLoader.h" />
+    <ClInclude Include="ProjectJavos\Common.h" />
     <ClInclude Include="ProjectJavos\Components.h" />
     <ClInclude Include="ProjectJavos\Conductor.h" />
+    <ClInclude Include="ProjectJavos\GameScene.h" />
     <ClInclude Include="ProjectJavos\GameState.h" />
+    <ClInclude Include="ProjectJavos\InGameSystem.h" />
     <ClInclude Include="ProjectJavos\JavosApp.h" />
     <ClInclude Include="ProjectJavos\Player.h" />
     <ClInclude Include="ProjectJavos\SparrowReader.h" />
+    <ClInclude Include="ProjectJavos\StageInfo.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Asset\ShaderPermutationFile.cpp" />
@@ -451,6 +455,8 @@
     <ClCompile Include="ProjectJavos\ChartInfo.cpp" />
     <ClCompile Include="ProjectJavos\ChartLoader.cpp" />
     <ClCompile Include="ProjectJavos\Conductor.cpp" />
+    <ClCompile Include="ProjectJavos\GameScene.cpp" />
+    <ClCompile Include="ProjectJavos\InGameSystem.cpp" />
     <ClCompile Include="ProjectJavos\JavosApp.cpp" />
     <ClCompile Include="ProjectJavos\main.cpp" />
     <ClCompile Include="ProjectJavos\Player.cpp" />
