@@ -14086,7 +14086,7 @@
 		"gameOverChar": "CebollaConPeloDead",
 		"needsVoices": true,
 		"sections": 0,
-		"stage": "ShobonNoAction",
+		"stage": "week1",
 		"bpm": 210
 	}
 }
