@@ -162,12 +162,6 @@ void ZVFS::MountEmbeddedFile(const char* filePath, int resourceId, const char* r
 RefBinaryStream ZVFS::GetFile(const char* file)
 {
 
-    if (g_FileCache.contains(file))
-    {
-        auto stream = std::stringstream(g_FileCache[file].stream->Str());
-        return CreateRef<BinaryStream>(stream);
-    }
-
     std::string sfile = file;
 
     if (sfile.starts_with("/"))

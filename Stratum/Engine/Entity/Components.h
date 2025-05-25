@@ -75,6 +75,8 @@ struct SpriteRendererComponent
 	int32_t TextureHandle = -1;
 	bool Enabled = true;
 	bool IsGui = false; // Makes the sprite render to a second view
+	bool FlipX = false;
+	bool FlipY = false;
 
 };
 

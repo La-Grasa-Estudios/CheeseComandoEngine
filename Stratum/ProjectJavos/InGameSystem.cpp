@@ -18,12 +18,20 @@
 #include <Scene/Renderer2D.h>
 
 #include <Thirdparty/imgui/imgui.h>
+#include <json/json.hpp>
 
 
 Javos::GameState gGameState;
 
 #undef min
 #undef max
+
+struct StagePropComponent
+{
+	glm::vec2 Scroll;
+	glm::vec2 Position;
+	float DanceEvery;
+};
 
 Javos::InGameSystem::InGameSystem(const LoadChartParams& params) : mLoadParams(params)
 {
@@ -47,6 +55,7 @@ void Javos::InGameSystem::Init(Stratum::Scene* scene)
 	mScene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<NoteComponent>(), C_NOTE_COMPONENT_NAME);
 	mScene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<NoteHoldComponent>(), C_NOTE_HOLD_COMPONENT_NAME);
 	mScene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<AnimatedEffectComponent>(), C_ANIMATED_EFFECT_COMPONENT_NAME);
+	mScene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<StagePropComponent>(), "stage_prop");
 
 	mConductor = new Conductor();
 	gGameState.pConductor = mConductor;
@@ -63,7 +72,7 @@ void Javos::InGameSystem::Init(Stratum::Scene* scene)
 	instPath.append(mConductor->chart.info.song).append("/Inst.mp3");
 	voicesPath.append(mConductor->chart.info.song).append("/Voices.mp3");
 
-	playerSystem->CreatePlayer();
+	mPlayerSprite = playerSystem->CreatePlayer();
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -85,8 +94,8 @@ void Javos::InGameSystem::Init(Stratum::Scene* scene)
 			voicesSource->SetVolume(1.0f);
 		};
 
-	Stratum::EventHandler::RegisterListener(missListener, Stratum::EventHandler::GetEventID("miss_note"), true);
-	Stratum::EventHandler::RegisterListener(hitListener, Stratum::EventHandler::GetEventID("hit_note"), true);
+	Stratum::EventHandler::RegisterListener(missListener, Stratum::EventHandler::GetEventID("miss_note"), true, true);
+	Stratum::EventHandler::RegisterListener(hitListener, Stratum::EventHandler::GetEventID("hit_note"), true, true);
 
 	mConductor->RegisterEventHandler("StSetScreenBeat", [this](ChartEvent& event)
 		{
@@ -105,6 +114,18 @@ void Javos::InGameSystem::Init(Stratum::Scene* scene)
 			mFadeToWhiteTime = 0.0f;
 		});
 
+	mWhiteSprite = mScene->EntityManager.CreateEntity();
+
+	mScene->Transforms.Create(mWhiteSprite);
+
+	auto& sprite = mScene->SpriteRenderers.Create(mWhiteSprite);
+	sprite.Rect = { glm::ivec2(0, 0), glm::ivec2(10000, 10000) };
+	sprite.IsGui = true;
+	sprite.RenderLayer = 100;
+	sprite.SpriteColor.a = 0.0f;
+
+	LoadStage();
+
 	instSource = Stratum::CreateRef<Stratum::MP3AudioSource>(instPath.c_str(), scene->AudioEngine->GetEngine());
 	scene->AudioEngine->AddSource(instSource);
 	instSource->Play();
@@ -115,16 +136,6 @@ void Javos::InGameSystem::Init(Stratum::Scene* scene)
 		scene->AudioEngine->AddSource(voicesSource);
 		voicesSource->Play();
 	}
-
-	mWhiteSprite = mScene->EntityManager.CreateEntity();
-
-	mScene->Transforms.Create(mWhiteSprite);
-
-	auto& sprite = mScene->SpriteRenderers.Create(mWhiteSprite);
-	sprite.Rect = { glm::ivec2(0, 0), glm::ivec2(10000, 10000) };
-	sprite.IsGui = true;
-	sprite.RenderLayer = 100;
-	sprite.SpriteColor.a = 0.0f;
 }
 
 void Javos::InGameSystem::Update(Stratum::Scene* scene)
@@ -188,6 +199,10 @@ void Javos::InGameSystem::Update(Stratum::Scene* scene)
 
 	scene->RenderPath3D->RenderPath2D->SetGuiCameraZoom({ GuiZoomLevel, GuiZoomLevel });
 	scene->RenderPath3D->RenderPath2D->SetCameraZoom({ ZoomLevel, ZoomLevel });
+
+	scene->RenderPath3D->RenderPath2D->SetCameraPosition(gGameState.CameraPosition);
+
+	UpdateStage();
 }
 
 void Javos::InGameSystem::PostUpdate(Stratum::Scene* scene)
@@ -223,4 +238,76 @@ void Javos::InGameSystem::RenderImGui(Stratum::Scene* scene)
 	}
 
 	ImGui::End();
+}
+
+void Javos::InGameSystem::LoadStage()
+{
+	std::string stagePath = GenerateAssetPath(C_STAGE_PATH_PREFIX, mConductor->chart.info.stage, "json");
+
+	if (!Stratum::ZVFS::Exists(stagePath.c_str()))
+		return;
+
+	nlohmann::json json = nlohmann::json::parse(Stratum::ZVFS::GetFile(stagePath.c_str())->Str());
+	auto metadataManager = mScene->GetComponentManager<StagePropComponent>("stage_prop");
+
+	for (auto& prop : json["props"])
+	{
+		auto entity = mScene->EntityManager.CreateEntity();
+		auto& sprite = mScene->SpriteRenderers.Create(entity);
+		auto& transform = mScene->Transforms.Create(entity);
+		auto& name = mScene->Names.Create(entity);
+		auto& meta = metadataManager->Create(entity);
+
+		name.Name = prop["name"];
+		sprite.TextureHandle = mScene->Resources.LoadTextureImage(prop["assetPath"]);
+		sprite.Rect.size = mScene->Resources.GetImageHandle(sprite.TextureHandle)->GetSize();
+		sprite.SpriteColor.a = prop["opacity"];
+		sprite.RenderLayer = prop["zIndex"];
+		meta.Position.x = prop["position"][0];
+		meta.Position.y = prop["position"][1];
+		meta.Scroll.x = prop["scroll"][0];
+		meta.Scroll.y = prop["scroll"][1];
+		transform.Scale.x = prop["scale"][0];
+		transform.Scale.y = prop["scale"][1];
+	}
+
+	if (json.contains("characters"))
+	{
+		auto& characters = json["characters"];
+
+		{
+			auto& bf = characters["bf"];
+			auto& transform = mScene->Transforms.Get(mPlayerSprite);
+			auto& sprite = mScene->SpriteRenderers.Get(mPlayerSprite);
+
+			sprite.RenderLayer = bf["zIndex"];
+			gGameState.PlayerPosition.x = bf["position"][0];
+			gGameState.PlayerPosition.y = bf["position"][1];
+			transform.Scale.x = bf["scale"][0];
+			transform.Scale.y = bf["scale"][1];
+			CameraOffsets[0].x = bf["cameraOffset"][0];
+			CameraOffsets[0].y = bf["cameraOffset"][1];
+		}
+	}
+}
+
+void Javos::InGameSystem::UpdateStage()
+{
+	auto metadataManager = mScene->GetComponentManager<StagePropComponent>("stage_prop");
+
+	auto& props = metadataManager->GetEntities();
+
+	for (auto entity : props)
+	{
+		auto& metadata = metadataManager->Get(entity);
+		auto& transform = mScene->Transforms.Get(entity);
+
+		glm::vec2 pos = metadata.Position;
+		glm::vec2 scroll = metadata.Scroll;
+		glm::vec2 targetPos = metadata.Position + gGameState.CameraPosition * scroll;
+
+		transform.Position = glm::vec3(targetPos, 0.0f);
+
+		transform.IsDirty = true;
+	}
 }

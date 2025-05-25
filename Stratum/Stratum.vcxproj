@@ -455,6 +455,7 @@
     <ClCompile Include="Engine\Win32Libs.cpp" />
     <ClCompile Include="ProjectJavos\ChartInfo.cpp" />
     <ClCompile Include="ProjectJavos\ChartLoader.cpp" />
+    <ClCompile Include="ProjectJavos\Common.cpp" />
     <ClCompile Include="ProjectJavos\Conductor.cpp" />
     <ClCompile Include="ProjectJavos\GameScene.cpp" />
     <ClCompile Include="ProjectJavos\InGameSystem.cpp" />

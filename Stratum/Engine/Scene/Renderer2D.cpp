@@ -93,6 +93,8 @@ void Renderer2D::PreRender(Scene* scene)
 
 		RenderQueue2D::RenderInstance instance{};
 
+		glm::vec2 flipMult = glm::vec2(renderer.FlipX ? -1.0f : 1.0f, renderer.FlipY ? -1.0f : 1.0f);
+
 		instance.center = renderer.Center;
 		instance.rect = renderer.Rect;
 		instance.texture = renderer.TextureHandle;
@@ -103,13 +105,13 @@ void Renderer2D::PreRender(Scene* scene)
 		{
 			auto frame = scene->SpriteAnimators.Get(entity).GetCurrentRect();
 			instance.rect = frame.Rect;
-			instance.transform = glm::translate(instance.transform, glm::vec3(-scene->SpriteAnimators.Get(entity).GetCurrentRect().Offset, 0.0f));
+			instance.transform = glm::translate(instance.transform, glm::vec3(glm::vec2(-scene->SpriteAnimators.Get(entity).GetCurrentRect().Offset) * flipMult, 0.0f));
 			if (frame.Rotated)
 				instance.transform = glm::rotate(instance.transform, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		}
 
-
 		instance.transform = glm::rotate(instance.transform, glm::radians(renderer.Rotation.x), glm::vec3(0.0f, 0.0f, 1.0f));
+		instance.transform = glm::scale(instance.transform, glm::vec3(flipMult, 1.0f));
 		instance.color = renderer.SpriteColor;
 
 		if (!renderer.IsGui)

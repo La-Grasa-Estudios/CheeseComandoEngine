@@ -20,6 +20,7 @@ class EventHandler {
 	{
 		EventFunction func;
 		bool threadSafe;
+		bool deleteOnSceneLoad;
 	};
 
 public:
@@ -27,8 +28,10 @@ public:
 	static void Process();
 	static void InvokeEvent(uint64_t eventId, void* sender, std::vector<void*> args = {}, uint32_t argc = 0);
 
-	static void RegisterListener(EventFunction func, uint64_t eventId, bool threadSafe = false);
+	static void RegisterListener(EventFunction func, uint64_t eventId, bool removeOnSceneLoad = false, bool threadSafe = false);
 	static uint64_t GetEventID(const std::string& name);
+
+	static void RemoveSceneEventListeners();
 
 private:
 

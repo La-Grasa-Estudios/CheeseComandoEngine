@@ -28,6 +28,7 @@ namespace Javos
 		uint32_t bpm = 0;
 		float speed = 1.0f;
 		std::string song;
+		std::string stage;
 	};
 	struct ChartEvent
 	{

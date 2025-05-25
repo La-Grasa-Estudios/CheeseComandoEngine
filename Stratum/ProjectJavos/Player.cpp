@@ -41,8 +41,8 @@ void Javos::PlayerSystem::Init(Stratum::Scene* scene)
 
 		};
 
-	Stratum::EventHandler::RegisterListener(animationListener, Stratum::EventHandler::GetEventID("hit_note"), true);
-	Stratum::EventHandler::RegisterListener(animationListener, Stratum::EventHandler::GetEventID("sustain_note"), true);
+	Stratum::EventHandler::RegisterListener(animationListener, Stratum::EventHandler::GetEventID("hit_note"), true, true);
+	Stratum::EventHandler::RegisterListener(animationListener, Stratum::EventHandler::GetEventID("sustain_note"), true, true);
 }
 
 void Javos::PlayerSystem::Update(Stratum::Scene* scene)
@@ -96,7 +96,7 @@ void Javos::PlayerSystem::Update(Stratum::Scene* scene)
 
 			scale.x += 1.0f * Stratum::gpGlobals->deltaTime;
 
-			playerEntity.Position.y -= 70.0f * Stratum::gpGlobals->deltaTime;
+			mGameState->PlayerPosition.y -= 70.0f * Stratum::gpGlobals->deltaTime;
 			sprite.Rotation.x -= 15.0f * Stratum::gpGlobals->deltaTime;
 
 			transform.SetScale(scale);
@@ -153,21 +153,23 @@ void Javos::PlayerSystem::Update(Stratum::Scene* scene)
 
 		animator.AnimationMap["idle"].FrameIndex = frameIndex;
 
-		transform.SetPosition(playerEntity.Position);
+		glm::vec3 Position = glm::vec3(mGameState->PlayerPosition, 0.0f);
+
+		transform.SetPosition(Position);
 
 		if (animator.CurrentAnimation.compare("left") == 0)
 		{
-			transform.SetPosition(playerEntity.Position + glm::vec3(-7*5, 0.0f, 0.0f));
+			transform.SetPosition(Position + glm::vec3(-7*5, 0.0f, 0.0f));
 		}
 
 		if (animator.CurrentAnimation.compare("right") == 0)
 		{
-			transform.SetPosition(playerEntity.Position + glm::vec3(20*5, 0.0f, 0.0f));
+			transform.SetPosition(Position + glm::vec3(20*5, 0.0f, 0.0f));
 		}
 
 		if (animator.CurrentAnimation.compare("down") == 0)
 		{
-			transform.SetPosition(playerEntity.Position + glm::vec3(0.0f, -20.0f*5, 0.0f));
+			transform.SetPosition(Position + glm::vec3(0.0f, -20.0f*5, 0.0f));
 		}
 
 	}
@@ -189,8 +191,6 @@ Stratum::ECS::edict_t Javos::PlayerSystem::CreatePlayer()
 	auto& player = playerManager->Create(sprite);
 
 	player.bfEntity = sprite;
-
-	transform.SetScale(glm::vec3(1.0f));
 
 	renderer.Rect.position = glm::vec2(0.0f);
 	renderer.Rect.size = glm::vec2(1024.0f);

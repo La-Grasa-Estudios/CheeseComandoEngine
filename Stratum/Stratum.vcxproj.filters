@@ -977,6 +977,9 @@
     <ClCompile Include="ProjectJavos\StageEditorSystem.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
+    <ClCompile Include="ProjectJavos\Common.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Engine\Renderer\DX12\directx\d3d12.idl">

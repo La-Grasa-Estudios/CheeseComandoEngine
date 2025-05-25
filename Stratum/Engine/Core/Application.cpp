@@ -365,6 +365,7 @@ void Application::MainLoop()
 
 			if (mCurrentScene->NextScenePtr)
 			{
+				Stratum::EventHandler::RemoveSceneEventListeners();
 				SetScene(mCurrentScene->NextScenePtr);
 			}
 

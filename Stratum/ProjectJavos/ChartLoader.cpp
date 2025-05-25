@@ -25,6 +25,7 @@ Javos::Chart Javos::ChartLoader::LoadChart(const std::string& path)
 		chart.info.needsVoices = song["needsVoices"];
 		chart.info.song = song["song"];
 		chart.info.speed = song["speed"];
+		chart.info.stage = song["stage"];
 
 		auto sections = song["notes"];
 

@@ -23,7 +23,12 @@ namespace Javos
 
 	private:
 
+		void LoadStage();
+		void UpdateStage();
+
 		LoadChartParams mLoadParams;
+		Stratum::ECS::edict_t mPlayerSprite;
+
 		Stratum::ECS::edict_t mWhiteSprite;
 		float mFadeToWhiteTime = 0.0f;
 		float mFadeToWhiteBaseTime = 0.0f;
@@ -32,6 +37,8 @@ namespace Javos
 		Stratum::Ref<Stratum::MP3AudioSource> instSource;
 		Stratum::Ref<Stratum::MP3AudioSource> voicesSource;
 		Stratum::Ref<Stratum::MP3AudioSource> missSources[3];
+
+		glm::vec2 CameraOffsets[2];
 
 		Stratum::Scene* mScene;
 		Conductor* mConductor;

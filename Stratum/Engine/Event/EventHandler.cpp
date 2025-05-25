@@ -56,11 +56,11 @@ void EventHandler::InvokeEvent(uint64_t eventId, void* sender, std::vector<void*
 	}
 }
 
-void EventHandler::RegisterListener(EventFunction func, uint64_t eventId, bool threadSafe)
+void EventHandler::RegisterListener(EventFunction func, uint64_t eventId, bool removeOnSceneLoad, bool threadSafe)
 {
 	if (!s_EventHandlers.contains(eventId)) s_EventHandlers[eventId] = {};
 
-	s_EventHandlers[eventId].push_back({ func, threadSafe });
+	s_EventHandlers[eventId].push_back({ func, threadSafe, removeOnSceneLoad });
 }
 
 uint64_t EventHandler::GetEventID(const std::string& name)
@@ -76,4 +76,26 @@ uint64_t EventHandler::GetEventID(const std::string& name)
 	s_EventIDs[name] = c;
 	s_EventNames[c] = name;
 	return c;
+}
+
+void EventHandler::RemoveSceneEventListeners()
+{
+	for (auto& handler : s_EventHandlers)
+	{
+		auto& v = handler.second;
+
+		for (uint32_t i = 0; i < v.size(); ++i)
+		{
+			if (v[i].deleteOnSceneLoad)
+			{
+				if (v.size() == 1)
+				{
+					v.clear();
+					break;
+				}
+				v.erase(v.begin() + i);
+				i--;
+			}
+		}
+	}
 }

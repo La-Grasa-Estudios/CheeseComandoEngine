@@ -14,7 +14,6 @@ namespace Javos
 		bool doBeat = false;
 		float beatAcumulator;
 		uint32_t frameIndex = 0;
-		glm::vec3 Position;
 	};
 
 	class PlayerSystem : public Stratum::ISceneSystem
