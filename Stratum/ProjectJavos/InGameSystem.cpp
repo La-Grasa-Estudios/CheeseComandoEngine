@@ -8,6 +8,8 @@
 #include "StageEditorSystem.h"
 #include "CharaEditorSystem.h"
 
+#include "StageRegistry.h"
+
 #include <Core/EngineStats.h>
 #include <Core/Time.h>
 #include <Core/Window.h>
@@ -26,13 +28,6 @@ Funkin::GameState gGameState;
 
 #undef min
 #undef max
-
-struct StagePropComponent
-{
-	glm::vec2 Scroll;
-	glm::vec2 Position;
-	float DanceEvery;
-};
 
 Funkin::InGameSystem::InGameSystem(const LoadChartParams& params) : mLoadParams(params)
 {
@@ -54,13 +49,16 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	gGameState = {};
 	mScene = scene;
 
+	StageRegistry::Init(mScene);
+
 	mScene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<NoteComponent>(), C_NOTE_COMPONENT_NAME);
 	mScene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<NoteHoldComponent>(), C_NOTE_HOLD_COMPONENT_NAME);
 	mScene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<AnimatedEffectComponent>(), C_ANIMATED_EFFECT_COMPONENT_NAME);
-	mScene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<StagePropComponent>(), "stage_prop");
+	mScene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<StagePropComponent>(), C_STAGE_PROP_COMPONENT_NAME);
 
 	mConductor = new Conductor();
 	gGameState.pConductor = mConductor;
+	gGameState.pInGame = this;
 
 	PlayerSystem* playerSystem;
 
@@ -68,6 +66,11 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mScene->RegisterCustomSystem(playerSystem = new PlayerSystem(mConductor, &gGameState), true);
 
 	mConductor->LoadChart(mScene, mLoadParams.ChartPath);
+
+	StageRegistry::AddStage(mConductor->chart.info.stage);
+	StageRegistry::AddStage("syobon1-4");
+
+	StageRegistry::SetStage(mConductor->chart.info.stage);
 
 	if (!mLoadParams.OverrideStage.empty())
 		mConductor->chart.info.stage = mLoadParams.OverrideStage;
@@ -83,7 +86,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mPlayerCharacter = new CharaSprite(mScene, GenerateAssetPath(C_CHARA_PATH_PREFIX, mConductor->chart.info.player1, "json"));
 
 	playerSystem->SetCharacter(mPlayerCharacter);
-	mPlayerSprite = mPlayerCharacter->CharaEntity;
+	this->SetPlayerCharacter(mPlayerCharacter);
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -124,6 +127,10 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 			mFadeToWhiteBaseTime = event.castInteger(event.Arg2) / 1000.0f;
 			mFadeToWhiteTime = 0.0f;
 		});
+	mConductor->RegisterEventHandler("StSetStage", [this](ChartEvent& event)
+		{
+			StageRegistry::SetStage(event.Arg1);
+		});
 
 	mWhiteSprite = mScene->EntityManager.CreateEntity();
 
@@ -134,8 +141,6 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	sprite.IsGui = true;
 	sprite.RenderLayer = 100;
 	sprite.SpriteColor.a = 0.0f;
-
-	LoadStage();
 
 	instSource = Stratum::CreateRef<Stratum::MP3AudioSource>(instPath.c_str(), scene->AudioEngine->GetEngine());
 	scene->AudioEngine->AddSource(instSource);
@@ -148,8 +153,38 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		voicesSource->Play();
 	}
 
-	instSource->Seek(15 * 44100);
-	voicesSource->Seek(15 * 44100);
+	ChartEvent Event1dash4{};
+	ChartEvent Event1dash2{};
+	ChartEvent EventWhite{};
+	ChartEvent EventStopWhite{};
+
+	Event1dash4.EventName = "StSetStage";
+	Event1dash2.EventName = "StSetStage";
+	EventWhite.EventName = "StFadeToWhite";
+	EventStopWhite.EventName = "StFadeToWhite";
+
+	Event1dash4.EventTime = 110.82f;
+	Event1dash2.EventTime = 149.65f;
+
+	EventWhite.EventTime = 110.82f;
+	EventStopWhite.EventTime = 110.9f;
+
+	EventWhite.Arg1 = "1.0";
+	EventWhite.Arg2 = "1";
+
+	EventStopWhite.Arg1 = "0.0";
+	EventStopWhite.Arg2 = "1000";
+
+	Event1dash2.Arg1 = "syobon";
+	Event1dash4.Arg1 = "syobon1-4";
+
+	mConductor->chart.events.push_back(Event1dash4);
+	mConductor->chart.events.push_back(Event1dash2);
+	mConductor->chart.events.push_back(EventWhite);
+	mConductor->chart.events.push_back(EventStopWhite);
+
+	instSource->Seek(95 * 44100);
+	voicesSource->Seek(95 * 44100);
 
 	pEarlyUpdate = true;
 }
@@ -198,7 +233,15 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 	mFadeToWhiteTime = glm::min(mFadeToWhiteTime, mFadeToWhiteBaseTime);
 
 	auto& whiteSprite = mScene->SpriteRenderers.Get(mWhiteSprite);
-	whiteSprite.SpriteColor.a = glm::mix(0.0f, mFadeToWhiteIntensity, mFadeToWhiteTime / mFadeToWhiteBaseTime);
+
+	if (mFadeToWhiteIntensity > 0.0f)
+	{
+		whiteSprite.SpriteColor.a = glm::mix(0.0f, mFadeToWhiteIntensity, mFadeToWhiteTime / mFadeToWhiteBaseTime);
+	}
+	else
+	{
+		whiteSprite.SpriteColor.a = glm::mix(1.0f, 0.0f, mFadeToWhiteTime / mFadeToWhiteBaseTime);
+	}
 
 	if ((mConductor->BeatCount + gGameState.BeatOffset) % gGameState.DoBeatEveryNthBeat == 0)
 	{
@@ -266,73 +309,51 @@ void Funkin::InGameSystem::RenderImGui(Stratum::Scene* scene)
 	ImGui::End();
 }
 
-void Funkin::InGameSystem::LoadStage()
+void Funkin::InGameSystem::SetPlayerCharacter(CharaSprite* chara)
 {
-	std::string stagePath = GenerateAssetPath(C_STAGE_PATH_PREFIX, mConductor->chart.info.stage, "json");
+	mPlayerCharacter = chara;
+	mPlayerSprite = chara->CharaEntity;
 
-	if (!Stratum::ZVFS::Exists(stagePath.c_str()))
-		return;
-
-	nlohmann::json json = nlohmann::json::parse(Stratum::ZVFS::GetFile(stagePath.c_str())->Str());
-	auto metadataManager = mScene->GetComponentManager<StagePropComponent>("stage_prop");
-
-	for (auto& prop : json["props"])
+	if (auto stage = StageRegistry::GetCurrentStage())
 	{
-		auto entity = mScene->EntityManager.CreateEntity();
-		auto& sprite = mScene->SpriteRenderers.Create(entity);
-		auto& transform = mScene->Transforms.Create(entity);
-		auto& name = mScene->Names.Create(entity);
-		auto& meta = metadataManager->Create(entity);
+		mPlayerCharacter->CharaPosition = stage->Player.Position;
+		mPlayerCharacter->CharaScale = stage->Player.Scale;
 
-		name.Name = prop["name"];
-		sprite.TextureHandle = mScene->Resources.LoadTextureImage(prop["assetPath"]);
-		sprite.Rect.size = mScene->Resources.GetImageHandle(sprite.TextureHandle)->GetSize();
-		sprite.SpriteColor.a = prop["opacity"];
-		sprite.RenderLayer = prop["zIndex"];
-		meta.Position.x = prop["position"][0];
-		meta.Position.y = prop["position"][1];
-		meta.Scroll.x = prop["scroll"][0];
-		meta.Scroll.y = prop["scroll"][1];
-		transform.Scale.x = prop["scale"][0];
-		transform.Scale.y = prop["scale"][1];
-		if (prop.contains("usePixel"))
-			sprite.UseNearestTextureFilter = prop["usePixel"];
-
+		auto& sprite = mScene->SpriteRenderers.Get(chara->CharaEntity);
+		sprite.RenderLayer = stage->Player.zIndex;
 	}
+}
 
-	if (json.contains("characters"))
-	{
-		auto& characters = json["characters"];
-
-		{
-			auto& bf = characters["bf"];
-			auto& sprite = mScene->SpriteRenderers.Get(mPlayerSprite);
-
-			sprite.RenderLayer = bf["zIndex"];
-			mPlayerCharacter->CharaPosition.x = bf["position"][0];
-			mPlayerCharacter->CharaPosition.y = bf["position"][1];
-			mPlayerCharacter->CharaScale.x = bf["scale"][0];
-			mPlayerCharacter->CharaScale.y = bf["scale"][1];
-			CameraOffsets[0].x = bf["cameraOffset"][0];
-			CameraOffsets[0].y = bf["cameraOffset"][1];
-		}
-	}
+Funkin::CharaSprite* Funkin::InGameSystem::GetPlayerCharacter()
+{
+	return mPlayerCharacter;
 }
 
 void Funkin::InGameSystem::UpdateStage()
 {
-	auto metadataManager = mScene->GetComponentManager<StagePropComponent>("stage_prop");
+	auto metadataManager = mScene->GetComponentManager<StagePropComponent>(C_STAGE_PROP_COMPONENT_NAME);
 
 	auto& props = metadataManager->GetEntities();
 
 	for (auto entity : props)
 	{
 		auto& metadata = metadataManager->Get(entity);
+		auto& nameTag = mScene->Names.Get(entity);
 		auto& transform = mScene->Transforms.Get(entity);
+		auto& sprite = mScene->SpriteRenderers.Get(entity);
 
 		glm::vec2 pos = metadata.Position;
 		glm::vec2 scroll = metadata.Scroll;
 		glm::vec2 targetPos = metadata.Position + gGameState.CameraPosition * scroll;
+
+		if (nameTag.Name.starts_with("fb"))
+		{
+			if (sprite.Rotation.x == 0.0f)
+			{
+				sprite.Rotation.x = rand() % 360;
+			}
+			sprite.Rotation.x += 360.0f * 1.5f * Stratum::gpGlobals->deltaTime;
+		}
 
 		transform.Position = glm::vec3(targetPos, 0.0f);
 

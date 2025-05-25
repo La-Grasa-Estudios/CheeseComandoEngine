@@ -331,6 +331,7 @@
     <ClInclude Include="Engine\VFS\ZVFS.h" />
     <ClInclude Include="Engine\znmsp.h" />
     <ClInclude Include="ProjectJavos\CharaEditorSystem.h" />
+    <ClInclude Include="ProjectJavos\CharaRegistry.h" />
     <ClInclude Include="ProjectJavos\CharaSprite.h" />
     <ClInclude Include="ProjectJavos\ChartInfo.h" />
     <ClInclude Include="ProjectJavos\ChartLoader.h" />
@@ -345,6 +346,7 @@
     <ClInclude Include="ProjectJavos\SparrowReader.h" />
     <ClInclude Include="ProjectJavos\StageEditorSystem.h" />
     <ClInclude Include="ProjectJavos\StageInfo.h" />
+    <ClInclude Include="ProjectJavos\StageRegistry.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Asset\ShaderPermutationFile.cpp" />
@@ -456,6 +458,7 @@
     <ClCompile Include="Engine\VFS\ZVFS.cpp" />
     <ClCompile Include="Engine\Win32Libs.cpp" />
     <ClCompile Include="ProjectJavos\CharaEditorSystem.cpp" />
+    <ClCompile Include="ProjectJavos\CharaRegistry.cpp" />
     <ClCompile Include="ProjectJavos\CharaSprite.cpp" />
     <ClCompile Include="ProjectJavos\ChartInfo.cpp" />
     <ClCompile Include="ProjectJavos\ChartLoader.cpp" />
@@ -468,6 +471,7 @@
     <ClCompile Include="ProjectJavos\Player.cpp" />
     <ClCompile Include="ProjectJavos\SparrowReader.cpp" />
     <ClCompile Include="ProjectJavos\StageEditorSystem.cpp" />
+    <ClCompile Include="ProjectJavos\StageRegistry.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="Engine\Renderer\DX12\directx\d3d12.idl" />

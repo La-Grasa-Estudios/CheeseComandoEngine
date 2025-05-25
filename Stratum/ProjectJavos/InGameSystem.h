@@ -22,10 +22,11 @@ namespace Funkin
 		void Update(Stratum::Scene* scene) final;
 		void PostUpdate(Stratum::Scene* scene) final;
 		void RenderImGui(Stratum::Scene* scene) final;
+		void SetPlayerCharacter(CharaSprite* chara);
+		CharaSprite* GetPlayerCharacter();
 
 	private:
 
-		void LoadStage();
 		void UpdateStage();
 
 		LoadChartParams mLoadParams;
@@ -44,6 +45,6 @@ namespace Funkin
 
 		Stratum::Scene* mScene;
 		Conductor* mConductor;
-		CharaSprite* mPlayerCharacter;
+		CharaSprite* mPlayerCharacter = NULL;
 	};
 }
