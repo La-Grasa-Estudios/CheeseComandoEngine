@@ -198,42 +198,42 @@ Stratum::ECS::edict_t Javos::PlayerSystem::CreatePlayer()
 	renderer.RenderLayer = 0;
 
 #ifndef _DEBUG
-	renderer.TextureHandle = mScene->Resources.LoadTextureImage("textures/BOYFRIEND.DDS");
+	renderer.TextureHandle = mScene->Resources.LoadTextureImage("fnf/characters/images/bf/BOYFRIEND.DDS");
 #endif
 
 	Stratum::SpriteAnimator::Animation idleAnimation = Stratum::SpriteAnimator::Animation()
 		.SetFrameRate(15)
 		.SetLoop(true)
 		.SetAnimateOnIdle(false)
-		.SetFrames(SparrowReader::readXML("textures/BOYFRIEND.xml", "BF idle dance", false));
+		.SetFrames(SparrowReader::readXML("fnf/characters/images/bf/BOYFRIEND.xml", "BF idle dance", false));
 
 	Stratum::SpriteAnimator::Animation leftAnimation = Stratum::SpriteAnimator::Animation()
 		.SetFrameRate(30)
 		.SetLoop(false)
 		.SetAnimateOnIdle(false)
 		.SetNextState("idle")
-		.SetFrames(SparrowReader::readXML("textures/BOYFRIEND.xml", "BF NOTE LEFT00", false));
+		.SetFrames(SparrowReader::readXML("fnf/characters/images/bf/BOYFRIEND.xml", "BF NOTE LEFT00", false));
 
 	Stratum::SpriteAnimator::Animation rightAnimation = Stratum::SpriteAnimator::Animation()
 		.SetFrameRate(15)
 		.SetLoop(false)
 		.SetAnimateOnIdle(false)
 		.SetNextState("idle")
-		.SetFrames(SparrowReader::readXML("textures/BOYFRIEND.xml", "BF NOTE RIGHT00", true));
+		.SetFrames(SparrowReader::readXML("fnf/characters/images/bf/BOYFRIEND.xml", "BF NOTE RIGHT00", true));
 
 	Stratum::SpriteAnimator::Animation upAnimation = Stratum::SpriteAnimator::Animation()
 		.SetFrameRate(17)
 		.SetLoop(false)
 		.SetAnimateOnIdle(false)
 		.SetNextState("idle")
-		.SetFrames(SparrowReader::readXML("textures/BOYFRIEND.xml", "BF NOTE UP00", false));
+		.SetFrames(SparrowReader::readXML("fnf/characters/images/bf/BOYFRIEND.xml", "BF NOTE UP00", false));
 
 	Stratum::SpriteAnimator::Animation downAnimation = Stratum::SpriteAnimator::Animation()
 		.SetFrameRate(25)
 		.SetLoop(false)
 		.SetAnimateOnIdle(false)
 		.SetNextState("idle")
-		.SetFrames(SparrowReader::readXML("textures/BOYFRIEND.xml", "BF NOTE DOWN00", true));
+		.SetFrames(SparrowReader::readXML("fnf/characters/images/bf/BOYFRIEND.xml", "BF NOTE DOWN00", true));
 
 	auto& animator = mScene->SpriteAnimators.Create(sprite);
 	animator.AnimationMap["idle"] = idleAnimation;

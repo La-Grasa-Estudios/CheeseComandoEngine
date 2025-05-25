@@ -86,6 +86,12 @@ void Renderer2D::PreRender(Scene* scene)
 		glm::vec2 position = transform.Position;
 		glm::vec2 size = glm::vec2(renderer.Rect.size) * glm::vec2(transform.Scale);
 
+		if (scene->SpriteAnimators.HasComponent(entity))
+		{
+			auto frame = scene->SpriteAnimators.Get(entity).GetCurrentRect();
+			size = frame.Rect.size;
+		}
+
 		AABB instanceAABB = { position.x - size.x, position.y - size.y, position.x + size.x, position.y + size.y };
 
 		if (!screenAABB.Overlap(instanceAABB))

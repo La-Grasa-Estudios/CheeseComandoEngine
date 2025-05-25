@@ -6,6 +6,7 @@
 #include "Player.h"
 
 #include "StageEditorSystem.h"
+#include "CharaEditorSystem.h"
 
 #include <Core/EngineStats.h>
 #include <Core/Time.h>
@@ -151,6 +152,15 @@ void Javos::InGameSystem::Update(Stratum::Scene* scene)
 		auto editor = new Stratum::Scene();
 
 		editor->RegisterCustomSystem(new StageEditorSystem(""));
+
+		scene->SwapScene(editor);
+	}
+
+	if (Stratum::Input::GetKeyDown(KeyCode::NUMBER_8))
+	{
+		auto editor = new Stratum::Scene();
+
+		editor->RegisterCustomSystem(new CharaEditorSystem(""));
 
 		scene->SwapScene(editor);
 	}
