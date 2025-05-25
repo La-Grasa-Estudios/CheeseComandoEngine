@@ -2,7 +2,10 @@
 
 #include "CharaSprite.h"
 
+#include <Core/Ref.h>
+
 #include <string>
+#include <unordered_map>
 
 namespace Stratum
 {
@@ -16,8 +19,10 @@ namespace Funkin
 	public:
 		static void Init(Stratum::Scene* scene);
 		static void AddCharacter(const std::string& name);
-		static void SetPlayerCharacter(const std::string& name);
+		static void Update();
+		static CharaSprite* GetCharacter(const std::string& name);
 	private:
-		static Stratum::Scene* sScene;
+		static inline Stratum::Scene* sScene;
+		static inline std::unordered_map<std::string, Stratum::Ref<CharaSprite>> sCharaSprites;
 	};
 }

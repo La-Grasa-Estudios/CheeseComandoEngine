@@ -38,12 +38,20 @@ void Funkin::StageRegistry::AddStage(const std::string& name)
 		auto& nameCompo = sScene->Names.Create(entity);
 		auto& meta = metadataManager->Create(entity);
 
+		std::string assetPath = prop["assetPath"];
+
 		nameCompo.Name = prop["name"];
-		sprite.TextureHandle = sScene->Resources.LoadTextureImage(prop["assetPath"]);
-		sprite.Rect.size = sScene->Resources.GetImageHandle(sprite.TextureHandle)->GetSize();
+		if (!assetPath.empty())
+		{
+			sprite.TextureHandle = sScene->Resources.LoadTextureImage(assetPath);
+			sprite.Rect.size = sScene->Resources.GetImageHandle(sprite.TextureHandle)->GetSize();
+		}
+		else
+		{
+			sprite.Rect.size = { 1, 1 };
+		}
 		sprite.SpriteColor.a = prop["opacity"];
 		sprite.RenderLayer = prop["zIndex"];
-		sprite.TextureHandle = sScene->Resources.LoadTextureImage(prop["assetPath"]);
 		sprite.Enabled = false;
 		meta.Position.x = prop["position"][0];
 		meta.Position.y = prop["position"][1];
@@ -52,6 +60,12 @@ void Funkin::StageRegistry::AddStage(const std::string& name)
 		meta.StageName = name;
 		transform.Scale.x = prop["scale"][0];
 		transform.Scale.y = prop["scale"][1];
+		if (prop.contains("color"))
+		{
+			sprite.SpriteColor.r = prop["color"][0];
+			sprite.SpriteColor.g = prop["color"][1];
+			sprite.SpriteColor.b = prop["color"][2];
+		}
 		if (prop.contains("usePixel"))
 			sprite.UseNearestTextureFilter = prop["usePixel"];
 	}

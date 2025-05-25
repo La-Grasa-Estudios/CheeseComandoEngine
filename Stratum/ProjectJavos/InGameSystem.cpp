@@ -9,6 +9,7 @@
 #include "CharaEditorSystem.h"
 
 #include "StageRegistry.h"
+#include "CharaRegistry.h"
 
 #include <Core/EngineStats.h>
 #include <Core/Time.h>
@@ -41,7 +42,6 @@ Funkin::InGameSystem::~InGameSystem()
 		voicesSource->Stop();
 	instSource = NULL;
 	voicesSource = NULL;
-	delete mPlayerCharacter;
 }
 
 void Funkin::InGameSystem::Init(Stratum::Scene* scene)
@@ -50,6 +50,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mScene = scene;
 
 	StageRegistry::Init(mScene);
+	CharaRegistry::Init(mScene);
 
 	mScene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<NoteComponent>(), C_NOTE_COMPONENT_NAME);
 	mScene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<NoteHoldComponent>(), C_NOTE_HOLD_COMPONENT_NAME);
@@ -65,10 +66,18 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mScene->RegisterCustomSystem(mConductor, true);
 	mScene->RegisterCustomSystem(playerSystem = new PlayerSystem(mConductor, &gGameState), true);
 
+	gGameState.pPlayerSystem = playerSystem;
+
 	mConductor->LoadChart(mScene, mLoadParams.ChartPath);
 
 	StageRegistry::AddStage(mConductor->chart.info.stage);
+	CharaRegistry::AddCharacter(mConductor->chart.info.player1);
+
 	StageRegistry::AddStage("syobon1-4");
+	StageRegistry::AddStage("syobon1-1");
+
+	CharaRegistry::AddCharacter("syobon");
+	CharaRegistry::AddCharacter("cebollaconpelo");
 
 	StageRegistry::SetStage(mConductor->chart.info.stage);
 
@@ -83,10 +92,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	instPath.append(mConductor->chart.info.song).append("/Inst.mp3");
 	voicesPath.append(mConductor->chart.info.song).append("/Voices.mp3");
 
-	mPlayerCharacter = new CharaSprite(mScene, GenerateAssetPath(C_CHARA_PATH_PREFIX, mConductor->chart.info.player1, "json"));
-
-	playerSystem->SetCharacter(mPlayerCharacter);
-	this->SetPlayerCharacter(mPlayerCharacter);
+	this->SetPlayerCharacter(CharaRegistry::GetCharacter(mConductor->chart.info.player1));
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -143,6 +149,10 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		{
 			StageRegistry::SetStage(event.Arg1);
 		});
+	mConductor->RegisterEventHandler("StSetPlayerCharacter", [this](ChartEvent& event)
+		{
+			this->SetPlayerCharacter(CharaRegistry::GetCharacter(event.Arg1));
+		});
 
 	mWhiteSprite = mScene->EntityManager.CreateEntity();
 
@@ -165,8 +175,11 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		voicesSource->Play();
 	}
 
+	ChartEvent EventSyobon{};
+	ChartEvent EventCebolla{};
 	ChartEvent Event1dash4{};
 	ChartEvent Event1dash2{};
+	ChartEvent Event1dash1{};
 	ChartEvent EventWhite{};
 	ChartEvent EventStopWhite{};
 	ChartEvent EventStartBlack{};
@@ -174,10 +187,19 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 
 	Event1dash4.EventName = "StSetStage";
 	Event1dash2.EventName = "StSetStage";
+	Event1dash1.EventName = "StSetStage";
+
 	EventWhite.EventName = "StFadeToWhite";
 	EventStopWhite.EventName = "StFadeToWhite";
+
 	EventStartBlack.EventName = "StFadeToBlack";
 	EventStopBlack.EventName = "StFadeToBlack";
+
+	EventSyobon.EventName = "StSetPlayerCharacter";
+	EventCebolla.EventName = "StSetPlayerCharacter";
+
+	EventSyobon.Arg1 = "syobon";
+	EventCebolla.Arg1 = "cebollaconpelo";
 
 	EventStartBlack.EventTime = 147.45f;
 	EventStopBlack.EventTime = 149.65f;
@@ -189,7 +211,11 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	EventStopBlack.Arg2 = "1";
 
 	Event1dash4.EventTime = 110.82f;
+	EventSyobon.EventTime = 110.82f;
 	Event1dash2.EventTime = 149.65f;
+	EventCebolla.EventTime = 149.65f;
+
+	Event1dash1.EventTime = 232.49f;
 
 	EventWhite.EventTime = 110.82f;
 	EventStopWhite.EventTime = 110.9f;
@@ -202,6 +228,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 
 	Event1dash2.Arg1 = "syobon";
 	Event1dash4.Arg1 = "syobon1-4";
+	Event1dash1.Arg1 = "syobon1-1";
 
 	mConductor->chart.events.push_back(Event1dash4);
 	mConductor->chart.events.push_back(Event1dash2);
@@ -209,6 +236,9 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mConductor->chart.events.push_back(EventStopWhite);
 	mConductor->chart.events.push_back(EventStartBlack);
 	mConductor->chart.events.push_back(EventStopBlack);
+	mConductor->chart.events.push_back(EventSyobon);
+	mConductor->chart.events.push_back(EventCebolla);
+	mConductor->chart.events.push_back(Event1dash1);
 
 	instSource->Seek(95 * 44100);
 	voicesSource->Seek(95 * 44100);
@@ -303,7 +333,7 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 
 void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 {
-	mPlayerCharacter->Update();
+	CharaRegistry::Update();
 }
 
 void Funkin::InGameSystem::RenderImGui(Stratum::Scene* scene)
@@ -339,8 +369,14 @@ void Funkin::InGameSystem::RenderImGui(Stratum::Scene* scene)
 
 void Funkin::InGameSystem::SetPlayerCharacter(CharaSprite* chara)
 {
+	if (mPlayerCharacter)
+	{
+		mPlayerCharacter->SetEnabled(false);
+	}
 	mPlayerCharacter = chara;
 	mPlayerSprite = chara->CharaEntity;
+	gGameState.pPlayerSystem->SetCharacter(chara);
+	chara->SetEnabled(true);
 
 	if (auto stage = StageRegistry::GetCurrentStage())
 	{

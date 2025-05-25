@@ -4,7 +4,7 @@
 [WARNING] No listeners found for event: init_modules
 [WARNING] No listeners found for event: init_input
 [INFO] Printing cmdline args
-[INFO] Radeon RX 570 Series, VRAM: 4039 MB, SHARED: 8127 MB, USED: 0 MB
+[INFO] Intel(R) UHD Graphics 630, VRAM: 128 MB, SHARED: 7995 MB, USED: 0 MB
 [WARNING] No listeners found for event: init_media
 [WARNING] No listeners found for event: late_init
 [WARNING] Failed to open /config/startup.cfg
@@ -46,15 +46,15 @@
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring I can't,, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring I can't, dammint, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
-[WARNING] Detected stutter! frame got 189.145ms over 33ms max delta
+[WARNING] Detected stutter! frame got 129.843ms over 33ms max delta
 [WARNING] Logging last frame scope
-[INFO] Application::InternalUpdate: 0.008ms
-[INFO] Scene::Update: 175.217ms
+[INFO] Application::InternalUpdate: 0.006ms
+[INFO] Scene::Update: 133.377ms
 [INFO] Application::FrameUpdate: 0.000ms
-[INFO] Scene::PostUpdate: 0.078ms
-[INFO] Renderer2D::PreRender: 1.513ms
-[INFO] Renderer2D::Render: 1.405ms
-[INFO] Application::Frame: 205.630ms
+[INFO] Scene::PostUpdate: 0.058ms
+[INFO] Renderer2D::PreRender: 0.517ms
+[INFO] Renderer2D::Render: 1.260ms
+[INFO] Application::Frame: 150.963ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby,, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby, repeat, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby, repeat after, .
@@ -72,3 +72,16 @@
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring (we can not), .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Hello!, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Eh,, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Eh, Eh,, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Eh, Eh, don't, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Eh, Eh, don't listen him, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Eh, Eh, don't listen him, he, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Eh, Eh, don't listen him, he doesn't know he is saying., .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Let's go!, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Forgive me you, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Forgive me you bastard!, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring NOO!, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring NOO! Onion!, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .

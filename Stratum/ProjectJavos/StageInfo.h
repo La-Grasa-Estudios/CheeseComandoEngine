@@ -25,6 +25,7 @@ namespace Funkin
 		glm::vec2 Position;
 		glm::vec2 Scale;
 		glm::vec2 Scroll;
+		glm::vec3 Color;
 		float Opacity;
 		float DanceEvery;
 		std::string Name;

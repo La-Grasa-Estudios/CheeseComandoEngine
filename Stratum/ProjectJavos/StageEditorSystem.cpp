@@ -231,7 +231,7 @@ void Funkin::StageEditorSystem::DrawProps()
 			if (Stratum::ZVFS::Exists(metadata.assetPath.c_str()))
 			{
 				sprite.TextureHandle = mScene->Resources.LoadTextureImage(metadata.assetPath);
-				if (sprite.Rect.size.x == 0 && sprite.Rect.size.y == 0)
+				if (sprite.Rect.size.x <= 1 && sprite.Rect.size.y <= 1)
 				{
 					sprite.Rect.size = mScene->Resources.GetImageHandle(sprite.TextureHandle)->GetSize();
 				}
@@ -254,6 +254,8 @@ void Funkin::StageEditorSystem::DrawProps()
 			auto& name = mScene->Names.Create(entity);
 			metadataManager->Create(entity);
 			
+			sprite.Rect.size = { 1, 1 };
+
 			name.Name = "Empty Prop";
 
 		}
@@ -325,7 +327,7 @@ void Funkin::StageEditorSystem::DrawPropManager()
 					metadata.assetPath = str;
 					isSelectWindowOpen = false;
 					updateProp = true;
-					sprite.Rect.size = {};
+					sprite.Rect.size = { 1, 1 };
 				}
 			}
 
@@ -441,6 +443,7 @@ void Funkin::StageEditorSystem::SaveJson()
 		prop.Opacity = sprite.SpriteColor.a;
 		prop.Scale = transform.Scale;
 		prop.Position = transform.Position;
+		prop.Color = sprite.SpriteColor;
 		prop.zIndex = sprite.RenderLayer;
 		prop.Scroll = metadata.Scroll;
 		prop.Name = name.Name;
@@ -468,6 +471,9 @@ void Funkin::StageEditorSystem::SaveJson()
 		propJson["name"] = prop.Name;
 		propJson["assetPath"] = prop.Asset;
 		propJson["usePixel"] = prop.UsePixel;
+		propJson["color"][0] = prop.Color.r;
+		propJson["color"][1] = prop.Color.g;
+		propJson["color"][2] = prop.Color.b;
 
 		propArray.push_back(propJson);
 
@@ -546,6 +552,15 @@ void Funkin::StageEditorSystem::ReadJson(const std::string& name)
 		transform.Scale.x = prop["scale"][0];
 		transform.Scale.y = prop["scale"][1];
 		sprite.RenderLayer = prop["zIndex"];
+
+		sprite.Rect.size = { 1,1 };
+
+		if (prop.contains("color"))
+		{
+			sprite.SpriteColor.r = prop["color"][0];
+			sprite.SpriteColor.g = prop["color"][1];
+			sprite.SpriteColor.b = prop["color"][2];
+		}
 
 		if (prop.contains("usePixel"))
 			sprite.UseNearestTextureFilter = prop["usePixel"];

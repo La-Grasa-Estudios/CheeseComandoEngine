@@ -79,6 +79,8 @@ Funkin::CharaSprite::CharaSprite(Stratum::Scene* scene, const std::string& file)
 		renderer.UseNearestTextureFilter = json["usePixel"];
 	
 	SetEnabled(false);
+
+	mBeatAcumulator = 0.0f;
 }
 
 void Funkin::CharaSprite::Update()
