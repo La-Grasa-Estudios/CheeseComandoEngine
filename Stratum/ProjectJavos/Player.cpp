@@ -6,14 +6,14 @@
 #include <Util/Globals.h>
 #include <Event/EventHandler.h>
 
-Javos::PlayerSystem::PlayerSystem(Conductor* conductor, GameState* gameState)
+Funkin::PlayerSystem::PlayerSystem(Conductor* conductor, GameState* gameState)
 {
 	mConductor = conductor;
 	mGameState = gameState;
 	mScene = nullptr;
 }
 
-void Javos::PlayerSystem::Init(Stratum::Scene* scene)
+void Funkin::PlayerSystem::Init(Stratum::Scene* scene)
 {
 	mScene = scene;
 	scene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<PlayerComponent>(), "player_component");
@@ -24,20 +24,15 @@ void Javos::PlayerSystem::Init(Stratum::Scene* scene)
 			auto& entities = playerManager->GetEntities();
 			uint32_t noteType = (uint32_t)args[0];
 
-			for (auto edict : entities)
+			const char* animations[4] =
 			{
-				auto& animator = mScene->SpriteAnimators.Get(edict);
+				"left",
+				"down",
+				"up",
+				"right"
+			};
 
-				const char* animations[4] =
-				{
-					"left",
-					"down",
-					"up",
-					"right"
-				};
-
-				animator.SetState(animations[noteType]);
-			}
+			mCharaSprite->PlayAnimation(animations[noteType]);
 
 		};
 
@@ -45,12 +40,13 @@ void Javos::PlayerSystem::Init(Stratum::Scene* scene)
 	Stratum::EventHandler::RegisterListener(animationListener, Stratum::EventHandler::GetEventID("sustain_note"), true, true);
 }
 
-void Javos::PlayerSystem::Update(Stratum::Scene* scene)
+void Funkin::PlayerSystem::Update(Stratum::Scene* scene)
 {
 
 	auto playerManager = scene->GetComponentManager<PlayerComponent>("player_component");
 	auto& entities = playerManager->GetEntities();
 
+	/*
 	for (auto edict : entities)
 	{
 		auto& playerEntity = playerManager->Get(edict);
@@ -173,14 +169,25 @@ void Javos::PlayerSystem::Update(Stratum::Scene* scene)
 		}
 
 	}
+	*/
 
 }
 
-void Javos::PlayerSystem::PostUpdate(Stratum::Scene* scene)
+void Funkin::PlayerSystem::PostUpdate(Stratum::Scene* scene)
 {
 }
 
-Stratum::ECS::edict_t Javos::PlayerSystem::CreatePlayer()
+void Funkin::PlayerSystem::SetCharacter(CharaSprite* pCharaSprite)
+{
+	if (mCharaSprite)
+	{
+		mCharaSprite->SetEnabled(false);
+	}
+	mCharaSprite = pCharaSprite;
+	pCharaSprite->SetEnabled(true);
+}
+/*
+Stratum::ECS::edict_t Funkin::PlayerSystem::CreatePlayer()
 {
 	auto playerManager = mScene->GetComponentManager<PlayerComponent>("player_component");
 
@@ -246,3 +253,4 @@ Stratum::ECS::edict_t Javos::PlayerSystem::CreatePlayer()
 
 	return sprite;
 }
+*/

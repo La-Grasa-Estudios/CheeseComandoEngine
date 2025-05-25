@@ -5,7 +5,7 @@
 #include <Scene/Scene.h>
 #include <Sound/AudioSystem.h>
 
-namespace Javos
+namespace Funkin
 {
 	class Conductor;
 
@@ -23,6 +23,8 @@ namespace Javos
 
 	private:
 
+		std::string mLoadedWith;
+
 		enum AnimationKind
 		{
 			IDLE,
@@ -37,6 +39,7 @@ namespace Javos
 			std::string Name;
 			glm::vec2 Offset;
 			float Duration = 1.0f;
+			bool IgnoreOffset = false;
 		};
 
 		void EditCharacterGUI();

@@ -1,19 +1,21 @@
 #include "CharaEditorSystem.h"
 #include "SparrowReader.h"
+#include "InGameSystem.h"
 
 #include <Thirdparty/imgui/imgui.h>
 #include <Input/Input.h>
 #include <json/json.hpp>
 
-Javos::CharaEditorSystem::CharaEditorSystem(const std::string& stage)
+Funkin::CharaEditorSystem::CharaEditorSystem(const std::string& stage)
+{
+	mLoadedWith = stage;
+}
+
+Funkin::CharaEditorSystem::~CharaEditorSystem()
 {
 }
 
-Javos::CharaEditorSystem::~CharaEditorSystem()
-{
-}
-
-void Javos::CharaEditorSystem::Init(Stratum::Scene* scene)
+void Funkin::CharaEditorSystem::Init(Stratum::Scene* scene)
 {
 	mScene = scene;
 
@@ -31,8 +33,22 @@ void Javos::CharaEditorSystem::Init(Stratum::Scene* scene)
 	mCurrentState = "idle";
 }
 
-void Javos::CharaEditorSystem::Update(Stratum::Scene* scene)
+void Funkin::CharaEditorSystem::Update(Stratum::Scene* scene)
 {
+
+	if (Stratum::Input::GetKeyDown(KeyCode::ESCAPE))
+	{
+		LoadChartParams params;
+		params.ChartPath = mLoadedWith;
+
+		if (!mCharaName.empty())
+			params.OverridePlayer1 = mCharaName;
+
+		auto scene = new Stratum::Scene();
+		scene->RegisterCustomSystem(new InGameSystem(params));
+		mScene->SwapScene(scene);
+	}
+
 	auto& transform = mScene->Transforms.Get(mCharacterEntity);
 	auto& sprite = mScene->SpriteRenderers.Get(mCharacterEntity);
 	auto& animator = mScene->SpriteAnimators.Get(mCharacterEntity);
@@ -55,6 +71,15 @@ void Javos::CharaEditorSystem::Update(Stratum::Scene* scene)
 	sprite.Center = glm::vec2(0.0f, 1.0f);
 
 	bool set = false;
+
+	if (animator.AnimationMap.contains("left"))
+		animator.AnimationMap["left"].SetFrameRate(animator.AnimationMap["left"].rects.size() * mLeftAnimation.Duration);
+	if (animator.AnimationMap.contains("right"))
+		animator.AnimationMap["right"].SetFrameRate(animator.AnimationMap["right"].rects.size() * mLeftAnimation.Duration);
+	if (animator.AnimationMap.contains("up"))
+		animator.AnimationMap["up"].SetFrameRate(animator.AnimationMap["up"].rects.size() * mLeftAnimation.Duration);
+	if (animator.AnimationMap.contains("down"))
+		animator.AnimationMap["down"].SetFrameRate(animator.AnimationMap["down"].rects.size() * mLeftAnimation.Duration);
 
 	if (Stratum::Input::GetKeyDown(KeyCode::LEFT))
 	{
@@ -94,35 +119,37 @@ void Javos::CharaEditorSystem::Update(Stratum::Scene* scene)
 		animator.SetState(mCurrentState);
 	}
 
+	glm::vec2 multiplier = { sprite.FlipX ? -1.0f : 1.0f, 1.0f };
 	glm::vec3 Position = glm::vec3(0.0f, -500.0f, 0.0f);
 
 	transformGhost.SetPosition(Position);
+	transformGhost.SetScale(transform.Scale);
 
 	if (animator.CurrentAnimation.compare("left") == 0)
 	{
-		Position += glm::vec3(mLeftAnimation.Offset, 0.0f);
+		Position += glm::vec3(mLeftAnimation.Offset * multiplier, 0.0f);
 	}
 	if (animator.CurrentAnimation.compare("right") == 0)
 	{
-		Position += glm::vec3(mRightAnimation.Offset, 0.0f);
+		Position += glm::vec3(mRightAnimation.Offset * multiplier, 0.0f);
 	}
 	if (animator.CurrentAnimation.compare("up") == 0)
 	{
-		Position += glm::vec3(mUpAnimation.Offset, 0.0f);
+		Position += glm::vec3(mUpAnimation.Offset * multiplier, 0.0f);
 	}
 	if (animator.CurrentAnimation.compare("down") == 0)
 	{
-		Position += glm::vec3(mDownAnimation.Offset, 0.0f);
+		Position += glm::vec3(mDownAnimation.Offset * multiplier, 0.0f);
 	}
 
 	transform.SetPosition(Position);
 }
 
-void Javos::CharaEditorSystem::PostUpdate(Stratum::Scene* scene)
+void Funkin::CharaEditorSystem::PostUpdate(Stratum::Scene* scene)
 {
 }
 
-void Javos::CharaEditorSystem::RenderImGui(Stratum::Scene* scene)
+void Funkin::CharaEditorSystem::RenderImGui(Stratum::Scene* scene)
 {
 	EditCharacterGUI();
 
@@ -190,14 +217,22 @@ void Javos::CharaEditorSystem::RenderImGui(Stratum::Scene* scene)
 	}
 }
 
-void Javos::CharaEditorSystem::EditCharacterGUI()
+void Funkin::CharaEditorSystem::EditCharacterGUI()
 {
+	auto& sprite = mScene->SpriteRenderers.Get(mCharacterEntity);
+	auto& animator = mScene->SpriteAnimators.Get(mCharacterEntity);
+	auto& transform = mScene->Transforms.Get(mCharacterEntity);
+
 	ImGui::Begin("Character Editor");
 
 	static bool isSelectWindowOpen = false;
 
 	InputText(mCharaName, "Character Name");
 	ImGui::Checkbox("Return to idle", &mBackToIdle);
+	ImGui::Checkbox("Horizontal Flip", &sprite.FlipX);
+	ImGui::Checkbox("Use pixel", &sprite.UseNearestTextureFilter);
+
+	ImGui::DragFloat2("Scale", glm::value_ptr(transform.Scale), 0.025f);
 
 	ImGui::Text("Asset Path: %s", mAssetPath.c_str());
 	ImGui::Text("Sparrow Path: %s", mSparrowPath.c_str());
@@ -212,21 +247,22 @@ void Javos::CharaEditorSystem::EditCharacterGUI()
 	InputText(mLeftAnimation.Name, "Left Animation");
 	ImGui::DragFloat2("Offset Left", glm::value_ptr(mLeftAnimation.Offset), 0.5f);
 	ImGui::InputFloat("Left Multiplier", &mLeftAnimation.Duration);
+	ImGui::Checkbox("Ignore Offset Left", &mLeftAnimation.IgnoreOffset);
 
 	InputText(mDownAnimation.Name, "Down Animation");
 	ImGui::DragFloat2("Offset Down", glm::value_ptr(mDownAnimation.Offset), 0.5f);
 	ImGui::InputFloat("Down Multiplier", &mDownAnimation.Duration);
+	ImGui::Checkbox("Ignore Offset Down", &mDownAnimation.IgnoreOffset);
 
 	InputText(mUpAnimation.Name, "Up Animation");
 	ImGui::DragFloat2("Offset Up", glm::value_ptr(mUpAnimation.Offset), 0.5f);
 	ImGui::InputFloat("Up Multiplier", &mUpAnimation.Duration);
+	ImGui::Checkbox("Ignore Offset Up", &mUpAnimation.IgnoreOffset);
 
 	InputText(mRightAnimation.Name, "Right Animation");
 	ImGui::DragFloat2("Offset Right", glm::value_ptr(mRightAnimation.Offset), 0.5f);
 	ImGui::InputFloat("Right Multiplier", &mRightAnimation.Duration);
-
-	auto& sprite = mScene->SpriteRenderers.Get(mCharacterEntity);
-	auto& animator = mScene->SpriteAnimators.Get(mCharacterEntity);
+	ImGui::Checkbox("Ignore Offset Right", &mRightAnimation.IgnoreOffset);
 
 	sprite.Center = glm::vec2(0.0f, 1.0f);
 
@@ -272,25 +308,25 @@ void Javos::CharaEditorSystem::EditCharacterGUI()
 				.SetFrameRate(24)
 				.SetLoop(false)
 				.SetAnimateOnIdle(false)
-				.SetFrames(SparrowReader::readXML(mSparrowPath, mLeftAnimation.Name, true));
+				.SetFrames(SparrowReader::readXML(mSparrowPath, mLeftAnimation.Name, mLeftAnimation.IgnoreOffset));
 
 			Stratum::SpriteAnimator::Animation rightAnimation = Stratum::SpriteAnimator::Animation()
 				.SetFrameRate(24)
 				.SetLoop(false)
 				.SetAnimateOnIdle(false)
-				.SetFrames(SparrowReader::readXML(mSparrowPath, mRightAnimation.Name, true));
+				.SetFrames(SparrowReader::readXML(mSparrowPath, mRightAnimation.Name, mRightAnimation.IgnoreOffset));
 
 			Stratum::SpriteAnimator::Animation upAnimation = Stratum::SpriteAnimator::Animation()
 				.SetFrameRate(24)
 				.SetLoop(false)
 				.SetAnimateOnIdle(false)
-				.SetFrames(SparrowReader::readXML(mSparrowPath, mUpAnimation.Name, true));
+				.SetFrames(SparrowReader::readXML(mSparrowPath, mUpAnimation.Name, mUpAnimation.IgnoreOffset));
 
 			Stratum::SpriteAnimator::Animation downAnimation = Stratum::SpriteAnimator::Animation()
 				.SetFrameRate(24)
 				.SetLoop(false)
 				.SetAnimateOnIdle(false)
-				.SetFrames(SparrowReader::readXML(mSparrowPath, mDownAnimation.Name, true));
+				.SetFrames(SparrowReader::readXML(mSparrowPath, mDownAnimation.Name, mDownAnimation.IgnoreOffset));
 
 			downAnimation.SetFrameRate(downAnimation.rects.size() * mDownAnimation.Duration);
 			upAnimation.SetFrameRate(upAnimation.rects.size() * mUpAnimation.Duration);
@@ -314,16 +350,22 @@ void Javos::CharaEditorSystem::EditCharacterGUI()
 	ImGui::End();
 }
 
-void Javos::CharaEditorSystem::SaveJson()
+void Funkin::CharaEditorSystem::SaveJson()
 {
 	std::string path = "Data/fnf/characters/data/";
 	path.append(mSaveOutput).append(".json");
 
 	nlohmann::json json;
+	auto& sprite = mScene->SpriteRenderers.Get(mCharacterEntity);
+	auto& transform = mScene->Transforms.Get(mCharacterEntity);
 
 	json["name"] = mCharaName;
 	json["assetPath"] = mAssetPath;
 	json["sparrowPath"] = mSparrowPath;
+	json["flipX"] = sprite.FlipX;
+	json["scale"][0] = transform.Scale.x;
+	json["scale"][1] = transform.Scale.y;
+	json["usePixel"] = sprite.UseNearestTextureFilter;
 	
 	CharaAnimation animations[5] =
 	{
@@ -351,6 +393,7 @@ void Javos::CharaEditorSystem::SaveJson()
 		anim["duration"] = animations[i].Duration;
 		anim["offsets"][0] = animations[i].Offset.x;
 		anim["offsets"][1] = animations[i].Offset.y;
+		anim["ignoreOffsets"][1] = animations[i].IgnoreOffset;
 		json["animations"][i] = anim;
 	}
 
@@ -361,7 +404,7 @@ void Javos::CharaEditorSystem::SaveJson()
 	output.close();
 }
 
-void Javos::CharaEditorSystem::ReadJson(const std::string& name)
+void Funkin::CharaEditorSystem::ReadJson(const std::string& name)
 {
 	if (!Stratum::ZVFS::Exists(name.c_str()))
 		return;
@@ -370,6 +413,7 @@ void Javos::CharaEditorSystem::ReadJson(const std::string& name)
 
 	auto& sprite = mScene->SpriteRenderers.Get(mCharacterEntity);
 	auto& animator = mScene->SpriteAnimators.Get(mCharacterEntity);
+	auto& transform = mScene->Transforms.Get(mCharacterEntity);
 
 	CharaAnimation* animations[5] =
 	{
@@ -393,6 +437,18 @@ void Javos::CharaEditorSystem::ReadJson(const std::string& name)
 	mAssetPath = json["assetPath"];
 	mSparrowPath = json["sparrowPath"];
 
+	if (json.contains("flipX"))
+		sprite.FlipX = json["flipX"];
+
+	if (json.contains("scale"))
+	{
+		transform.Scale.x = json["scale"][0];
+		transform.Scale.y = json["scale"][1];
+	}
+
+	if (json.contains("usePixel"))
+		sprite.UseNearestTextureFilter = json["usePixel"];
+
 	sprite.TextureHandle = mScene->Resources.LoadTextureImage(mAssetPath);
 
 	for (int i = 0; i < 5; i++)
@@ -403,6 +459,8 @@ void Javos::CharaEditorSystem::ReadJson(const std::string& name)
 		animations[i]->Name = anim["prefix"];
 		animations[i]->Offset.x = anim["offsets"][0];
 		animations[i]->Offset.y = anim["offsets"][1];
+		if (anim.contains("animOffsets"))
+			animations[i]->IgnoreOffset = anim["ignoreOffsets"];
 
 		Stratum::SpriteAnimator::Animation animation = Stratum::SpriteAnimator::Animation()
 			.SetFrameRate(24)
@@ -415,7 +473,7 @@ void Javos::CharaEditorSystem::ReadJson(const std::string& name)
 	}
 }
 
-void Javos::CharaEditorSystem::InputText(std::string& target, const char* label)
+void Funkin::CharaEditorSystem::InputText(std::string& target, const char* label)
 {
 	char buffer[255]{};
 

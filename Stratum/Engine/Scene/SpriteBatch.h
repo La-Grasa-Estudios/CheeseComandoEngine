@@ -19,10 +19,22 @@ class SpriteBatch
 
 public:
 
+	struct SpriteInstance
+	{
+		glm::mat4 transform;
+		SpriteRendererComponent::SpriteRect rect;
+		glm::ivec2 RenderSize;
+		glm::vec2 center;
+		glm::vec2 offset;
+		glm::vec4 color;
+		DescriptorHandle texture;
+		bool useNearestFilter = false;
+	};
+
 	SpriteBatch(SceneResources* pResources);
 
 	void Begin();
-	void DrawSprite(const glm::mat4& transform, SpriteRendererComponent::SpriteRect& rect, glm::vec2 center, const glm::vec4& color, DescriptorHandle texture);
+	void DrawSprite(const SpriteInstance& instance);
 	void End(Render::GraphicsCommandBuffer* pCmdBuffer);
 
 	void SetResources(SceneResources* pRsc);
@@ -33,9 +45,12 @@ public:
 		glm::vec4 uvs[2];
 		glm::vec4 Color;
 		DescriptorHandle texture;
+		uint32_t flags;
 	};
 
 private:
+
+	static inline const uint32_t FLAG_SPRITE_NEAREST = 1 << 0;
 
 	std::vector<SpriteRenderable> mRenderQueue;
 

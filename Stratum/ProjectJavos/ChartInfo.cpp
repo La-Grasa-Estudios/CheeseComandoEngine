@@ -2,7 +2,7 @@
 
 #include <regex>
 
-float Javos::ChartEvent::castFloat(std::string token)
+float Funkin::ChartEvent::castFloat(std::string token)
 {
 	bool isFloat = std::regex_match(token, std::regex(("((\\+|-)?[[:digit:]]+)(\\.(([[:digit:]]+)?))?")));
 
@@ -14,7 +14,7 @@ float Javos::ChartEvent::castFloat(std::string token)
 	return 0.0f;
 }
 
-int32_t Javos::ChartEvent::castInteger(std::string token)
+int32_t Funkin::ChartEvent::castInteger(std::string token)
 {
 	bool isInteger = token.find_first_not_of("-1234567890") == std::string::npos;
 
@@ -26,7 +26,7 @@ int32_t Javos::ChartEvent::castInteger(std::string token)
 	return 0;
 }
 
-bool Javos::ChartEvent::castBoolean(std::string token)
+bool Funkin::ChartEvent::castBoolean(std::string token)
 {
 	if (castInteger(token))
 	{

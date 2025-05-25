@@ -331,6 +331,7 @@
     <ClInclude Include="Engine\VFS\ZVFS.h" />
     <ClInclude Include="Engine\znmsp.h" />
     <ClInclude Include="ProjectJavos\CharaEditorSystem.h" />
+    <ClInclude Include="ProjectJavos\CharaSprite.h" />
     <ClInclude Include="ProjectJavos\ChartInfo.h" />
     <ClInclude Include="ProjectJavos\ChartLoader.h" />
     <ClInclude Include="ProjectJavos\Common.h" />
@@ -455,6 +456,7 @@
     <ClCompile Include="Engine\VFS\ZVFS.cpp" />
     <ClCompile Include="Engine\Win32Libs.cpp" />
     <ClCompile Include="ProjectJavos\CharaEditorSystem.cpp" />
+    <ClCompile Include="ProjectJavos\CharaSprite.cpp" />
     <ClCompile Include="ProjectJavos\ChartInfo.cpp" />
     <ClCompile Include="ProjectJavos\ChartLoader.cpp" />
     <ClCompile Include="ProjectJavos\Common.cpp" />

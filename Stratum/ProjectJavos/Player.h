@@ -3,8 +3,9 @@
 #include <Scene/Scene.h>
 
 #include "GameState.h"
+#include "CharaSprite.h"
 
-namespace Javos
+namespace Funkin
 {
 	class Conductor;
 
@@ -24,13 +25,14 @@ namespace Javos
 		void Init(Stratum::Scene* scene) override;
 		void Update(Stratum::Scene* scene) override;
 		void PostUpdate(Stratum::Scene* scene) override;
-		Stratum::ECS::edict_t CreatePlayer();
+		void SetCharacter(CharaSprite* pCharaSprite);
 
 	private:
 
 		Stratum::Scene* mScene;
 		Conductor* mConductor;
 		GameState* mGameState;
+		CharaSprite* mCharaSprite = NULL;
 
 	};
 }

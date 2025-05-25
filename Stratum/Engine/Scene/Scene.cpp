@@ -61,11 +61,17 @@ void Scene::UpdateSystems()
 
 void Scene::PostUpdate()
 {
+	for (int i = 0; i < mSystems.size(); i++)
+	{
+		if (mSystems[i]->pEarlyUpdate)
+			mSystems[i]->PostUpdate(this);
+	}
 	UpdateGuiAnchors();
 	UpdateTransforms();
 	for (int i = 0; i < mSystems.size(); i++)
 	{
-		mSystems[i]->PostUpdate(this);
+		if (!mSystems[i]->pEarlyUpdate)
+			mSystems[i]->PostUpdate(this);
 	}
 }
 

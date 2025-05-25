@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace Javos
+namespace Funkin
 {
 	struct StagePropAnimation
 	{
@@ -29,6 +29,7 @@ namespace Javos
 		float DanceEvery;
 		std::string Name;
 		std::string Asset;
+		bool UsePixel;
 	};
 
 	struct LevelStage

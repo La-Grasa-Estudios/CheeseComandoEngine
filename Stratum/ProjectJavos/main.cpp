@@ -15,6 +15,6 @@ Application* AppMain(std::vector<std::string> args)
 	info.WindowedResolutionX = 1600;
 	info.WindowedResolutionY = 900;
 
-	Application* app = new Javos::JavosApp(info);
+	Application* app = new Funkin::JavosApp(info);
 	return app;
 }

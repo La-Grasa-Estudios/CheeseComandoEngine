@@ -5,11 +5,11 @@
 #undef min
 #undef max
 
-Javos::JavosApp::JavosApp(Stratum::ApplicationInfo appInfo) : Stratum::Application(appInfo)
+Funkin::JavosApp::JavosApp(Stratum::ApplicationInfo appInfo) : Stratum::Application(appInfo)
 {
 }
 
-void Javos::JavosApp::OnInit()
+void Funkin::JavosApp::OnInit()
 {
 	LoadChartParams params;
 	params.ChartPath = "fnf/data/bite/bite-fernan.json";
@@ -20,17 +20,17 @@ void Javos::JavosApp::OnInit()
 	scene->RegisterCustomSystem(new InGameSystem(params));
 }
 
-void Javos::JavosApp::OnFrameUpdate()
+void Funkin::JavosApp::OnFrameUpdate()
 {
 
 }
 
-void Javos::JavosApp::OnFrameRenderImGui()
+void Funkin::JavosApp::OnFrameRenderImGui()
 {
 	
 }
 
-void Javos::JavosApp::Cleanup()
+void Funkin::JavosApp::Cleanup()
 {
 	
 }

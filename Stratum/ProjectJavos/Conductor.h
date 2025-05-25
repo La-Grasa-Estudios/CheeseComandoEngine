@@ -10,7 +10,7 @@ namespace Stratum
 	class Scene;
 }
 
-namespace Javos
+namespace Funkin
 {
 
 	typedef std::function<void(ChartEvent&)> ChartEventHandler;
@@ -34,6 +34,8 @@ namespace Javos
 		void Update(Stratum::Scene* scene);
 
 		void RegisterEventHandler(const std::string& eventName, ChartEventHandler handler);
+
+		float GetConductorBeatMultiplier();
 
 		bool EnableBot = false;
 		int32_t PlayerScore = 0;

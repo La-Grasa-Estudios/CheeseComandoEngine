@@ -624,6 +624,9 @@
     <ClInclude Include="ProjectJavos\CharaEditorSystem.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
+    <ClInclude Include="ProjectJavos\CharaSprite.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Asset\ShaderPermutationFile.cpp">
@@ -984,6 +987,9 @@
       <Filter>Archivos de origen</Filter>
     </ClCompile>
     <ClCompile Include="ProjectJavos\CharaEditorSystem.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="ProjectJavos\CharaSprite.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>

@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace Javos
+namespace Funkin
 {
 	struct ChartNote
 	{
@@ -29,6 +29,9 @@ namespace Javos
 		float speed = 1.0f;
 		std::string song;
 		std::string stage;
+		std::string player1;
+		std::string player2;
+		std::string gfVersion;
 	};
 	struct ChartEvent
 	{

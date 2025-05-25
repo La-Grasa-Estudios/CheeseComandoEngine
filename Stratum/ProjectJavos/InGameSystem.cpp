@@ -22,7 +22,7 @@
 #include <json/json.hpp>
 
 
-Javos::GameState gGameState;
+Funkin::GameState gGameState;
 
 #undef min
 #undef max
@@ -34,21 +34,22 @@ struct StagePropComponent
 	float DanceEvery;
 };
 
-Javos::InGameSystem::InGameSystem(const LoadChartParams& params) : mLoadParams(params)
+Funkin::InGameSystem::InGameSystem(const LoadChartParams& params) : mLoadParams(params)
 {
 	
 }
 
-Javos::InGameSystem::~InGameSystem()
+Funkin::InGameSystem::~InGameSystem()
 {
 	instSource->Stop();
 	if (voicesSource)
 		voicesSource->Stop();
 	instSource = NULL;
 	voicesSource = NULL;
+	delete mPlayerCharacter;
 }
 
-void Javos::InGameSystem::Init(Stratum::Scene* scene)
+void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 {
 	gGameState = {};
 	mScene = scene;
@@ -68,12 +69,21 @@ void Javos::InGameSystem::Init(Stratum::Scene* scene)
 
 	mConductor->LoadChart(mScene, mLoadParams.ChartPath);
 
+	if (!mLoadParams.OverrideStage.empty())
+		mConductor->chart.info.stage = mLoadParams.OverrideStage;
+
+	if (!mLoadParams.OverridePlayer1.empty())
+		mConductor->chart.info.player1 = mLoadParams.OverridePlayer1;
+
 	std::string instPath = C_SONG_PATH_PREFIX;
 	std::string voicesPath = "fnf/songs/";
 	instPath.append(mConductor->chart.info.song).append("/Inst.mp3");
 	voicesPath.append(mConductor->chart.info.song).append("/Voices.mp3");
 
-	mPlayerSprite = playerSystem->CreatePlayer();
+	mPlayerCharacter = new CharaSprite(mScene, GenerateAssetPath(C_CHARA_PATH_PREFIX, mConductor->chart.info.player1, "json"));
+
+	playerSystem->SetCharacter(mPlayerCharacter);
+	mPlayerSprite = mPlayerCharacter->CharaEntity;
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -137,10 +147,16 @@ void Javos::InGameSystem::Init(Stratum::Scene* scene)
 		scene->AudioEngine->AddSource(voicesSource);
 		voicesSource->Play();
 	}
+
+	instSource->Seek(15 * 44100);
+	voicesSource->Seek(15 * 44100);
+
+	pEarlyUpdate = true;
 }
 
-void Javos::InGameSystem::Update(Stratum::Scene* scene)
+void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 {
+
 	if (Stratum::Input::GetKeyDown(KeyCode::F11))
 	{
 		static bool fs = false;
@@ -151,7 +167,7 @@ void Javos::InGameSystem::Update(Stratum::Scene* scene)
 	{
 		auto editor = new Stratum::Scene();
 
-		editor->RegisterCustomSystem(new StageEditorSystem(""));
+		editor->RegisterCustomSystem(new StageEditorSystem(mLoadParams.ChartPath));
 
 		scene->SwapScene(editor);
 	}
@@ -160,7 +176,7 @@ void Javos::InGameSystem::Update(Stratum::Scene* scene)
 	{
 		auto editor = new Stratum::Scene();
 
-		editor->RegisterCustomSystem(new CharaEditorSystem(""));
+		editor->RegisterCustomSystem(new CharaEditorSystem(mLoadParams.ChartPath));
 
 		scene->SwapScene(editor);
 	}
@@ -215,12 +231,12 @@ void Javos::InGameSystem::Update(Stratum::Scene* scene)
 	UpdateStage();
 }
 
-void Javos::InGameSystem::PostUpdate(Stratum::Scene* scene)
+void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 {
-
+	mPlayerCharacter->Update();
 }
 
-void Javos::InGameSystem::RenderImGui(Stratum::Scene* scene)
+void Funkin::InGameSystem::RenderImGui(Stratum::Scene* scene)
 {
 	using namespace Stratum;
 
@@ -250,7 +266,7 @@ void Javos::InGameSystem::RenderImGui(Stratum::Scene* scene)
 	ImGui::End();
 }
 
-void Javos::InGameSystem::LoadStage()
+void Funkin::InGameSystem::LoadStage()
 {
 	std::string stagePath = GenerateAssetPath(C_STAGE_PATH_PREFIX, mConductor->chart.info.stage, "json");
 
@@ -279,6 +295,9 @@ void Javos::InGameSystem::LoadStage()
 		meta.Scroll.y = prop["scroll"][1];
 		transform.Scale.x = prop["scale"][0];
 		transform.Scale.y = prop["scale"][1];
+		if (prop.contains("usePixel"))
+			sprite.UseNearestTextureFilter = prop["usePixel"];
+
 	}
 
 	if (json.contains("characters"))
@@ -287,21 +306,20 @@ void Javos::InGameSystem::LoadStage()
 
 		{
 			auto& bf = characters["bf"];
-			auto& transform = mScene->Transforms.Get(mPlayerSprite);
 			auto& sprite = mScene->SpriteRenderers.Get(mPlayerSprite);
 
 			sprite.RenderLayer = bf["zIndex"];
-			gGameState.PlayerPosition.x = bf["position"][0];
-			gGameState.PlayerPosition.y = bf["position"][1];
-			transform.Scale.x = bf["scale"][0];
-			transform.Scale.y = bf["scale"][1];
+			mPlayerCharacter->CharaPosition.x = bf["position"][0];
+			mPlayerCharacter->CharaPosition.y = bf["position"][1];
+			mPlayerCharacter->CharaScale.x = bf["scale"][0];
+			mPlayerCharacter->CharaScale.y = bf["scale"][1];
 			CameraOffsets[0].x = bf["cameraOffset"][0];
 			CameraOffsets[0].y = bf["cameraOffset"][1];
 		}
 	}
 }
 
-void Javos::InGameSystem::UpdateStage()
+void Funkin::InGameSystem::UpdateStage()
 {
 	auto metadataManager = mScene->GetComponentManager<StagePropComponent>("stage_prop");
 

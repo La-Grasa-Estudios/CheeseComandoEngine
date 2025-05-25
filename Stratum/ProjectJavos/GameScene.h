@@ -3,7 +3,7 @@
 #include <Scene/Scene.h>
 #include "Common.h"
 
-namespace Javos
+namespace Funkin
 {
 	Stratum::Scene* CreatePlayingScene(const LoadChartParams& params);
 }

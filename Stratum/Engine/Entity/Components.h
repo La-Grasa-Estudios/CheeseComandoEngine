@@ -77,6 +77,7 @@ struct SpriteRendererComponent
 	bool IsGui = false; // Makes the sprite render to a second view
 	bool FlipX = false;
 	bool FlipY = false;
+	bool UseNearestTextureFilter = false;
 
 };
 
@@ -86,6 +87,7 @@ struct SpriteAnimator
 	{
 		SpriteRendererComponent::SpriteRect Rect;
 		glm::ivec2 Offset;
+		glm::ivec2 FrameSize; // Same as Rect.size when is not available
 		bool Rotated = false; // Sparrow V2 Compatibility
 	};
 
@@ -162,6 +164,8 @@ struct SpriteAnimator
 
 		if (auto a = AnimationMap.find(CurrentAnimation); AnimationMap.contains(CurrentAnimation))
 		{
+			if (a->second.rects.empty())
+				return {};
 			return a->second.rects[a->second.FrameIndex];
 		} 
 

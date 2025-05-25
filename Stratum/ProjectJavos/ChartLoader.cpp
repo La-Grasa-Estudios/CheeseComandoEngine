@@ -6,7 +6,7 @@
 
 #include <json/json.hpp>
 
-Javos::Chart Javos::ChartLoader::LoadChart(const std::string& path)
+Funkin::Chart Funkin::ChartLoader::LoadChart(const std::string& path)
 {
 
 	Stratum::RefBinaryStream stream = Stratum::ZVFS::GetFile(path.c_str());
@@ -26,6 +26,9 @@ Javos::Chart Javos::ChartLoader::LoadChart(const std::string& path)
 		chart.info.song = song["song"];
 		chart.info.speed = song["speed"];
 		chart.info.stage = song["stage"];
+		chart.info.player1 = song["player1"];
+		chart.info.player2 = song["player2"];
+		chart.info.gfVersion = song["gfVersion"];
 
 		auto sections = song["notes"];
 

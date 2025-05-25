@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Javos
+namespace Funkin
 {
 	class Conductor;
 	struct GameState

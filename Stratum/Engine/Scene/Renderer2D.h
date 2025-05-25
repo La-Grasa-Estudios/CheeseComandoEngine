@@ -2,6 +2,7 @@
 
 #include "Scene.h"
 #include "RendererCommon.h"
+#include "SpriteBatch.h"
 
 #include "znmsp.h"
 
@@ -17,21 +18,14 @@ namespace Render
 	class ConstantBuffer;
 	class TextureSampler;
 }
-
-class SpriteBatch;
-
 struct RenderQueue2D
 {
 
 	struct RenderInstance
 	{
-		glm::mat4 transform;
-		glm::vec2 center;
-		glm::vec4 color;
+		SpriteBatch::SpriteInstance batch;
 		uint32_t zIndex;
-		SpriteRendererComponent::SpriteRect rect;
-		DescriptorHandle texture;
-
+		
 		constexpr bool operator >(const RenderInstance& other) const
 		{
 			return zIndex > other.zIndex;
@@ -107,6 +101,7 @@ private:
 	Ref<Render::ConstantBuffer> mPerFrameData;
 
 	Ref<Render::TextureSampler> mBilinearSampler;
+	Ref<Render::TextureSampler> mNearestSampler;
 	
 	RenderQueue2D mRenderQueue;
 	RenderQueue2D mGuiRenderQueue;

@@ -2,7 +2,7 @@
 
 #include "ChartInfo.h"
 
-namespace Javos
+namespace Funkin
 {
 	class ChartLoader
 	{

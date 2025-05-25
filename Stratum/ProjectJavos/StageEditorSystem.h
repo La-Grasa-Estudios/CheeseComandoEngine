@@ -2,10 +2,12 @@
 
 #include "Common.h"
 
+#include "CharaSprite.h"
+
 #include <Scene/Scene.h>
 #include <Sound/AudioSystem.h>
 
-namespace Javos
+namespace Funkin
 {
 	class Conductor;
 
@@ -22,6 +24,8 @@ namespace Javos
 		void RenderImGui(Stratum::Scene* scene) final;
 
 	private:
+
+		std::string mLoadedWith;
 
 		void DrawProps();
 		void DrawPropManager();
@@ -48,5 +52,6 @@ namespace Javos
 		glm::vec2 CameraOffsets[3] = {};
 
 		Stratum::Scene* mScene;
+		CharaSprite* mCharacter;
 	};
 }

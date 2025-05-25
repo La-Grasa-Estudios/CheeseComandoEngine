@@ -5,7 +5,9 @@
 #include <Scene/Scene.h>
 #include <Sound/AudioSystem.h>
 
-namespace Javos
+#include "CharaSprite.h"
+
+namespace Funkin
 {
 	class Conductor;
 
@@ -42,5 +44,6 @@ namespace Javos
 
 		Stratum::Scene* mScene;
 		Conductor* mConductor;
+		CharaSprite* mPlayerCharacter;
 	};
 }

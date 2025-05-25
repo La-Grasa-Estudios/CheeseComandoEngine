@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace Javos
+namespace Funkin
 {
 
 	static inline const char* C_NOTE_COMPONENT_NAME = "note_component";

@@ -1,7 +1,7 @@
 #include "GameScene.h"
 #include "InGameSystem.h"
 
-Stratum::Scene* Javos::CreatePlayingScene(const LoadChartParams& params)
+Stratum::Scene* Funkin::CreatePlayingScene(const LoadChartParams& params)
 {
     
 

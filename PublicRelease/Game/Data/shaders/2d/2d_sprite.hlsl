@@ -16,7 +16,10 @@ cbuffer DrawData : register(b0)
     float4 uv2;
     float4 instanceColor;
     int texture;
+    int flags;
 };
+
+static const int FLAG_NEAREST = 0x1;
 
 #ifdef STAGE_VERTEX
 
@@ -51,6 +54,7 @@ v2f main(in i2v input, in uint vertexID : SV_VertexID)
 
 Texture2D Textures[] : register(t0, space2);
 SamplerState BilinearSampler : register(s0);
+SamplerState NearestSampler : register(s1);
 
 float4 main(v2f input) : SV_Target
 {
@@ -59,7 +63,13 @@ float4 main(v2f input) : SV_Target
     if (texture != -1)
     {
         float2 TexCoord = input.TexCoord;
-        color = Textures[texture].Sample(BilinearSampler, TexCoord);
+        
+        bool useNearest = (flags & FLAG_NEAREST) != 0;
+        
+        if (useNearest)
+            color = Textures[texture].Sample(NearestSampler, TexCoord);
+        else
+            color = Textures[texture].Sample(BilinearSampler, TexCoord);
     }
     
     return color * instanceColor;

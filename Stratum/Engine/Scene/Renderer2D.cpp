@@ -41,7 +41,14 @@ Renderer2D::Renderer2D()
 
 	Render::TextureSamplerDescription samplerDesc{};
 
+	samplerDesc.Filter = Render::TextureFilterMode::ANISOTROPIC;
+	samplerDesc.AnisoLevel = 16;
+
 	mBilinearSampler = CreateRef<Render::TextureSampler>(samplerDesc);
+
+	samplerDesc.Filter = Render::TextureFilterMode::POINT;
+
+	mNearestSampler = CreateRef<Render::TextureSampler>(samplerDesc);
 }
 
 void Renderer2D::PreRender(Scene* scene)
@@ -101,24 +108,47 @@ void Renderer2D::PreRender(Scene* scene)
 
 		glm::vec2 flipMult = glm::vec2(renderer.FlipX ? -1.0f : 1.0f, renderer.FlipY ? -1.0f : 1.0f);
 
-		instance.center = renderer.Center;
-		instance.rect = renderer.Rect;
-		instance.texture = renderer.TextureHandle;
+		instance.batch.center = renderer.Center;
+		instance.batch.rect = renderer.Rect;
+		instance.batch.RenderSize = renderer.Rect.size;
+		instance.batch.texture = renderer.TextureHandle;
+		instance.batch.transform = transform.ModelMatrix;
 		instance.zIndex = renderer.RenderLayer;
-		instance.transform = transform.ModelMatrix;
 
 		if (scene->SpriteAnimators.HasComponent(entity))
 		{
 			auto frame = scene->SpriteAnimators.Get(entity).GetCurrentRect();
-			instance.rect = frame.Rect;
-			instance.transform = glm::translate(instance.transform, glm::vec3(glm::vec2(-scene->SpriteAnimators.Get(entity).GetCurrentRect().Offset) * flipMult, 0.0f));
+
+			auto offset = glm::vec2(frame.Offset);
+			auto frameSize = glm::vec2(frame.FrameSize);
+
+			if (frame.Rotated && frame.FrameSize != frame.Rect.size)
+			{
+				float ox = offset.x;
+				offset.x = offset.y;
+				offset.y = ox;
+
+				float sx = frameSize.x;
+				frameSize.x = frameSize.y;
+				frameSize.y = sx;
+			}
+
+			instance.batch.rect = frame.Rect;
+			instance.batch.RenderSize = frameSize + offset;
+
+			instance.batch.offset = -offset;
+
+			//auto animOffset = glm::vec2(-frame.Offset) * flipMult;
+			//instance.batch.transform = glm::translate(instance.batch.transform, glm::vec3(animOffset, 0.0f));
+
 			if (frame.Rotated)
-				instance.transform = glm::rotate(instance.transform, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				instance.batch.transform = glm::rotate(instance.batch.transform, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		}
 
-		instance.transform = glm::rotate(instance.transform, glm::radians(renderer.Rotation.x), glm::vec3(0.0f, 0.0f, 1.0f));
-		instance.transform = glm::scale(instance.transform, glm::vec3(flipMult, 1.0f));
-		instance.color = renderer.SpriteColor;
+		instance.batch.transform = glm::rotate(instance.batch.transform, glm::radians(renderer.Rotation.x), glm::vec3(0.0f, 0.0f, 1.0f));
+		instance.batch.transform = glm::scale(instance.batch.transform, glm::vec3(flipMult, 1.0f));
+		instance.batch.color = renderer.SpriteColor;
+		instance.batch.useNearestFilter = renderer.UseNearestTextureFilter;
 
 		if (!renderer.IsGui)
 		{
@@ -178,6 +208,7 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 	mCmdBuffer->SetConstantBuffer(mPerFrameData.get(), 1);
 	mCmdBuffer->SetViewport(&viewport);
 	mCmdBuffer->SetTextureSampler(mBilinearSampler.get(), 0);
+	mCmdBuffer->SetTextureSampler(mNearestSampler.get(), 1);
 	mCmdBuffer->SetBindlessDescriptorTable(scene->BindlessTable);
 
 	RenderCamera(&mMainCamera, &mRenderQueue, scene, pOutput);
@@ -230,7 +261,7 @@ void Renderer2D::RenderCamera(Camera2D* camera, RenderQueue2D* renderQueue, Scen
 	{
 		auto& instance = renderQueue->instances[j];
 
-		mSpriteBatch->DrawSprite(instance.transform, instance.rect, instance.center, instance.color, instance.texture);
+		mSpriteBatch->DrawSprite(instance.batch);
 	}
 
 	glm::mat4 proj = glm::ortho(-VirtualScreenSize.x, VirtualScreenSize.x, -VirtualScreenSize.y, VirtualScreenSize.y);

@@ -26,7 +26,7 @@ const int32_t NOTE_HOLD_LAYER = 5;
 const int32_t NOTE_LAYER = 10;
 const int32_t NOTE_EFFECT_LAYER = 15;
 
-Javos::Conductor::Conductor()
+Funkin::Conductor::Conductor()
 {
 	mHitNoteEvent = Stratum::EventHandler::GetEventID("hit_note");
 	mSustainNoteEvent = Stratum::EventHandler::GetEventID("sustain_note");
@@ -38,7 +38,7 @@ Javos::Conductor::Conductor()
 		});
 }
 
-void Javos::Conductor::Init(Stratum::Scene* scene)
+void Funkin::Conductor::Init(Stratum::Scene* scene)
 {
 	// Precache everything needed
 	scene->Resources.LoadTextureImage("textures/noteSplashes.png");
@@ -54,26 +54,26 @@ void Javos::Conductor::Init(Stratum::Scene* scene)
 
 	std::array<Stratum::SpriteAnimator::Animation, 4> defaultAnimations =
 	{
-		Stratum::SpriteAnimator::Animation().SetLoop(true).SetFrameRate(24).SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "arrowLEFT00", true)),
-		Stratum::SpriteAnimator::Animation().SetLoop(true).SetFrameRate(24).SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "arrowDOWN00", true)),
-		Stratum::SpriteAnimator::Animation().SetLoop(true).SetFrameRate(24).SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "arrowUP00", true)),
-		Stratum::SpriteAnimator::Animation().SetLoop(true).SetFrameRate(24).SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "arrowRIGHT00", true)),
+		Stratum::SpriteAnimator::Animation().SetLoop(true).SetFrameRate(24).SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "arrowLEFT00", true, true)),
+		Stratum::SpriteAnimator::Animation().SetLoop(true).SetFrameRate(24).SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "arrowDOWN00", true, true)),
+		Stratum::SpriteAnimator::Animation().SetLoop(true).SetFrameRate(24).SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "arrowUP00", true, true)),
+		Stratum::SpriteAnimator::Animation().SetLoop(true).SetFrameRate(24).SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "arrowRIGHT00", true, true)),
 	};
 
 	std::array<Stratum::SpriteAnimator::Animation, 4> holdAnimations =
 	{
-		Stratum::SpriteAnimator::Animation().SetTransitionToDefault(false).SetFrameRate(24).SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "left press00", true)),
-		Stratum::SpriteAnimator::Animation().SetTransitionToDefault(false).SetFrameRate(24).SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "down press00", true)),
-		Stratum::SpriteAnimator::Animation().SetTransitionToDefault(false).SetFrameRate(24).SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "up press00", true)),
-		Stratum::SpriteAnimator::Animation().SetTransitionToDefault(false).SetFrameRate(24).SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "right press00", true)),
+		Stratum::SpriteAnimator::Animation().SetTransitionToDefault(false).SetFrameRate(24).SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "left press00", true, true)),
+		Stratum::SpriteAnimator::Animation().SetTransitionToDefault(false).SetFrameRate(24).SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "down press00", true, true)),
+		Stratum::SpriteAnimator::Animation().SetTransitionToDefault(false).SetFrameRate(24).SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "up press00", true, true)),
+		Stratum::SpriteAnimator::Animation().SetTransitionToDefault(false).SetFrameRate(24).SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "right press00", true, true)),
 	};
 
 	std::array<Stratum::SpriteAnimator::Animation, 4> hitAnimations =
 	{
-		Stratum::SpriteAnimator::Animation().SetFrameRate(24).SetNextState("default").SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "left confirm00", true)),
-		Stratum::SpriteAnimator::Animation().SetFrameRate(24).SetNextState("default").SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "down confirm00", true)),
-		Stratum::SpriteAnimator::Animation().SetFrameRate(24).SetNextState("default").SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "up confirm00", true)),
-		Stratum::SpriteAnimator::Animation().SetFrameRate(24).SetNextState("default").SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "right confirm00", true)),
+		Stratum::SpriteAnimator::Animation().SetFrameRate(24).SetNextState("default").SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "left confirm00", true, true)),
+		Stratum::SpriteAnimator::Animation().SetFrameRate(24).SetNextState("default").SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "down confirm00", true, true)),
+		Stratum::SpriteAnimator::Animation().SetFrameRate(24).SetNextState("default").SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "up confirm00", true, true)),
+		Stratum::SpriteAnimator::Animation().SetFrameRate(24).SetNextState("default").SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "right confirm00", true, true)),
 	};
 
 	for (int i = 0; i < 4; i++)
@@ -153,7 +153,7 @@ void Javos::Conductor::Init(Stratum::Scene* scene)
 			.SetFrameRate(24)
 			.SetLoop(false)
 			.SetNextState("destroy")
-			.SetFrames(SparrowReader::readXML(coverFileNames[i], coverNames[i], true));
+			.SetFrames(SparrowReader::readXML(coverFileNames[i], coverNames[i], true, true));
 
 		mNoteCoverEndAnimations[i] = anim;
 
@@ -181,7 +181,7 @@ void Javos::Conductor::Init(Stratum::Scene* scene)
 		
 		auto anim = Stratum::SpriteAnimator::Animation()
 			.SetFrameRate(24)
-			.SetFrames(SparrowReader::readXML(coverFileNames[i], coverStrumNames[i], true))
+			.SetFrames(SparrowReader::readXML(coverFileNames[i], coverStrumNames[i], true, true))
 			.SetAnimateOnIdle(true)
 			.SetLoop(true);
 
@@ -204,11 +204,11 @@ void Javos::Conductor::Init(Stratum::Scene* scene)
 	}
 }
 
-void Javos::Conductor::PostUpdate(Stratum::Scene* scene)
+void Funkin::Conductor::PostUpdate(Stratum::Scene* scene)
 {
 }
 
-void Javos::Conductor::LoadChart(Stratum::Scene* scene, const std::string& path)
+void Funkin::Conductor::LoadChart(Stratum::Scene* scene, const std::string& path)
 {
 	chart = ChartLoader::LoadChart(path);
 	SongTime = 0.0f;
@@ -224,7 +224,7 @@ void Javos::Conductor::LoadChart(Stratum::Scene* scene, const std::string& path)
 
 }
 
-void Javos::Conductor::Update(Stratum::Scene* scene)
+void Funkin::Conductor::Update(Stratum::Scene* scene)
 {
 	const int NOTE_MISS_SCORE = 100;
 
@@ -509,12 +509,17 @@ void Javos::Conductor::Update(Stratum::Scene* scene)
 	}
 }
 
-void Javos::Conductor::RegisterEventHandler(const std::string& eventName, ChartEventHandler handler)
+void Funkin::Conductor::RegisterEventHandler(const std::string& eventName, ChartEventHandler handler)
 {
 	mEventHandlers[eventName] = handler;
 }
 
-void Javos::Conductor::SpawnNote(Stratum::Scene* scene, ChartNote note)
+float Funkin::Conductor::GetConductorBeatMultiplier()
+{
+	return chart.info.bpm / 60.0f;
+}
+
+void Funkin::Conductor::SpawnNote(Stratum::Scene* scene, ChartNote note)
 {
 	int l = note.noteType;
 	bool valid = false;
@@ -624,7 +629,7 @@ void Javos::Conductor::SpawnNote(Stratum::Scene* scene, ChartNote note)
 
 }
 
-void Javos::Conductor::SpawnNoteSplash(Stratum::Scene* scene, uint32_t noteType)
+void Funkin::Conductor::SpawnNoteSplash(Stratum::Scene* scene, uint32_t noteType)
 {
 	auto effectManager = scene->GetComponentManager<AnimatedEffectComponent>(C_ANIMATED_EFFECT_COMPONENT_NAME);
 	auto entity = scene->EntityManager.CreateEntity();
@@ -646,7 +651,7 @@ void Javos::Conductor::SpawnNoteSplash(Stratum::Scene* scene, uint32_t noteType)
 	transform.SetPosition(strumTransform.Position);
 }
 
-void Javos::Conductor::SpawnSustainCover(Stratum::Scene* scene, uint32_t noteType)
+void Funkin::Conductor::SpawnSustainCover(Stratum::Scene* scene, uint32_t noteType)
 {
 	auto effectManager = scene->GetComponentManager<AnimatedEffectComponent>(C_ANIMATED_EFFECT_COMPONENT_NAME);
 	auto entity = scene->EntityManager.CreateEntity();
@@ -674,7 +679,7 @@ void Javos::Conductor::SpawnSustainCover(Stratum::Scene* scene, uint32_t noteTyp
 	transform.SetPosition(strumTransform.Position);
 }
 
-void Javos::Conductor::AddScoreNoteHit(uint32_t time)
+void Funkin::Conductor::AddScoreNoteHit(uint32_t time)
 {
 
 	const float SICK_TIME_FRAME = 45;

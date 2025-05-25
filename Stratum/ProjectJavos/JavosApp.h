@@ -2,7 +2,7 @@
 
 #include "Core/Application.h"
 
-namespace Javos
+namespace Funkin
 {
 	class JavosApp : public Stratum::Application
 	{

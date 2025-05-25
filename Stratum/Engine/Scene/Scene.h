@@ -30,6 +30,8 @@ public:
 	virtual void RenderImGui(Scene* scene) {};
 private:
 	bool mInitialized = false;
+protected:
+	bool pEarlyUpdate = false;
 };
 
 class AudioEngine;
