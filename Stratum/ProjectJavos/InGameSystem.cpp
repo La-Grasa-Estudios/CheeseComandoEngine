@@ -123,6 +123,18 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 
 	mConductor->RegisterEventHandler("StFadeToWhite", [this](ChartEvent& event)
 		{
+			auto& whiteSprite = mScene->SpriteRenderers.Get(mWhiteSprite);
+			whiteSprite.SpriteColor = glm::vec4(1.0f, 1.0f, 1.0f, whiteSprite.SpriteColor.a);
+
+			mFadeToWhiteIntensity = event.castFloat(event.Arg1);
+			mFadeToWhiteBaseTime = event.castInteger(event.Arg2) / 1000.0f;
+			mFadeToWhiteTime = 0.0f;
+		});
+	mConductor->RegisterEventHandler("StFadeToBlack", [this](ChartEvent& event)
+		{
+			auto& whiteSprite = mScene->SpriteRenderers.Get(mWhiteSprite);
+			whiteSprite.SpriteColor = glm::vec4(0.0f, 0.0f, 0.0f, whiteSprite.SpriteColor.a);
+
 			mFadeToWhiteIntensity = event.castFloat(event.Arg1);
 			mFadeToWhiteBaseTime = event.castInteger(event.Arg2) / 1000.0f;
 			mFadeToWhiteTime = 0.0f;
@@ -157,11 +169,15 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	ChartEvent Event1dash2{};
 	ChartEvent EventWhite{};
 	ChartEvent EventStopWhite{};
+	ChartEvent EventStartBlack{};
+	ChartEvent EventStopBlack{};
 
 	Event1dash4.EventName = "StSetStage";
 	Event1dash2.EventName = "StSetStage";
 	EventWhite.EventName = "StFadeToWhite";
 	EventStopWhite.EventName = "StFadeToWhite";
+	EventStartBlack.EventName = "StFadeToBlack";
+	EventStopBlack.EventName = "StFadeToBlack";
 
 	Event1dash4.EventTime = 110.82f;
 	Event1dash2.EventTime = 149.65f;
@@ -281,6 +297,7 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 
 void Funkin::InGameSystem::RenderImGui(Stratum::Scene* scene)
 {
+	return;
 	using namespace Stratum;
 
 	static int frameRate = 0;
