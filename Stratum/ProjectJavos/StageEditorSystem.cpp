@@ -301,6 +301,13 @@ void Javos::StageEditorSystem::DrawPropManager()
 		if (isSelectWindowOpen && ImGui::Begin("Select Texture", &isSelectWindowOpen))
 		{
 			auto textures = Stratum::ZVFS::GetAllOf("png");
+			auto textures1 = Stratum::ZVFS::GetAllOf("jpg");
+			auto textures2 = Stratum::ZVFS::GetAllOf("jpeg");
+			auto textures3 = Stratum::ZVFS::GetAllOf("dds");
+
+			for (auto str : textures1) textures.push_back(str);
+			for (auto str : textures2) textures.push_back(str);
+			for (auto str : textures3) textures.push_back(str);
 
 			for (auto& str : textures)
 			{
@@ -569,14 +576,14 @@ void Javos::StageEditorSystem::CreateBf()
 	renderer.RenderLayer = 0;
 
 #ifndef _DEBUG
-	renderer.TextureHandle = mScene->Resources.LoadTextureImage("textures/BOYFRIEND.DDS");
+	renderer.TextureHandle = mScene->Resources.LoadTextureImage("fnf/characters/images/bf/BOYFRIEND.DDS");
 #endif
 
 	Stratum::SpriteAnimator::Animation idleAnimation = Stratum::SpriteAnimator::Animation()
 		.SetFrameRate(15)
 		.SetLoop(true)
 		.SetAnimateOnIdle(false)
-		.SetFrames(SparrowReader::readXML("textures/BOYFRIEND.xml", "BF idle dance", false));
+		.SetFrames(SparrowReader::readXML("fnf/characters/images/bf/BOYFRIEND.xml", "BF idle dance", false));
 
 	auto& animator = mScene->SpriteAnimators.Create(sprite);
 	animator.AnimationMap["idle"] = idleAnimation;
