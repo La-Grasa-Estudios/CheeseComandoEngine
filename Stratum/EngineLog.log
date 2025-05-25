@@ -46,15 +46,15 @@
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring I can't,, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring I can't, dammint, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
-[WARNING] Detected stutter! frame got 199.640ms over 33ms max delta
+[WARNING] Detected stutter! frame got 189.145ms over 33ms max delta
 [WARNING] Logging last frame scope
-[INFO] Application::InternalUpdate: 0.010ms
-[INFO] Scene::Update: 190.950ms
+[INFO] Application::InternalUpdate: 0.008ms
+[INFO] Scene::Update: 175.217ms
 [INFO] Application::FrameUpdate: 0.000ms
-[INFO] Scene::PostUpdate: 0.062ms
-[INFO] Renderer2D::PreRender: 1.472ms
-[INFO] Renderer2D::Render: 2.001ms
-[INFO] Application::Frame: 218.806ms
+[INFO] Scene::PostUpdate: 0.078ms
+[INFO] Renderer2D::PreRender: 1.513ms
+[INFO] Renderer2D::Render: 1.405ms
+[INFO] Application::Frame: 205.630ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby,, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby, repeat, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby, repeat after, .

@@ -179,6 +179,15 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	EventStartBlack.EventName = "StFadeToBlack";
 	EventStopBlack.EventName = "StFadeToBlack";
 
+	EventStartBlack.EventTime = 147.45f;
+	EventStopBlack.EventTime = 149.65f;
+
+	EventStartBlack.Arg1 = "1.0";
+	EventStartBlack.Arg2 = "1";
+
+	EventStopBlack.Arg1 = "0.0";
+	EventStopBlack.Arg2 = "1";
+
 	Event1dash4.EventTime = 110.82f;
 	Event1dash2.EventTime = 149.65f;
 
@@ -198,6 +207,8 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mConductor->chart.events.push_back(Event1dash2);
 	mConductor->chart.events.push_back(EventWhite);
 	mConductor->chart.events.push_back(EventStopWhite);
+	mConductor->chart.events.push_back(EventStartBlack);
+	mConductor->chart.events.push_back(EventStopBlack);
 
 	instSource->Seek(95 * 44100);
 	voicesSource->Seek(95 * 44100);
