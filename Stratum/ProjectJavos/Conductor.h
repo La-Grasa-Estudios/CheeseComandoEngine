@@ -4,6 +4,7 @@
 
 #include <Scene/Scene.h>
 #include <array>
+#include <vector>
 
 namespace Stratum
 {
@@ -14,6 +15,7 @@ namespace Funkin
 {
 
 	typedef std::function<void(ChartEvent&)> ChartEventHandler;
+	typedef std::function<void()> ScriptedEvent;
 
 	class Conductor : public Stratum::ISceneSystem
 	{
@@ -34,19 +36,34 @@ namespace Funkin
 		void Update(Stratum::Scene* scene);
 
 		void RegisterEventHandler(const std::string& eventName, ChartEventHandler handler);
+		void AddScriptedEvent(int step, ScriptedEvent event);
 
 		float GetConductorBeatMultiplier();
+
+		uint32_t GetStepCount();
 
 		bool EnableBot = false;
 		int32_t PlayerScore = 0;
 
 	private:
 
+		void OnStep();
+
+		struct ScriptedEventContainer
+		{
+			ScriptedEvent event;
+			bool executed;
+			int stepCount;
+		};
+
 		void SpawnNote(Stratum::Scene* scene, ChartNote note);
 		void SpawnNoteSplash(Stratum::Scene* scene, uint32_t noteType);
 		void SpawnSustainCover(Stratum::Scene* scene, uint32_t noteType);
 
 		void AddScoreNoteHit(uint32_t time);
+
+		uint32_t mStepCount = 0;
+		float mStepAccumulator = 0.0f;
 
 		uint64_t mHitNoteEvent;
 		uint64_t mSustainNoteEvent;
@@ -60,6 +77,7 @@ namespace Funkin
 		std::array<Stratum::SpriteAnimator::Animation, 4> mNoteCoverEndAnimations;
 		
 		std::unordered_map<std::string, ChartEventHandler> mEventHandlers;
+		std::vector<ScriptedEventContainer> mScriptedEvents;
 
 	};
 }

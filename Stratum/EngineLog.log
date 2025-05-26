@@ -4,13 +4,49 @@
 [WARNING] No listeners found for event: init_modules
 [WARNING] No listeners found for event: init_input
 [INFO] Printing cmdline args
-[INFO] Intel(R) UHD Graphics 630, VRAM: 128 MB, SHARED: 7995 MB, USED: 0 MB
+[INFO] Radeon RX 570 Series, VRAM: 4039 MB, SHARED: 8127 MB, USED: 0 MB
 [WARNING] No listeners found for event: init_media
 [WARNING] No listeners found for event: late_init
 [WARNING] Failed to open /config/startup.cfg
 [WARNING] Failed to open /config/autoexec.cfg
 [WARNING] No listeners found for event: post_init
+[WARNING] Detected stutter! frame got 243.989ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.020ms
+[INFO] Scene::Update: 227.007ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.067ms
+[INFO] Renderer2D::PreRender: 1.379ms
+[INFO] Renderer2D::Render: 1.592ms
+[INFO] Application::Frame: 263.008ms
+[WARNING] Detected stutter! frame got 36.087ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.070ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.066ms
+[INFO] Renderer2D::PreRender: 0.033ms
+[INFO] Renderer2D::Render: 0.131ms
+[INFO] Application::Frame: 43.675ms
+[WARNING] Detected stutter! frame got 39.130ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.034ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.054ms
+[INFO] Renderer2D::PreRender: 0.014ms
+[INFO] Renderer2D::Render: 0.067ms
+[INFO] Application::Frame: 42.301ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Oh,, .
+[WARNING] Detected stutter! frame got 40.494ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.026ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.053ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.067ms
+[INFO] Application::Frame: 42.429ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Oh, yeah,, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Oh, yeah, come on, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Oh, yeah, come on TOOTHLESS!, .
@@ -19,6 +55,15 @@
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring What happend there?, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Let's see,, .
+[WARNING] Detected stutter! frame got 55.886ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.024ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.054ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.052ms
+[INFO] Application::Frame: 57.472ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Let's see, come on., .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Let's see, come on. it's coming down., .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
@@ -31,36 +76,657 @@
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring See, no, no. Let's see., .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring If I catch the mushroom I become super strong and destroy everything,, .
+[WARNING] Detected stutter! frame got 38.945ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.060ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.066ms
+[INFO] Renderer2D::PreRender: 0.038ms
+[INFO] Renderer2D::Render: 0.165ms
+[INFO] Application::Frame: 47.298ms
+[WARNING] Detected stutter! frame got 39.768ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.043ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.054ms
+[INFO] Renderer2D::PreRender: 0.028ms
+[INFO] Renderer2D::Render: 0.108ms
+[INFO] Application::Frame: 47.262ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring If I catch the mushroom I become super strong and destroy everything, I imagine., .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring See., .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring AAHHHHH!, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring [Music], .
+[WARNING] Detected stutter! frame got 35.643ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.003ms
+[INFO] Scene::Update: 0.047ms
+[INFO] Application::FrameUpdate: 0.001ms
+[INFO] Scene::PostUpdate: 0.113ms
+[INFO] Renderer2D::PreRender: 0.027ms
+[INFO] Renderer2D::Render: 0.143ms
+[INFO] Application::Frame: 43.943ms
+[WARNING] Detected stutter! frame got 37.775ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.024ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.054ms
+[INFO] Renderer2D::PreRender: 0.015ms
+[INFO] Renderer2D::Render: 0.092ms
+[INFO] Application::Frame: 41.973ms
+[WARNING] Detected stutter! frame got 38.248ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.038ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.055ms
+[INFO] Renderer2D::PreRender: 0.018ms
+[INFO] Renderer2D::Render: 0.130ms
+[INFO] Application::Frame: 46.502ms
+[WARNING] Detected stutter! frame got 54.914ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.024ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.052ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.084ms
+[INFO] Application::Frame: 57.526ms
+[WARNING] Detected stutter! frame got 37.613ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.042ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.078ms
+[INFO] Renderer2D::PreRender: 0.028ms
+[INFO] Renderer2D::Render: 0.113ms
+[INFO] Application::Frame: 45.993ms
+[WARNING] Detected stutter! frame got 55.547ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.024ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.053ms
+[INFO] Renderer2D::PreRender: 0.014ms
+[INFO] Renderer2D::Render: 0.083ms
+[INFO] Application::Frame: 58.047ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Detected stutter! frame got 35.538ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.037ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.051ms
+[INFO] Renderer2D::PreRender: 0.021ms
+[INFO] Renderer2D::Render: 0.106ms
+[INFO] Application::Frame: 43.939ms
+[WARNING] Detected stutter! frame got 50.828ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.022ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.050ms
+[INFO] Renderer2D::PreRender: 0.015ms
+[INFO] Renderer2D::Render: 0.073ms
+[INFO] Application::Frame: 56.279ms
+[WARNING] Detected stutter! frame got 35.438ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.149ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.095ms
+[INFO] Renderer2D::PreRender: 0.028ms
+[INFO] Renderer2D::Render: 0.136ms
+[INFO] Application::Frame: 47.407ms
+[WARNING] Detected stutter! frame got 57.365ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.024ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.051ms
+[INFO] Renderer2D::PreRender: 0.015ms
+[INFO] Renderer2D::Render: 0.078ms
+[INFO] Application::Frame: 58.826ms
+[WARNING] Detected stutter! frame got 43.342ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.024ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.050ms
+[INFO] Renderer2D::PreRender: 0.014ms
+[INFO] Renderer2D::Render: 0.086ms
+[INFO] Application::Frame: 44.886ms
+[WARNING] Detected stutter! frame got 39.158ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.034ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.052ms
+[INFO] Renderer2D::PreRender: 0.015ms
+[INFO] Renderer2D::Render: 0.112ms
+[INFO] Application::Frame: 47.293ms
+[WARNING] Detected stutter! frame got 58.751ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.022ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.045ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.074ms
+[INFO] Application::Frame: 60.212ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Perfect., .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Detected stutter! frame got 40.518ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.025ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.045ms
+[INFO] Renderer2D::PreRender: 0.015ms
+[INFO] Renderer2D::Render: 0.096ms
+[INFO] Application::Frame: 48.849ms
+[WARNING] Detected stutter! frame got 58.929ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.021ms
+[INFO] Application::FrameUpdate: 0.001ms
+[INFO] Scene::PostUpdate: 0.045ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.071ms
+[INFO] Application::Frame: 60.308ms
+[WARNING] Detected stutter! frame got 43.225ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.004ms
+[INFO] Scene::Update: 0.040ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.076ms
+[INFO] Renderer2D::PreRender: 0.029ms
+[INFO] Renderer2D::Render: 0.116ms
+[INFO] Application::Frame: 45.680ms
+[WARNING] Detected stutter! frame got 56.677ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.026ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.046ms
+[INFO] Renderer2D::PreRender: 0.014ms
+[INFO] Renderer2D::Render: 0.088ms
+[INFO] Application::Frame: 59.056ms
+[WARNING] Detected stutter! frame got 34.950ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.147ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.046ms
+[INFO] Renderer2D::PreRender: 0.014ms
+[INFO] Renderer2D::Render: 0.096ms
+[INFO] Application::Frame: 42.556ms
+[WARNING] Detected stutter! frame got 43.008ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.035ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.055ms
+[INFO] Renderer2D::PreRender: 0.027ms
+[INFO] Renderer2D::Render: 0.106ms
+[INFO] Application::Frame: 44.467ms
+[WARNING] Detected stutter! frame got 44.191ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.016ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.045ms
+[INFO] Renderer2D::PreRender: 0.024ms
+[INFO] Renderer2D::Render: 0.083ms
+[INFO] Application::Frame: 45.722ms
+[WARNING] Detected stutter! frame got 45.133ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.080ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.047ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.081ms
+[INFO] Application::Frame: 46.691ms
+[WARNING] Detected stutter! frame got 43.786ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.021ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.046ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.075ms
+[INFO] Application::Frame: 45.178ms
+[WARNING] Detected stutter! frame got 44.107ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.023ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.046ms
+[INFO] Renderer2D::PreRender: 0.015ms
+[INFO] Renderer2D::Render: 0.104ms
+[INFO] Application::Frame: 45.668ms
+[WARNING] Detected stutter! frame got 35.111ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.037ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.061ms
+[INFO] Renderer2D::PreRender: 0.036ms
+[INFO] Renderer2D::Render: 0.135ms
+[INFO] Application::Frame: 43.512ms
+[WARNING] Detected stutter! frame got 50.025ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.022ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.043ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.082ms
+[INFO] Application::Frame: 55.761ms
+[WARNING] Detected stutter! frame got 40.347ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.007ms
+[INFO] Scene::Update: 0.096ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.323ms
+[INFO] Renderer2D::PreRender: 0.094ms
+[INFO] Renderer2D::Render: 0.441ms
+[INFO] Application::Frame: 49.420ms
+[WARNING] Detected stutter! frame got 58.243ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.018ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.042ms
+[INFO] Renderer2D::PreRender: 0.011ms
+[INFO] Renderer2D::Render: 0.087ms
+[INFO] Application::Frame: 59.732ms
+[WARNING] Detected stutter! frame got 35.548ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.033ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.065ms
+[INFO] Renderer2D::PreRender: 0.021ms
+[INFO] Renderer2D::Render: 0.146ms
+[INFO] Application::Frame: 43.863ms
+[WARNING] Detected stutter! frame got 44.116ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.048ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.065ms
+[INFO] Renderer2D::PreRender: 0.020ms
+[INFO] Renderer2D::Render: 0.110ms
+[INFO] Application::Frame: 45.868ms
+[WARNING] Detected stutter! frame got 43.834ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.003ms
+[INFO] Scene::Update: 0.022ms
+[INFO] Application::FrameUpdate: 0.001ms
+[INFO] Scene::PostUpdate: 0.042ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.095ms
+[INFO] Application::Frame: 45.413ms
+[WARNING] Detected stutter! frame got 44.555ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.004ms
+[INFO] Scene::Update: 0.045ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.106ms
+[INFO] Renderer2D::PreRender: 0.036ms
+[INFO] Renderer2D::Render: 0.179ms
+[INFO] Application::Frame: 46.152ms
+[WARNING] Detected stutter! frame got 58.458ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.031ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.074ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.098ms
+[INFO] Application::Frame: 60.395ms
+[WARNING] Detected stutter! frame got 43.647ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.023ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.044ms
+[INFO] Renderer2D::PreRender: 0.014ms
+[INFO] Renderer2D::Render: 0.090ms
+[INFO] Application::Frame: 45.270ms
+[WARNING] Detected stutter! frame got 44.051ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.027ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.043ms
+[INFO] Renderer2D::PreRender: 0.014ms
+[INFO] Renderer2D::Render: 0.100ms
+[INFO] Application::Frame: 45.631ms
+[WARNING] Detected stutter! frame got 48.759ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.024ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.043ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.094ms
+[INFO] Application::Frame: 54.752ms
+[WARNING] Detected stutter! frame got 41.945ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.033ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.063ms
+[INFO] Renderer2D::PreRender: 0.018ms
+[INFO] Renderer2D::Render: 0.122ms
+[INFO] Application::Frame: 50.295ms
+[WARNING] Detected stutter! frame got 57.513ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.022ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.043ms
+[INFO] Renderer2D::PreRender: 0.012ms
+[INFO] Renderer2D::Render: 0.082ms
+[INFO] Application::Frame: 59.325ms
+[WARNING] Detected stutter! frame got 59.681ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.025ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.044ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.090ms
+[INFO] Application::Frame: 61.180ms
+[WARNING] Detected stutter! frame got 43.037ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.023ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.043ms
+[INFO] Renderer2D::PreRender: 0.014ms
+[INFO] Renderer2D::Render: 0.094ms
+[INFO] Application::Frame: 44.655ms
+[WARNING] Detected stutter! frame got 51.926ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.022ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.043ms
+[INFO] Renderer2D::PreRender: 0.012ms
+[INFO] Renderer2D::Render: 0.083ms
+[INFO] Application::Frame: 53.949ms
+[WARNING] Detected stutter! frame got 43.126ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.025ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.042ms
+[INFO] Renderer2D::PreRender: 0.014ms
+[INFO] Renderer2D::Render: 0.105ms
+[INFO] Application::Frame: 45.404ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring WHAAAT?, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Detected stutter! frame got 38.475ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.022ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.042ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.082ms
+[INFO] Application::Frame: 46.904ms
+[WARNING] Detected stutter! frame got 57.523ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.014ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.042ms
+[INFO] Renderer2D::PreRender: 0.011ms
+[INFO] Renderer2D::Render: 0.058ms
+[INFO] Application::Frame: 59.011ms
+[WARNING] Detected stutter! frame got 39.326ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.003ms
+[INFO] Scene::Update: 0.038ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.055ms
+[INFO] Renderer2D::PreRender: 0.024ms
+[INFO] Renderer2D::Render: 0.184ms
+[INFO] Application::Frame: 47.765ms
+[WARNING] Detected stutter! frame got 58.483ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.019ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.040ms
+[INFO] Renderer2D::PreRender: 0.012ms
+[INFO] Renderer2D::Render: 0.076ms
+[INFO] Application::Frame: 59.955ms
+[WARNING] Detected stutter! frame got 37.903ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.041ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.044ms
+[INFO] Renderer2D::PreRender: 0.021ms
+[INFO] Renderer2D::Render: 0.168ms
+[INFO] Application::Frame: 46.432ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring I , .
+[WARNING] Detected stutter! frame got 56.152ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.039ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.041ms
+[INFO] Renderer2D::PreRender: 0.014ms
+[INFO] Renderer2D::Render: 0.091ms
+[INFO] Application::Frame: 57.582ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring I can't,, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring I can't, dammint, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
-[WARNING] Detected stutter! frame got 129.843ms over 33ms max delta
+[WARNING] Detected stutter! frame got 43.859ms over 33ms max delta
 [WARNING] Logging last frame scope
-[INFO] Application::InternalUpdate: 0.006ms
-[INFO] Scene::Update: 133.377ms
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.022ms
 [INFO] Application::FrameUpdate: 0.000ms
-[INFO] Scene::PostUpdate: 0.058ms
-[INFO] Renderer2D::PreRender: 0.517ms
-[INFO] Renderer2D::Render: 1.260ms
-[INFO] Application::Frame: 150.963ms
+[INFO] Scene::PostUpdate: 0.040ms
+[INFO] Renderer2D::PreRender: 0.014ms
+[INFO] Renderer2D::Render: 0.084ms
+[INFO] Application::Frame: 45.504ms
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Detected stutter! frame got 43.765ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.018ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.040ms
+[INFO] Renderer2D::PreRender: 0.012ms
+[INFO] Renderer2D::Render: 0.061ms
+[INFO] Application::Frame: 45.268ms
+[WARNING] Detected stutter! frame got 41.404ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.020ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.040ms
+[INFO] Renderer2D::PreRender: 0.012ms
+[INFO] Renderer2D::Render: 0.084ms
+[INFO] Application::Frame: 43.598ms
+[WARNING] Detected stutter! frame got 38.054ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.028ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.042ms
+[INFO] Renderer2D::PreRender: 0.040ms
+[INFO] Renderer2D::Render: 0.110ms
+[INFO] Application::Frame: 46.361ms
+[WARNING] Detected stutter! frame got 56.451ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.014ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.040ms
+[INFO] Renderer2D::PreRender: 0.011ms
+[INFO] Renderer2D::Render: 0.061ms
+[INFO] Application::Frame: 57.992ms
+[WARNING] Detected stutter! frame got 57.334ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.016ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.040ms
+[INFO] Renderer2D::PreRender: 0.011ms
+[INFO] Renderer2D::Render: 0.064ms
+[INFO] Application::Frame: 58.801ms
+[WARNING] Detected stutter! frame got 40.478ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.032ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.059ms
+[INFO] Renderer2D::PreRender: 0.018ms
+[INFO] Renderer2D::Render: 0.137ms
+[INFO] Application::Frame: 48.827ms
+[WARNING] Detected stutter! frame got 37.247ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.019ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.040ms
+[INFO] Renderer2D::PreRender: 0.011ms
+[INFO] Renderer2D::Render: 0.083ms
+[INFO] Application::Frame: 41.258ms
+[WARNING] Detected stutter! frame got 42.983ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.024ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.042ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.118ms
+[INFO] Application::Frame: 44.516ms
+[WARNING] Detected stutter! frame got 56.484ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.018ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.039ms
+[INFO] Renderer2D::PreRender: 0.011ms
+[INFO] Renderer2D::Render: 0.071ms
+[INFO] Application::Frame: 57.986ms
+[WARNING] Detected stutter! frame got 38.414ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.034ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.042ms
+[INFO] Renderer2D::PreRender: 0.020ms
+[INFO] Renderer2D::Render: 0.138ms
+[INFO] Application::Frame: 46.767ms
+[WARNING] Detected stutter! frame got 58.113ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.028ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.042ms
+[INFO] Renderer2D::PreRender: 0.020ms
+[INFO] Renderer2D::Render: 0.081ms
+[INFO] Application::Frame: 59.671ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby,, .
+[WARNING] Detected stutter! frame got 42.718ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.003ms
+[INFO] Scene::Update: 0.027ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.059ms
+[INFO] Renderer2D::PreRender: 0.017ms
+[INFO] Renderer2D::Render: 0.104ms
+[INFO] Application::Frame: 44.546ms
+[WARNING] Detected stutter! frame got 54.268ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.021ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.040ms
+[INFO] Renderer2D::PreRender: 0.011ms
+[INFO] Renderer2D::Render: 0.083ms
+[INFO] Application::Frame: 56.999ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby, repeat, .
+[WARNING] Detected stutter! frame got 39.741ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.003ms
+[INFO] Scene::Update: 0.062ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.061ms
+[INFO] Renderer2D::PreRender: 0.019ms
+[INFO] Renderer2D::Render: 0.132ms
+[INFO] Application::Frame: 48.042ms
+[WARNING] Detected stutter! frame got 57.963ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.027ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.068ms
+[INFO] Renderer2D::PreRender: 0.017ms
+[INFO] Renderer2D::Render: 0.103ms
+[INFO] Application::Frame: 59.361ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby, repeat after, .
+[WARNING] Detected stutter! frame got 57.633ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.019ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.040ms
+[INFO] Renderer2D::PreRender: 0.011ms
+[INFO] Renderer2D::Render: 0.094ms
+[INFO] Application::Frame: 60.295ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby, repeat after me, .
+[WARNING] Detected stutter! frame got 38.747ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.034ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.055ms
+[INFO] Renderer2D::PreRender: 0.017ms
+[INFO] Renderer2D::Render: 0.127ms
+[INFO] Application::Frame: 46.408ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Detected stutter! frame got 57.982ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.023ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.072ms
+[INFO] Renderer2D::PreRender: 0.017ms
+[INFO] Renderer2D::Render: 0.094ms
+[INFO] Application::Frame: 59.344ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring we, .
+[WARNING] Detected stutter! frame got 38.707ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.003ms
+[INFO] Scene::Update: 0.034ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.060ms
+[INFO] Renderer2D::PreRender: 0.021ms
+[INFO] Renderer2D::Render: 0.150ms
+[INFO] Application::Frame: 47.157ms
+[WARNING] Detected stutter! frame got 58.746ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.017ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.040ms
+[INFO] Renderer2D::PreRender: 0.010ms
+[INFO] Renderer2D::Render: 0.065ms
+[INFO] Application::Frame: 60.237ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring we can, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring we can not, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
@@ -71,6 +737,186 @@
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring (we can not), .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Detected stutter! frame got 44.279ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.026ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.041ms
+[INFO] Renderer2D::PreRender: 0.016ms
+[INFO] Renderer2D::Render: 0.104ms
+[INFO] Application::Frame: 45.857ms
+[WARNING] Detected stutter! frame got 41.296ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.003ms
+[INFO] Scene::Update: 0.033ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.043ms
+[INFO] Renderer2D::PreRender: 0.022ms
+[INFO] Renderer2D::Render: 0.148ms
+[INFO] Application::Frame: 49.660ms
+[WARNING] Detected stutter! frame got 50.312ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.020ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.040ms
+[INFO] Renderer2D::PreRender: 0.012ms
+[INFO] Renderer2D::Render: 0.072ms
+[INFO] Application::Frame: 55.344ms
+[WARNING] Detected stutter! frame got 52.904ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.021ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.040ms
+[INFO] Renderer2D::PreRender: 0.012ms
+[INFO] Renderer2D::Render: 0.092ms
+[INFO] Application::Frame: 54.773ms
+[WARNING] Detected stutter! frame got 42.585ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.020ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.040ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.121ms
+[INFO] Application::Frame: 44.234ms
+[WARNING] Detected stutter! frame got 38.494ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.003ms
+[INFO] Scene::Update: 0.036ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.060ms
+[INFO] Renderer2D::PreRender: 0.018ms
+[INFO] Renderer2D::Render: 0.150ms
+[INFO] Application::Frame: 46.801ms
+[WARNING] Detected stutter! frame got 57.305ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.022ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.070ms
+[INFO] Renderer2D::PreRender: 0.012ms
+[INFO] Renderer2D::Render: 0.098ms
+[INFO] Application::Frame: 59.003ms
+[WARNING] Detected stutter! frame got 58.926ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.027ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.056ms
+[INFO] Renderer2D::PreRender: 0.018ms
+[INFO] Renderer2D::Render: 0.145ms
+[INFO] Application::Frame: 60.528ms
+[WARNING] Detected stutter! frame got 41.062ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.138ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.064ms
+[INFO] Renderer2D::PreRender: 0.038ms
+[INFO] Renderer2D::Render: 0.167ms
+[INFO] Application::Frame: 49.320ms
+[WARNING] Detected stutter! frame got 57.670ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.027ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.056ms
+[INFO] Renderer2D::PreRender: 0.018ms
+[INFO] Renderer2D::Render: 0.100ms
+[INFO] Application::Frame: 59.159ms
+[WARNING] Detected stutter! frame got 37.891ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.031ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.040ms
+[INFO] Renderer2D::PreRender: 0.020ms
+[INFO] Renderer2D::Render: 0.170ms
+[INFO] Application::Frame: 46.188ms
+[WARNING] Detected stutter! frame got 58.600ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.023ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.040ms
+[INFO] Renderer2D::PreRender: 0.014ms
+[INFO] Renderer2D::Render: 0.084ms
+[INFO] Application::Frame: 60.014ms
+[WARNING] Detected stutter! frame got 39.594ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.034ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.039ms
+[INFO] Renderer2D::PreRender: 0.022ms
+[INFO] Renderer2D::Render: 0.117ms
+[INFO] Application::Frame: 47.872ms
+[WARNING] Detected stutter! frame got 57.425ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.023ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.037ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.085ms
+[INFO] Application::Frame: 58.785ms
+[WARNING] Detected stutter! frame got 57.069ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.027ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.055ms
+[INFO] Renderer2D::PreRender: 0.016ms
+[INFO] Renderer2D::Render: 0.127ms
+[INFO] Application::Frame: 58.567ms
+[WARNING] Detected stutter! frame got 42.692ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.040ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.055ms
+[INFO] Renderer2D::PreRender: 0.024ms
+[INFO] Renderer2D::Render: 0.107ms
+[INFO] Application::Frame: 44.250ms
+[WARNING] Detected stutter! frame got 44.103ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.019ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.037ms
+[INFO] Renderer2D::PreRender: 0.012ms
+[INFO] Renderer2D::Render: 0.072ms
+[INFO] Application::Frame: 45.668ms
+[WARNING] Detected stutter! frame got 55.132ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::Update: 0.023ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.037ms
+[INFO] Renderer2D::PreRender: 0.012ms
+[INFO] Renderer2D::Render: 0.089ms
+[INFO] Application::Frame: 58.070ms
+[WARNING] Detected stutter! frame got 37.772ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.045ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.061ms
+[INFO] Renderer2D::PreRender: 0.029ms
+[INFO] Renderer2D::Render: 0.132ms
+[INFO] Application::Frame: 46.284ms
+[WARNING] Detected stutter! frame got 49.745ms over 33ms max delta
+[WARNING] Logging last frame scope
+[INFO] Application::InternalUpdate: 0.002ms
+[INFO] Scene::Update: 0.024ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::PostUpdate: 0.038ms
+[INFO] Renderer2D::PreRender: 0.013ms
+[INFO] Renderer2D::Render: 0.090ms
+[INFO] Application::Frame: 55.469ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Hello!, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Eh,, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Eh, Eh,, .

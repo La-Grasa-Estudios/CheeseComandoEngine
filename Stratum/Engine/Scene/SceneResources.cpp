@@ -253,6 +253,14 @@ DescriptorHandle SceneResources::LoadTextureImage(const std::string& path)
 	return -1;
 }
 
+DescriptorHandle SceneResources::CreateTextureImage(const Render::ImageDescription& desc)
+{
+	Ref<Render::ImageResource> image = CreateRef<Render::ImageResource>(desc);
+	auto handle = mDescriptorTable->AllocateDescriptor(nvrhi::BindingSetItem::Texture_SRV(0, image->Handle));
+	mTextures[handle] = image;
+	return handle;
+}
+
 Render::ImageResource* SceneResources::GetImageHandle(const DescriptorHandle handle)
 {
 	if (auto a = mTextures.find(handle); a != mTextures.end())

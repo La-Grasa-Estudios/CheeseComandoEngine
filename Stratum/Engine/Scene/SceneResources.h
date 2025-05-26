@@ -8,6 +8,7 @@
 #include <string_view>
 
 #include "Renderer/BindlessDescriptorIndex.h"
+#include "Renderer/ImageResource.h"
 
 BEGIN_ENGINE
 
@@ -52,6 +53,7 @@ public:
 	bool IsMaterialDirty(DescriptorHandle handle);
 
 	DescriptorHandle LoadTextureImage(const std::string& path);
+	DescriptorHandle CreateTextureImage(const Render::ImageDescription& desc);
 	Render::ImageResource* GetImageHandle(const DescriptorHandle handle);
 
 private:

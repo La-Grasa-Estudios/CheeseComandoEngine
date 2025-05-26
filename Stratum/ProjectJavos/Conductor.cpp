@@ -231,6 +231,17 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 	BeatCountF = (chart.info.bpm / 60.0f) * SongTime;
 	BeatCount = glm::floor(BeatCountF);
 
+	const float stepsPerSecond = 1.0f / ((chart.info.bpm / 60.0f) * 4.0f);
+	const uint32_t expectedStepCount = glm::floor(BeatCountF * 4.0f);
+
+	auto lastStepCount = mStepCount;
+	mStepCount = expectedStepCount;
+
+	if (mStepCount != lastStepCount)
+	{
+		OnStep();
+	}
+
 	bool botEnabled = EnableBot || false;
 
 	auto notesManager = scene->GetComponentManager<NoteComponent>(C_NOTE_COMPONENT_NAME);
@@ -514,9 +525,31 @@ void Funkin::Conductor::RegisterEventHandler(const std::string& eventName, Chart
 	mEventHandlers[eventName] = handler;
 }
 
+void Funkin::Conductor::AddScriptedEvent(int step, ScriptedEvent event)
+{
+	mScriptedEvents.push_back(ScriptedEventContainer{ event, false, step });
+}
+
 float Funkin::Conductor::GetConductorBeatMultiplier()
 {
 	return chart.info.bpm / 60.0f;
+}
+
+uint32_t Funkin::Conductor::GetStepCount()
+{
+	return mStepCount;
+}
+
+void Funkin::Conductor::OnStep()
+{
+	for (auto& event : mScriptedEvents)
+	{
+		if (event.stepCount <= mStepCount && !event.executed)
+		{
+			event.event();
+			event.executed = true;
+		}
+	}
 }
 
 void Funkin::Conductor::SpawnNote(Stratum::Scene* scene, ChartNote note)
