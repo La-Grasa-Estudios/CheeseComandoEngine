@@ -35,20 +35,6 @@ Funkin::GameState gGameState;
 #undef min
 #undef max
 
-Funkin::InGameSystem::InGameSystem(const LoadChartParams& params) : mLoadParams(params)
-{
-	
-}
-
-Funkin::InGameSystem::~InGameSystem()
-{
-	instSource->Stop();
-	if (voicesSource)
-		voicesSource->Stop();
-	instSource = NULL;
-	voicesSource = NULL;
-}
-
 using namespace Stratum;
 
 struct SpriteVideo
@@ -160,6 +146,21 @@ struct SpriteVideo
 };
 
 static SpriteVideo* startUpVideo;
+
+Funkin::InGameSystem::InGameSystem(const LoadChartParams& params) : mLoadParams(params)
+{
+	
+}
+
+Funkin::InGameSystem::~InGameSystem()
+{
+	instSource->Stop();
+	if (voicesSource)
+		voicesSource->Stop();
+	instSource = NULL;
+	voicesSource = NULL;
+	delete startUpVideo;
+}
 
 void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 {
