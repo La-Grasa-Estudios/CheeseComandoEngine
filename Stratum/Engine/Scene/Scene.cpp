@@ -290,6 +290,7 @@ void Scene::InitVideo(VideoSurfaceComponent& surface)
 	desc.Format = Render::ImageFormat::RGBA8_UNORM;
 
 	surface.TextureHandle = Resources.CreateTextureImage(desc);
+	decode->Step();
 }
 
 void Scene::SwapScene(Scene* scene)
@@ -463,16 +464,16 @@ void Scene::UpdateVideoPlayers()
 
 		decode->SetLoop(surface.mShouldLoop);
 
-		if (surface.mShouldPlay)
-		{
-			decode->Step();
-		}
-
 		surface.mFrameAccumulator += gpGlobals->deltaTime;
 
 		float frameTime = decode->GetFrametime();
 		while (surface.mFrameAccumulator >= frameTime && !decode->Finished())
 		{
+			if (surface.mShouldPlay)
+			{
+				decode->Step();
+			}
+
 			surface.mFrameAccumulator -= frameTime;
 			auto frame = decode->GetFrame();
 

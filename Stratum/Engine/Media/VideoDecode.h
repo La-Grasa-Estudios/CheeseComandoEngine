@@ -8,6 +8,7 @@
 #include "Sound/RawAudioBuffer.h"
 
 #include <mutex>
+#include <atomic>
 
 #include "znmsp.h"
 
@@ -48,6 +49,8 @@ private:
 	bool m_Stopped;
 	bool m_Finished;
 	float m_Framerate;
+
+	std::atomic_bool m_CanDecodeFrame;
 
 	ma_sound m_SoundStream;
 	Ref<RawAudioBuffer> m_AudioBuffer;

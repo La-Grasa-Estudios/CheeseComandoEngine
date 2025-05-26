@@ -16,8 +16,6 @@
 #include <Core/Window.h>
 #include <Core/JobManager.h>
 
-#include <Media/VideoDecode.h>
-
 #include <Util/Globals.h>
 #include <Event/EventHandler.h>
 #include <Input/Input.h>
@@ -335,6 +333,9 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 
 	Stratum::Time::EndProfile();
 	Stratum::Time::BeginProfile();
+
+	//instSource->Seek(105 * 44100);
+	//voicesSource->Seek(105 * 44100);
 }
 
 void Funkin::InGameSystem::Update(Stratum::Scene* scene)
@@ -528,7 +529,7 @@ void Funkin::InGameSystem::UpdateStage()
 			{
 				sprite.Rotation.x = rand() % 360;
 			}
-			sprite.Rotation.x += 360.0f * 1.5f * Stratum::gpGlobals->deltaTime;
+			sprite.Rotation.x += (360.0f * mConductor->GetConductorBeatMultiplier() * 0.5f) * Stratum::gpGlobals->deltaTime;
 		}
 
 		transform.Position = glm::vec3(targetPos, 0.0f);

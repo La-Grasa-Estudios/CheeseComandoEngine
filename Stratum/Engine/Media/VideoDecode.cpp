@@ -97,6 +97,7 @@ VideoDecode::VideoDecode(std::string_view path, AudioEngine* pEngine)
 	}
 
 	m_Initialized = true;
+	m_CanDecodeFrame.store(true);
 
 }
 
@@ -111,7 +112,9 @@ VideoDecode::~VideoDecode()
 
 void VideoDecode::Step()
 {
-	if (m_Finished || m_Pending.empty()) return;
+	if (m_Finished || m_Pending.empty() || !m_CanDecodeFrame.load()) return;
+
+	m_CanDecodeFrame.store(false);
 
 	JobManager::Dispatch(1, 1, [this](JobDispatchArgs args) {
 		m_PendingStop.lock();
@@ -224,6 +227,7 @@ void VideoDecode::Step()
 				*/
 			}
 		}
+		m_CanDecodeFrame.store(true);
 	});
 
 }
