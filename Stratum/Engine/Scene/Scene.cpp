@@ -3,6 +3,9 @@
 #include "Core/UnormInt.h"
 #include "Core/NormByte.h"
 #include "Core/Logger.h"
+#include "Core/JobManager.h"
+#include "Core/EngineStats.h"
+#include <Core/Time.h>
 
 #include "Util/Globals.h"
 
@@ -12,6 +15,11 @@
 
 #include "Renderer/RendererContext.h"
 #include "Renderer/Buffer.h"
+#include "Renderer/GraphicsCommandBuffer.h"
+
+#include "Media/VideoDecode.h"
+
+#undef min
 
 using namespace ENGINE_NAMESPACE;
 
@@ -23,6 +31,9 @@ Scene::Scene()
 	SpriteRenderers.Init(&EntityManager);
 	SpriteAnimators.Init(&EntityManager);
 	GuiAnchors.Init(&EntityManager);
+	VideoSurfaces.Init(&EntityManager);
+
+	mVideoCopyCommandBuffer = new Render::GraphicsCommandBuffer();
 }
 
 Scene::~Scene()
@@ -66,6 +77,7 @@ void Scene::PostUpdate()
 		if (mSystems[i]->pEarlyUpdate)
 			mSystems[i]->PostUpdate(this);
 	}
+	UpdateVideoPlayers();
 	UpdateGuiAnchors();
 	UpdateTransforms();
 	for (int i = 0; i < mSystems.size(); i++)
@@ -262,6 +274,24 @@ void Scene::RegisterCustomSystem(ISceneSystem* pSystem, bool initImmediately)
 	}
 }
 
+void Scene::InitVideo(VideoSurfaceComponent& surface)
+{
+	surface.mDecoder = new VideoDecode(surface.Path, surface.PlayAudio ? this->AudioEngine : NULL);
+	VideoDecode* decode = reinterpret_cast<VideoDecode*>(surface.mDecoder);
+
+	auto params = decode->GetSize();
+
+	surface.VideoResolution.x = params.width;
+	surface.VideoResolution.y = params.height;
+
+	Render::ImageDescription desc;
+	desc.Width = params.width;
+	desc.Height = params.height;
+	desc.Format = Render::ImageFormat::RGBA8_UNORM;
+
+	surface.TextureHandle = Resources.CreateTextureImage(desc);
+}
+
 void Scene::SwapScene(Scene* scene)
 {
 	NextScenePtr = scene;
@@ -269,6 +299,8 @@ void Scene::SwapScene(Scene* scene)
 
 void Scene::UpdateTransforms()
 {
+	Z_PROFILE_SCOPE("Scene::UpdateTransforms");
+
 	auto& transforms = Transforms.GetEntities();
 
 	for (auto entity : transforms)
@@ -289,6 +321,7 @@ void Scene::UpdateTransforms()
 
 void Scene::UpdateAnimators()
 {
+	Z_PROFILE_SCOPE("Scene::UpdateAnimators");
 
 	auto& animators = SpriteAnimators.GetEntities();
 
@@ -347,6 +380,8 @@ void Scene::UpdateAnimators()
 
 void Scene::UpdateGuiAnchors()
 {
+	Z_PROFILE_SCOPE("Scene::UpdateGuiAnchors");
+
 	auto& anchors = GuiAnchors.GetEntities();
 
 	for (auto entity : anchors)
@@ -398,4 +433,95 @@ void Scene::UpdateGuiAnchors()
 
 		transform.SetPosition(Position);
 	}
+}
+
+void Scene::UpdateVideoPlayers()
+{
+	Z_PROFILE_SCOPE("Scene::UpdateVideoPlayers");
+
+	auto& entities = VideoSurfaces.GetEntities();
+
+	mVideoCopyCommandBuffer->Begin();
+
+	for (auto entity : entities)
+	{
+
+		auto& surface = VideoSurfaces.Get(entity);
+
+		if (surface.Path.empty())
+			continue;
+
+		if (!surface.mDecoder)
+		{
+			return;
+		}
+
+		VideoDecode* decode = reinterpret_cast<VideoDecode*>(surface.mDecoder);
+
+		if (decode->Finished())
+			continue;
+
+		decode->SetLoop(surface.mShouldLoop);
+
+		if (surface.mShouldPlay)
+		{
+			decode->Step();
+		}
+
+		surface.mFrameAccumulator += gpGlobals->deltaTime;
+
+		float frameTime = decode->GetFrametime();
+		while (surface.mFrameAccumulator >= frameTime && !decode->Finished())
+		{
+			surface.mFrameAccumulator -= frameTime;
+			auto frame = decode->GetFrame();
+
+			if (frame)
+			{
+				Render::ImageResource* pSurface = Resources.GetImageHandle(surface.TextureHandle);
+
+				auto cmd = mVideoCopyCommandBuffer->GetNativeCommandList();
+				mVideoCopyCommandBuffer->RequireTextureState(pSurface, Render::ResourceState::ShaderResource, Render::ResourceState::CopyDest);
+				mVideoCopyCommandBuffer->CommitBarriers();
+
+				uint32_t count = surface.VideoResolution.x * surface.VideoResolution.y;
+				auto data = frame->native()->data[0];
+
+				JobManager::Dispatch(count, 8192, [&](JobDispatchArgs args)
+					{
+						uint32_t index = args.jobIndex * 4;
+						uint8_t r = data[index + 0];
+						uint8_t g = data[index + 1];
+						uint8_t b = data[index + 2];
+						uint8_t a = data[index + 3];
+						data[index + 0] = g;
+						data[index + 1] = b;
+						data[index + 2] = a;
+						data[index + 3] = r;
+					});
+
+				JobManager::Wait();
+
+				cmd->writeTexture(pSurface->Handle, 0, 0, data, surface.VideoResolution.x * 4);
+				mVideoCopyCommandBuffer->RequireTextureState(pSurface, Render::ResourceState::CopyDest, Render::ResourceState::ShaderResource);
+				mVideoCopyCommandBuffer->CommitBarriers();
+				decode->PushFrame(frame);
+			}
+		}
+
+	}
+
+	for (int i = 0; i < ECS::C_MAX_ENTITIES; i++)
+	{
+		if (!VideoSurfaces.mAllocatedArray[i] && VideoSurfaces.mComponentArray[i].mDecoder)
+		{
+			VideoDecode* decode = reinterpret_cast<VideoDecode*>(VideoSurfaces.mComponentArray[i].mDecoder);
+			delete decode;
+			VideoSurfaces.mComponentArray[i].mDecoder = 0;
+			Resources.ReleaseImage(VideoSurfaces.mComponentArray[i].TextureHandle);
+		}
+	}
+
+	mVideoCopyCommandBuffer->End();
+	mVideoCopyCommandBuffer->Submit();
 }

@@ -35,118 +35,6 @@ Funkin::GameState gGameState;
 #undef min
 #undef max
 
-using namespace Stratum;
-
-struct SpriteVideo
-{
-	ECS::edict_t entity;
-	VideoDecode* decode;
-	VideoParams params;
-	float accum = 0.0f;
-	float time = 0.0f;
-	bool firstFrameReady = false;
-	Ref<Render::GraphicsCommandBuffer> commandbuffer;
-	Render::ImageResource* surface;
-	DescriptorHandle handle;
-
-	SpriteVideo(const std::string& path, SceneResources* resources)
-	{
-		decode = new Stratum::VideoDecode(path.c_str(), NULL);
-		commandbuffer = CreateRef<Render::GraphicsCommandBuffer>();
-		params = decode->GetSize();
-
-		Render::ImageDescription desc;
-		desc.Width = params.width;
-		desc.Height = params.height;
-		desc.Format = Render::ImageFormat::RGBA8_UNORM;
-
-		handle = resources->CreateTextureImage(desc);
-		surface = resources->GetImageHandle(handle);
-	}
-	~SpriteVideo()
-	{
-		delete decode;
-	}
-	void Update(Scene* scene)
-	{
-		auto& sprite = scene->SpriteRenderers.Get(entity);
-		accum += Stratum::gpGlobals->deltaTime; if (decode->Finished())
-		{
-			sprite.Enabled = false;
-			return;
-		}
-		float frameTime = decode->GetFrametime();
-		decode->Step();
-		while (accum >= frameTime && !decode->Finished())
-		{
-			accum -= frameTime;
-			auto frame = decode->GetFrame();
-			if (frame)
-			{
-				commandbuffer->Begin();
-				auto cmd = commandbuffer->GetNativeCommandList();
-				commandbuffer->RequireTextureState(surface, Render::ResourceState::ShaderResource, Render::ResourceState::CopyDest);
-				commandbuffer->CommitBarriers();
-
-				uint32_t count = params.width * params.height;
-				auto data = frame->native()->data[0];
-
-				JobManager::Dispatch(count, 1024, [&](JobDispatchArgs args)
-					{
-						uint32_t index = args.jobIndex * 4;
-						uint8_t r = data[index + 0];
-						uint8_t g = data[index + 1];
-						uint8_t b = data[index + 2];
-						uint8_t a = data[index + 3];
-						data[index + 0] = g;
-						data[index + 1] = b;
-						data[index + 2] = a;
-						data[index + 3] = r;
-					});
-
-				JobManager::Wait();
-
-				cmd->writeTexture(surface->Handle, 0, 0, data, params.width * 4);
-				commandbuffer->RequireTextureState(surface, Render::ResourceState::CopyDest, Render::ResourceState::ShaderResource);
-				commandbuffer->CommitBarriers();
-				commandbuffer->End();
-				commandbuffer->Submit();
-				decode->PushFrame(frame);
-			}
-		}
-		auto& transform = scene->Transforms.Get(entity);
-		glm::vec2 scaleFactor = glm::vec2(scene->VirtualScreenSize) / glm::vec2(sprite.Rect.size);
-		transform.SetScale(glm::vec3(scaleFactor, 0.0f));
-
-		time += gpGlobals->deltaTime;
-
-		if (time > 3.5f)
-		{
-			sprite.SpriteColor.r += 0.1f * gpGlobals->deltaTime;
-			sprite.SpriteColor.g += 0.1f * gpGlobals->deltaTime;
-			sprite.SpriteColor.b += 0.1f * gpGlobals->deltaTime;
-		}
-
-	}
-	void Create(Scene* scene)
-	{
-		entity = scene->EntityManager.CreateEntity();
-		auto& sprite = scene->SpriteRenderers.Create(entity);
-		auto& transform = scene->Transforms.Create(entity);
-		sprite.Rect.position = {};
-		sprite.Rect.size = { params.width, params.height };
-		sprite.IsGui = true;
-		sprite.RenderLayer = 101;
-		sprite.TextureHandle = handle;
-		sprite.SpriteColor.r = 0.0f;
-		sprite.SpriteColor.g = 0.0f;
-		sprite.SpriteColor.b = 0.0f;
-		transform.SetScale(glm::vec3(20.0f));
-	}
-};
-
-static SpriteVideo* startUpVideo;
-
 Funkin::InGameSystem::InGameSystem(const LoadChartParams& params) : mLoadParams(params)
 {
 	
@@ -159,8 +47,9 @@ Funkin::InGameSystem::~InGameSystem()
 		voicesSource->Stop();
 	instSource = NULL;
 	voicesSource = NULL;
-	delete startUpVideo;
 }
+
+static Stratum::ECS::edict_t startupVideo = Stratum::ECS::C_INVALID_ENTITY;
 
 void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 {
@@ -365,21 +254,47 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mConductor->chart.events.push_back(EventCebolla);
 	mConductor->chart.events.push_back(Event1dash1);
 
-	startUpVideo = new SpriteVideo("fnf/videos/GatoBros.mp4", &mScene->Resources);
-	startUpVideo->Create(mScene);
-
 	mScene->Resources.LoadTextureImage("fnf/SyobonNoAction/screen1.png");
 
-	static ECS::edict_t x64entity;
-	static ECS::edict_t x64blackentity;
+	static Stratum::ECS::edict_t x64entity;
+	static Stratum::ECS::edict_t x64blackentity;
 
-	mConductor->AddScriptedEvent(253, [this]() {
+	mConductor->AddScriptedEvent(0, [this]()
+		{
+			startupVideo = mScene->EntityManager.CreateEntity();
+			auto& sprite = mScene->SpriteRenderers.Create(startupVideo);
+			auto& transform = mScene->Transforms.Create(startupVideo);
+
+			auto& surface = mScene->VideoSurfaces.Create(startupVideo);
+			surface.Path = "fnf/videos/GatoBros.mp4";
+			mScene->InitVideo(surface);
+
+			surface.SetPlayState(true);
+
+			sprite.Rect.position = {};
+			sprite.Rect.size = surface.VideoResolution;
+			sprite.IsGui = true;
+			sprite.RenderLayer = 101;
+			sprite.TextureHandle = surface.TextureHandle;
+			sprite.SpriteColor.r = 0.0f;
+			sprite.SpriteColor.g = 0.0f;
+			sprite.SpriteColor.b = 0.0f;
+			transform.SetScale(glm::vec3(20.0f));
+
+			gGameState.DoBeatEveryNthBeat = 999999999;
+		});
+
+	mConductor->AddScriptedEvent(255, [this]() {
+
 		x64entity = mScene->EntityManager.CreateEntity();
 		x64blackentity = mScene->EntityManager.CreateEntity();
 		auto& sprite = mScene->SpriteRenderers.Create(x64entity);
 		auto& transform = mScene->Transforms.Create(x64entity);
 		auto& sprite1 = mScene->SpriteRenderers.Create(x64blackentity);
 		auto& transform1 = mScene->Transforms.Create(x64blackentity);
+
+		mScene->EntityManager.DestroyEntity(startupVideo);
+		startupVideo = Stratum::ECS::C_INVALID_ENTITY;
 
 		sprite1.SpriteColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 		sprite1.Rect.size = { 100000, 100000 };
@@ -390,12 +305,14 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		sprite.UseNearestTextureFilter = true;
 		sprite.RenderLayer = 102;
 		sprite.IsGui = true;
+		transform.SetScale(glm::vec3(1.25f));
 
 		});
 
 	mConductor->AddScriptedEvent(272, [this]() {
 		mScene->EntityManager.DestroyEntity(x64blackentity);
 		mScene->EntityManager.DestroyEntity(x64entity);
+		gGameState.DoBeatEveryNthBeat = 4;
 		});
 
 	mConductor->AddScriptedEvent(1536, [this]() {
@@ -414,10 +331,10 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		mConductor->EnableBot = false;
 		});
 
-	//instSource->Seek(105 * 44100);
-	//voicesSource->Seek(105 * 44100);
-
 	pEarlyUpdate = true;
+
+	Stratum::Time::EndProfile();
+	Stratum::Time::BeginProfile();
 }
 
 void Funkin::InGameSystem::Update(Stratum::Scene* scene)
@@ -428,8 +345,6 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 			voicesSource->SetVolume(1.0f);
 		instSource->SetVolume(1.0f);
 	}
-
-	startUpVideo->Update(scene);
 
 	if (Stratum::Input::GetKeyDown(KeyCode::F11))
 	{
@@ -453,6 +368,20 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 		editor->RegisterCustomSystem(new CharaEditorSystem(mLoadParams.ChartPath));
 
 		scene->SwapScene(editor);
+	}
+
+	if (startupVideo != Stratum::ECS::C_INVALID_ENTITY)
+	{
+		auto& transform = scene->Transforms.Get(startupVideo);
+		auto& sprite = scene->SpriteRenderers.Get(startupVideo);
+		glm::vec2 scaleFactor = glm::vec2(scene->VirtualScreenSize) / glm::vec2(sprite.Rect.size);
+		transform.SetScale(glm::vec3(scaleFactor, 0.0f));
+
+		sprite.SpriteColor.r += 0.1f * Stratum::gpGlobals->deltaTime;
+		sprite.SpriteColor.g += 0.1f * Stratum::gpGlobals->deltaTime;
+		sprite.SpriteColor.b += 0.1f * Stratum::gpGlobals->deltaTime;
+
+		sprite.SpriteColor = glm::min(sprite.SpriteColor, glm::vec4(1.0f));
 	}
 
 	float bpmPerSecond = 1.0f / (mConductor->chart.info.bpm / 60.0f);

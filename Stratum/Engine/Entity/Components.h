@@ -5,8 +5,11 @@
 #include "glm/ext.hpp"
 
 #include "ComponentManager.h"
+#include "Renderer/BindlessDescriptorIndex.h"
 
 BEGIN_ENGINE
+
+class Scene;
 
 struct NameComponent
 {
@@ -190,6 +193,45 @@ struct GuiAnchorComponent
 {
 	glm::vec2 Position = {};
 	GuiAnchorPoint AnchorPoint = GuiAnchorPoint::CENTER;
+};
+
+struct VideoSurfaceComponent
+{
+	friend Scene;
+
+	Render::BindlessDescriptorIndex TextureHandle;
+	glm::ivec2 VideoResolution;
+	std::string Path;
+	bool PlayAudio = false;
+
+	VideoSurfaceComponent& SetPlayState(bool state)
+	{
+		mShouldPlay = state;
+		return *this;
+	}
+	VideoSurfaceComponent& Reset()
+	{
+		mShouldReset = true;
+		return *this;
+	}
+	VideoSurfaceComponent& SetLoop(bool loop)
+	{
+		mShouldLoop = loop;
+		return *this;
+	}
+	bool Finished()
+	{
+		return mHasFinished;
+	}
+
+private: // [25-05-2025] Ugly private on struct but i need it
+	float mFrameAccumulator = 0.0f;
+	void* mDecoder = NULL;
+
+	bool mShouldPlay = false;
+	bool mShouldReset = false;
+	bool mShouldLoop = false;
+	bool mHasFinished = false;
 };
 
 END_ENGINE

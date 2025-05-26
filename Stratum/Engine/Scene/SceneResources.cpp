@@ -253,7 +253,7 @@ DescriptorHandle SceneResources::LoadTextureImage(const std::string& path)
 	return -1;
 }
 
-DescriptorHandle SceneResources::CreateTextureImage(const Render::ImageDescription& desc)
+Render::BindlessDescriptorIndex SceneResources::CreateTextureImage(const Render::ImageDescription& desc)
 {
 	Ref<Render::ImageResource> image = CreateRef<Render::ImageResource>(desc);
 	auto handle = mDescriptorTable->AllocateDescriptor(nvrhi::BindingSetItem::Texture_SRV(0, image->Handle));
@@ -268,6 +268,13 @@ Render::ImageResource* SceneResources::GetImageHandle(const DescriptorHandle han
 		return a->second.get();
 	}
 	return nullptr;
+}
+
+void SceneResources::ReleaseImage(Render::BindlessDescriptorIndex handle)
+{
+	if (mTextures.contains(handle))
+		mTextures.erase(handle);
+	handle.Release();
 }
 
 int32_t SceneResources::AllocateBufferHandle()

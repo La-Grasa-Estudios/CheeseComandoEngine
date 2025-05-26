@@ -42,6 +42,11 @@ namespace Internal
 	class Window;
 }
 
+namespace Render
+{
+	class GraphicsCommandBuffer;
+}
+
 class Scene
 {
 
@@ -63,6 +68,7 @@ public:
 	ECS::ComponentManager<SpriteRendererComponent> SpriteRenderers;
 	ECS::ComponentManager<SpriteAnimator> SpriteAnimators;
 	ECS::ComponentManager<GuiAnchorComponent> GuiAnchors;
+	ECS::ComponentManager<VideoSurfaceComponent> VideoSurfaces;
 
 	void LoadModel(const std::string& path, const ECS::edict_t edict);
 
@@ -71,6 +77,8 @@ public:
 
 	void RegisterCustomComponent(ECS::ComponentManager_Interface* pInterface, const std::string& name);
 	void RegisterCustomSystem(ISceneSystem* pSystem, bool initImmediately = false);
+
+	void InitVideo(VideoSurfaceComponent& surface);
 
 	void SwapScene(Scene* scene);
 
@@ -96,9 +104,12 @@ private:
 	void UpdateTransforms();
 	void UpdateAnimators();
 	void UpdateGuiAnchors();
+	void UpdateVideoPlayers();
 
 	std::unordered_map<std::string, ECS::ComponentManager_Interface*> mCustomComponents;
 	std::vector<ISceneSystem*> mSystems;
+
+	Render::GraphicsCommandBuffer* mVideoCopyCommandBuffer;
 
 };
 

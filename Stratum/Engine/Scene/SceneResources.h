@@ -53,8 +53,10 @@ public:
 	bool IsMaterialDirty(DescriptorHandle handle);
 
 	DescriptorHandle LoadTextureImage(const std::string& path);
-	DescriptorHandle CreateTextureImage(const Render::ImageDescription& desc);
+	Render::BindlessDescriptorIndex CreateTextureImage(const Render::ImageDescription& desc);
 	Render::ImageResource* GetImageHandle(const DescriptorHandle handle);
+
+	void ReleaseImage(Render::BindlessDescriptorIndex handle);
 
 private:
 

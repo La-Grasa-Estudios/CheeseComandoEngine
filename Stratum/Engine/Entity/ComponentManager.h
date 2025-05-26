@@ -8,6 +8,8 @@
 
 BEGIN_ENGINE
 
+class Scene;
+
 namespace ECS
 {
 
@@ -21,6 +23,8 @@ namespace ECS
 	class ComponentManager : public ComponentManager_Interface
 	{
 	public:
+
+		friend Scene;
 
 		ComponentManager() = default;
 
@@ -82,7 +86,6 @@ namespace ECS
 
 				mLookup.erase(edict);
 
-				mComponentArray[edict - 1] = {};
 				mAllocatedArray[edict - 1] = false;
 			}
 		}
