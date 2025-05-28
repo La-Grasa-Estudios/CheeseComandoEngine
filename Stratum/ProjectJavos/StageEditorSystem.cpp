@@ -44,6 +44,8 @@ Funkin::StageEditorSystem::StageEditorSystem(const std::string& stage)
 Funkin::StageEditorSystem::~StageEditorSystem()
 {
 	delete mCharacter;
+	if (mOponentCharacter)
+		delete mOponentCharacter;
 }
 
 void Funkin::StageEditorSystem::Init(Stratum::Scene* scene)
@@ -67,6 +69,7 @@ void Funkin::StageEditorSystem::Update(Stratum::Scene* scene)
 	}
 
 	mCharacter->UpdateTransform();
+	mOponentCharacter->UpdateTransform();
 }
 
 void Funkin::StageEditorSystem::PostUpdate(Stratum::Scene* scene)
@@ -365,6 +368,8 @@ void Funkin::StageEditorSystem::DrawPropManager()
 
 void Funkin::StageEditorSystem::EditCharacter()
 {
+	auto character = mCharacter;
+
 	static int characterIndex = 0;
 	const char* names[3] =
 	{
@@ -373,8 +378,16 @@ void Funkin::StageEditorSystem::EditCharacter()
 		"Gf"
 	};
 
+	CharaSprite* characters[3] =
+	{
+		mCharacter,
+		mOponentCharacter,
+		NULL
+	};
+
 	ImGui::Begin("Character Editor");
 
+	int lastCharacterIndex = characterIndex;
 	ImGui::InputInt("Character", &characterIndex);
 
 	if (characterIndex < 0)
@@ -386,18 +399,35 @@ void Funkin::StageEditorSystem::EditCharacter()
 		characterIndex = 2;
 	}
 
+	character = characters[characterIndex];
+
+	if (lastCharacterIndex != characterIndex)
+	{
+		auto lastCharacter = characters[lastCharacterIndex];
+		if (lastCharacter)
+			lastCharacter->SetEnabled(false);
+		if (character)
+			character->SetEnabled(true);
+	}
+
+	if (!character)
+	{
+		ImGui::End();
+		return;
+	}
+
 	ImGui::Text("Now editing: %s", names[characterIndex]);
 
 	ImGui::Checkbox("Preview Camera", &mPreviewCamera);
 
-	auto entity = mBfEntity;
+	auto entity = character->CharaEntity;
 
 	auto& transform = mScene->Transforms.Get(entity);
 	auto& sprite = mScene->SpriteRenderers.Get(entity);
 
 	ImGui::DragFloat2("Camera Offset", glm::value_ptr(CameraOffsets[characterIndex]));
-	ImGui::DragFloat2("Position", glm::value_ptr(mCharacter->CharaPosition));
-	ImGui::DragFloat2("Scale", glm::value_ptr(mCharacter->CharaScale), 0.025f);
+	ImGui::DragFloat2("Position", glm::value_ptr(character->CharaPosition));
+	ImGui::DragFloat2("Scale", glm::value_ptr(character->CharaScale), 0.025f);
 	ImGui::InputInt("Z Index", &sprite.RenderLayer);
 
 	transform.IsDirty = true;
@@ -481,6 +511,7 @@ void Funkin::StageEditorSystem::SaveJson()
 
 	nlohmann::json characters;
 	nlohmann::json player;
+	nlohmann::json dad;
 
 	{
 		auto& transform = mScene->Transforms.Get(mBfEntity);
@@ -495,7 +526,21 @@ void Funkin::StageEditorSystem::SaveJson()
 		player["cameraOffset"][1] = CameraOffsets[0].y;
 	}
 
+	if (mOponentCharacter) {
+		auto& transform = mScene->Transforms.Get(mOponentCharacter->CharaEntity);
+		auto& sprite = mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity);
+
+		dad["zIndex"] = sprite.RenderLayer;
+		dad["position"][0] = transform.Position.x;
+		dad["position"][1] = transform.Position.y;
+		dad["scale"][0] = mOponentCharacter->CharaScale.x;
+		dad["scale"][1] = mOponentCharacter->CharaScale.y;
+		dad["cameraOffset"][0] = CameraOffsets[1].x;
+		dad["cameraOffset"][1] = CameraOffsets[1].y;
+	}
+
 	characters["bf"] = player;
+	characters["dad"] = dad;
 
 	json["characters"] = characters;
 	json["cameraZoom"] = stageRoot.CameraZoom;
@@ -583,6 +628,21 @@ void Funkin::StageEditorSystem::ReadJson(const std::string& name)
 			CameraOffsets[0].x = bf["cameraOffset"][0];
 			CameraOffsets[0].y = bf["cameraOffset"][1];
 		}
+
+		if (mOponentCharacter && characters.contains("dad"))
+		{
+			auto& dad = characters["dad"];
+			auto& transform = mScene->Transforms.Get(mOponentCharacter->CharaEntity);
+			auto& sprite = mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity);
+
+			sprite.RenderLayer = dad["zIndex"];
+			mOponentCharacter->CharaPosition.x = dad["position"][0];
+			mOponentCharacter->CharaPosition.y = dad["position"][1];
+			mOponentCharacter->CharaScale.x = dad["scale"][0];
+			mOponentCharacter->CharaScale.y = dad["scale"][1];
+			CameraOffsets[1].x = dad["cameraOffset"][0];
+			CameraOffsets[1].y = dad["cameraOffset"][1];
+		}
 	}
 
 }
@@ -598,4 +658,12 @@ void Funkin::StageEditorSystem::CreateBf()
 
 	auto& animator = mScene->SpriteAnimators.Get(mCharacter->CharaEntity);
 	animator.AnimationMap["idle"].FrameRate = animator.AnimationMap["idle"].rects.size() * 2.0f;
+
+	if (!chart.info.player2.empty())
+	{
+		mOponentCharacter = new CharaSprite(mScene, GenerateAssetPath(C_CHARA_PATH_PREFIX, chart.info.player2, "json"));
+		mOponentCharacter->SetEnabled(false);
+		auto& animatoro = mScene->SpriteAnimators.Get(mOponentCharacter->CharaEntity);
+		animatoro.AnimationMap["idle"].FrameRate = animatoro.AnimationMap["idle"].rects.size() * 2.0f;
+	}
 }

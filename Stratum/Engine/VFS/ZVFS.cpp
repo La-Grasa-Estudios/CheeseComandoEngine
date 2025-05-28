@@ -23,10 +23,10 @@ size_t g_FileCacheSize = 0;
 
 RefBinaryStream PutInCache(const char* file, RefBinaryStream stream)
 {
+    return stream;
 
     if (stream->Size() > CACHE_SIZE / 2)
     {
-        return stream;
     }
 
     while (g_FileCacheSize + stream->Size() > CACHE_SIZE)

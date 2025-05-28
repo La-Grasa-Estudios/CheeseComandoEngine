@@ -85,6 +85,7 @@ void Scene::PostUpdate()
 		if (!mSystems[i]->pEarlyUpdate)
 			mSystems[i]->PostUpdate(this);
 	}
+	EntityManager.Update();
 }
 
 void Scene::RenderImGui()

@@ -53,5 +53,6 @@ namespace Funkin
 
 		Stratum::Scene* mScene;
 		CharaSprite* mCharacter;
+		CharaSprite* mOponentCharacter;
 	};
 }

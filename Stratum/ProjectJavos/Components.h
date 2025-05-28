@@ -14,7 +14,10 @@ namespace Funkin
 	{
 		uint32_t Sustain = 0;
 		uint32_t NoteType;
+		uint32_t NoteIndex = 0;
+		uint32_t SectionIndex = 0;
 		float Time;
+		bool IsOponent;
 	};
 
 	struct NoteHoldComponent

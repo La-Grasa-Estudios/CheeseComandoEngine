@@ -11,6 +11,7 @@ namespace Funkin
 		int noteType;
 		float holdTime;
 		bool mustHitSection = false;
+		std::string noteData;
 	};
 	struct ChartSection
 	{

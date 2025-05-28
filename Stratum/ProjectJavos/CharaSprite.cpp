@@ -71,7 +71,10 @@ Funkin::CharaSprite::CharaSprite(Stratum::Scene* scene, const std::string& file)
 	animator.SetState("idle");
 
 	if (json.contains("flipX"))
+	{
 		renderer.FlipX = json["flipX"];
+		mIsFlipped = renderer.FlipX;
+	}
 
 	renderer.TextureHandle = mScene->Resources.LoadTextureImage(assetPath);
 
@@ -81,6 +84,7 @@ Funkin::CharaSprite::CharaSprite(Stratum::Scene* scene, const std::string& file)
 	SetEnabled(false);
 
 	mBeatAcumulator = 0.0f;
+	mSparrowPath = sparrowPath;
 }
 
 void Funkin::CharaSprite::Update()
@@ -136,6 +140,29 @@ void Funkin::CharaSprite::UpdateTransform()
 	transform.SetScale(glm::vec3(targetScale, 1.0f));
 }
 
+void Funkin::CharaSprite::AddAnimation(const std::string& name, const std::string& prefix, const std::string& nextState, float fps, bool loop, bool alwaysSync)
+{
+	auto frames = SparrowReader::readXML(mSparrowPath, prefix, false);
+
+	Stratum::SpriteAnimator::Animation animation = Stratum::SpriteAnimator::Animation()
+		.SetFrameRate(fps)
+		.SetLoop(loop)
+		.SetAnimateOnIdle(alwaysSync)
+		.SetNextState(nextState)
+		.SetFrames(frames);
+
+	if (!loop)
+	{
+		if (alwaysSync)
+		{
+			animation.SetTransitionToDefault(false);
+		}
+	}
+
+	auto& animator = mScene->SpriteAnimators.Get(CharaEntity);
+	animator.AnimationMap[name] = animation;
+}
+
 void Funkin::CharaSprite::PlayAnimation(const std::string& name)
 {
 	auto& animator = mScene->SpriteAnimators.Get(CharaEntity);
@@ -148,6 +175,9 @@ void Funkin::CharaSprite::PlayAnimation(const std::string& name)
 
 	if (renderer.FlipX && name.compare("right") == 0)
 		newName = "left";
+
+	if (!animator.AnimationMap.contains(newName))
+		return;
 
 	if (animator.CurrentAnimation.compare(newName) == 0)
 	{
@@ -166,4 +196,27 @@ void Funkin::CharaSprite::SetEnabled(bool enabled)
 {
 	auto& renderer = mScene->SpriteRenderers.Get(CharaEntity);
 	renderer.Enabled = enabled;
+
+	if (enabled)
+	{
+		auto& animator = mScene->SpriteAnimators.Get(CharaEntity);
+		animator.SetState("idle");
+	}
+}
+
+void Funkin::CharaSprite::SetCenter(const glm::vec2& center)
+{
+	auto& renderer = mScene->SpriteRenderers.Get(CharaEntity);
+	renderer.Center = center;
+}
+
+void Funkin::CharaSprite::SetLayer(uint32_t layer)
+{
+	auto& renderer = mScene->SpriteRenderers.Get(CharaEntity);
+	renderer.RenderLayer = layer;
+}
+
+bool Funkin::CharaSprite::FlippedHorizontally()
+{
+	return mIsFlipped;
 }

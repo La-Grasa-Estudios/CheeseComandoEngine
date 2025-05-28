@@ -47,8 +47,13 @@ Funkin::Chart Funkin::ChartLoader::LoadChart(const std::string& path)
 				note.noteType = notes[1];
 				note.holdTime = notes[2] / 1000.0f;
 				note.mustHitSection = sec.mustHitSection;
-				sec.notes.push_back(note);
 
+				if (notes.size() >= 4)
+				{
+					note.noteData = notes[3];
+				}
+
+				sec.notes.push_back(note);
 			}
 
 			chart.sections.push_back(sec);

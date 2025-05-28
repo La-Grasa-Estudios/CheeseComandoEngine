@@ -26,11 +26,69 @@ const int32_t NOTE_HOLD_LAYER = 5;
 const int32_t NOTE_LAYER = 10;
 const int32_t NOTE_EFFECT_LAYER = 15;
 
+const float PI = glm::pi<float>();
+
+static inline float easeInElastic(float x) {
+	float c4 = (2 * PI) / 3;
+
+	return x == 0.0f
+		? 0
+		: x == 1.0f
+		? 1
+		: -glm::pow(2, 10 * x - 10) * glm::sin((x * 10 - 10.75) * c4);
+}
+
+static inline float easeOutElastic(float x) {
+	float c4 = (2 * PI) / 3;
+
+	return x == 0
+		? 0
+		: x == 1
+		? 1
+		: glm::pow(2, -10 * x) * glm::sin((x * 10 - 0.75) * c4) + 1;
+}
+
+static inline float easeInOutElastic(float x) {
+	float c5 = (2 * PI) / 4.5;
+
+	return x == 0
+		? 0
+		: x == 1
+		? 1
+		: x < 0.5
+		? -(glm::pow(2, 20 * x - 10) * glm::sin((20 * x - 11.125) * c5)) / 2
+		: (glm::pow(2, -20 * x + 10) * glm::sin((20 * x - 11.125) * c5)) / 2 + 1;
+}
+
+static inline float easeInBack(float x) {
+	float c1 = 1.70158;
+	float c3 = c1 + 1;
+
+	return c3 * x * x * x - c1 * x * x;
+}
+
+static inline float easeOutBack(float x) {
+	float c1 = 1.70158;
+	float c3 = c1 + 1;
+
+	return 1 + c3 * glm::pow(x - 1, 3) + c1 * glm::pow(x - 1, 2);
+}
+
+static inline float easeInOutBack(float x) {
+	float c1 = 1.70158;
+	float c2 = c1 * 1.525;
+
+	return x < 0.5
+		? (glm::pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2)) / 2
+		: (glm::pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2;
+}
+
 Funkin::Conductor::Conductor()
 {
 	mHitNoteEvent = Stratum::EventHandler::GetEventID("hit_note");
 	mSustainNoteEvent = Stratum::EventHandler::GetEventID("sustain_note");
 	mMissNoteEvent = Stratum::EventHandler::GetEventID("miss_note");
+	mOponentNoteEvent = Stratum::EventHandler::GetEventID("oponent_note");
 
 	RegisterEventHandler("StSetBot", [this](ChartEvent& event)
 		{
@@ -91,7 +149,7 @@ void Funkin::Conductor::Init(Stratum::Scene* scene)
 		sprite.TextureHandle = scene->Resources.LoadTextureImage("textures/NOTE_assets.DDS");
 		sprite.IsGui = true;
 
-		anchor.Position = { i * 384.0f + (250.0f), 320.0f };
+		anchor.Position = { (i - 2.0f) * 384.0f + 196.0f, 320.0f };
 
 		animator.AnimationMap["default"] = defaultAnimations[i];
 		animator.AnimationMap["hold"] = holdAnimations[i];
@@ -172,7 +230,7 @@ void Funkin::Conductor::Init(Stratum::Scene* scene)
 		auto& anchor = scene->GuiAnchors.Create(coverEntity);
 
 		anchor.AnchorPoint = Stratum::GuiAnchorPoint::TOP;
-		anchor.Position = { i * 384.0f + (250.0f), 320.0f };
+		anchor.Position = { (i - 2.0f) * 384.0f + 196.0f, 320.0f };
 
 		coverSprite.Enabled = false;
 		coverSprite.TextureHandle = handle;
@@ -214,11 +272,12 @@ void Funkin::Conductor::LoadChart(Stratum::Scene* scene, const std::string& path
 	SongTime = 0.0f;
 	mSustainHeld = {};
 
-	for (auto section : chart.sections)
+	for (int j = 0; j < chart.sections.size(); j++)
 	{
-		for (auto note : section.notes)
+		auto& section = chart.sections[j];
+		for (int i = 0; i < section.notes.size(); i++)
 		{
-			SpawnNote(scene, note);
+			SpawnNote(scene, section.notes[i], i, j);
 		}
 	}
 
@@ -235,11 +294,23 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 	const uint32_t expectedStepCount = glm::floor(BeatCountF * 4.0f);
 
 	auto lastStepCount = mStepCount;
-	mStepCount = expectedStepCount;
 
-	if (mStepCount != lastStepCount)
+	uint32_t simulatedSteps = expectedStepCount - lastStepCount;
+
+	// Big lag spike! (TO DO: Fix the engine/get a good pc)
+	// Simulate last 16 steps (Also helps during developments when skipping parts of the song)
+	if (simulatedSteps > 1024)
 	{
+		mStepCount += simulatedSteps - 1024;
+		simulatedSteps = 1024;
+	}
+
+	// Need to do this to avoid skipping steps in case of lag
+	while (simulatedSteps > 0)
+	{
+		simulatedSteps -= 1;
 		OnStep();
+		mStepCount += 1;
 	}
 
 	bool botEnabled = EnableBot || false;
@@ -250,8 +321,6 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 	auto& notes = notesManager->GetEntities();
 	auto& effects = effectManager->GetEntities();
-
-	nvrhi::static_vector<Stratum::ECS::edict_t, 64> entitiesToDestroy;
 
 	std::array<bool, 4> inputs = { 
 		Stratum::Input::GetKeyDown(KeyCode::A) || Stratum::Input::GetKeyDown(KeyCode::LEFT),
@@ -272,14 +341,20 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 	const float SAFEZONE_PLUS = SongTime + SAFE_ZONE * 0.8f;
 	const float SAFEZONE_MINUS = SongTime - SAFE_ZONE;
 
-	const uint32_t maxNotesDestroyed = 8;
-	uint32_t numNotesDestroyed = 0;
-
 	for (auto entity : notes)
 	{
 		auto& note = notesManager->Get(entity);
 		auto& transform = scene->Transforms.Get(entity);
 		auto& buttonTransform = scene->Transforms.Get(noteButtons[note.NoteType]);
+
+		if (note.IsOponent)
+		{
+			if (note.Time < SongTime && note.Time > SAFEZONE_MINUS) {
+				Stratum::EventHandler::InvokeEvent(mOponentNoteEvent, this, { (void*)note.NoteType, (void*)note.NoteIndex, (void*)note.SectionIndex }, 3);
+				scene->EntityManager.DestroyEntity(entity);
+			}
+			continue;
+		}
 
 		STRUM_LINE_Y = buttonTransform.Position.y;
 
@@ -311,25 +386,21 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 		if (y > (160.0f + 384.0f) + STRUM_LINE_Y)
 		{
-			numNotesDestroyed++;
-			if (numNotesDestroyed < maxNotesDestroyed)
+			scene->EntityManager.DestroyEntity(entity);
+
+			PlayerScore -= NOTE_MISS_SCORE;
+
+			Stratum::EventHandler::InvokeEvent(mMissNoteEvent, this);
+
+			if (note.Sustain != Stratum::ECS::C_INVALID_ENTITY)
 			{
-				entitiesToDestroy.push_back(entity);
+				scene->EntityManager.DestroyEntity(note.Sustain);
+
+				auto& sustain = noteHoldManager->Get(note.Sustain);
+
+				scene->EntityManager.DestroyEntity(sustain.SustainEndSprite);
 
 				PlayerScore -= NOTE_MISS_SCORE;
-
-				Stratum::EventHandler::InvokeEvent(mMissNoteEvent, this);
-
-				if (note.Sustain != Stratum::ECS::C_INVALID_ENTITY)
-				{
-					entitiesToDestroy.push_back(note.Sustain);
-
-					auto& sustain = noteHoldManager->Get(note.Sustain);
-
-					entitiesToDestroy.push_back(sustain.SustainEndSprite);
-
-					PlayerScore -= NOTE_MISS_SCORE;
-				}
 			}
 		}
 
@@ -376,7 +447,7 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 			auto entity = note[sortedIndex];
 			auto& noteEntity = notesManager->Get(entity);
 
-			entitiesToDestroy.push_back(entity);
+			scene->EntityManager.DestroyEntity(entity);
 
 			float diff = SongTime - noteEntity.Time;
 			int32_t diffMillis = diff * 1000.0f;
@@ -392,7 +463,7 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 			{
 				if (mSustainHeld[noteEntity.NoteType] != 0)
 				{
-					entitiesToDestroy.push_back(mSustainHeld[noteEntity.NoteType]);
+					scene->EntityManager.DestroyEntity(mSustainHeld[noteEntity.NoteType]);
 				}
 				mSustainHeld[noteEntity.NoteType] = noteEntity.Sustain;
 
@@ -401,7 +472,7 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 				sustainNote.HoldTime -= glm::max(diff, 0.0f);
 			}
 
-			Stratum::EventHandler::InvokeEvent(mHitNoteEvent, this, { (void*)noteEntity.NoteType }, 1);
+			Stratum::EventHandler::InvokeEvent(mHitNoteEvent, this, { (void*)noteEntity.NoteType, (void*)noteEntity.NoteIndex, (void*)noteEntity.SectionIndex }, 3);
 
 			auto& animator = scene->SpriteAnimators.Get(noteButtons[noteEntity.NoteType]);
 			animator.SetState("press");
@@ -423,8 +494,8 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 			if (!inputsHold[i])
 			{
-				entitiesToDestroy.push_back(ent);
-				entitiesToDestroy.push_back(sustainNote.SustainEndSprite);
+				scene->EntityManager.DestroyEntity(ent);
+				scene->EntityManager.DestroyEntity(sustainNote.SustainEndSprite);
 				mSustainHeld[i] = Stratum::ECS::C_INVALID_ENTITY;
 				continue;
 			}
@@ -451,8 +522,8 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 			if (sustainNote.HoldTime <= holdTime)
 			{
-				entitiesToDestroy.push_back(sustainNote.SustainEndSprite);
-				entitiesToDestroy.push_back(ent);
+				scene->EntityManager.DestroyEntity(sustainNote.SustainEndSprite);
+				scene->EntityManager.DestroyEntity(ent);
 				mSustainHeld[i] = Stratum::ECS::C_INVALID_ENTITY;
 				SpawnSustainCover(scene, i);
 			}
@@ -471,13 +542,8 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 		auto& animator = scene->SpriteAnimators.Get(entity);
 		if (animator.CurrentAnimation.compare("destroy") == 0)
 		{
-			entitiesToDestroy.push_back(entity);
+			scene->EntityManager.DestroyEntity(entity);
 		}
-	}
-
-	for (auto entity : entitiesToDestroy)
-	{
-		scene->EntityManager.DestroyEntity(entity);
 	}
 
 	for (int i = 0; i < 4; i++)
@@ -518,6 +584,83 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 			}
 		}
 	}
+
+	for (int i = 0; i < mActions.size(); i++)
+	{
+		Action& act = mActions[i];
+
+		if (act.time == 0.0f)
+		{
+			for (int i = 0; i < act.count; i++)
+			{
+				act.srcFloat[i] = act.floatPtr[i];
+			}
+		}
+
+		act.time += Stratum::gpGlobals->deltaTime;
+
+		float interp = glm::clamp(act.time / act.duration, 0.0f, 1.0f);
+
+		for (int i = 0; i < act.count; i++)
+		{
+			float val = 0.0f;
+
+			switch (act.easing)
+			{
+			case Easing::Linear:
+				val = glm::mix(act.srcFloat[i], act.targetFloat[i], interp);
+				break;
+			case Easing::Random:
+			{
+				float randomVal = ((float)rand() / (float)RAND_MAX) * 0.2f - 0.1f;
+				val = glm::mix(act.srcFloat[i], act.targetFloat[i], glm::clamp(interp + randomVal, 0.0f, 1.0f));
+			}
+				break;
+			case Easing::SineIn:
+				val = glm::mix(act.srcFloat[i], act.targetFloat[i], 1 - glm::cos((interp * PI) / 2));
+				break;
+			case Easing::SineOut:
+				val = glm::mix(act.srcFloat[i], act.targetFloat[i], glm::sin((interp * PI) / 2.0f));
+				break; 
+			case Easing::SineInOut:
+				val = glm::mix(act.srcFloat[i], act.targetFloat[i], -(glm::cos(PI * interp) - 1) / 2.0f);
+				break;
+			case Easing::ElasticIn:
+				val = glm::mix(act.srcFloat[i], act.targetFloat[i], easeInElastic(interp));
+				break;
+			case Easing::ElasticOut:
+				val = glm::mix(act.srcFloat[i], act.targetFloat[i], easeOutElastic(interp));
+				break;
+			case Easing::ElasticInOut:
+				val = glm::mix(act.srcFloat[i], act.targetFloat[i], easeInOutElastic(interp));
+				break;
+			case Easing::BackIn:
+				val = glm::mix(act.srcFloat[i], act.targetFloat[i], easeInBack(interp));
+				break;
+			case Easing::BackOut:
+				val = glm::mix(act.srcFloat[i], act.targetFloat[i], easeOutBack(interp));
+				break;
+			case Easing::BackInOut:
+				val = glm::mix(act.srcFloat[i], act.targetFloat[i], easeInOutBack(interp));
+				break;
+			default:
+				break;
+			}
+
+			act.floatPtr[i] = val;
+		}
+
+		if (act.time >= act.duration)
+		{
+			if (act.cb)
+			{
+				act.cb();
+			}
+			mActions.erase(mActions.begin() + i);
+			i--;
+			continue;
+		}
+	}
 }
 
 void Funkin::Conductor::RegisterEventHandler(const std::string& eventName, ChartEventHandler handler)
@@ -535,6 +678,129 @@ float Funkin::Conductor::GetConductorBeatMultiplier()
 	return chart.info.bpm / 60.0f;
 }
 
+std::string Funkin::Conductor::GetPlayer1Name() const
+{
+	return chart.info.player1;
+}
+
+std::string Funkin::Conductor::GetPlayer2Name() const
+{
+	return chart.info.player2;
+}
+
+// Some hot shit incoming, but it does the job
+
+void Funkin::Conductor::PushAction(float* dst, float targetVal, float duration, Easing easing)
+{
+	Action action{};
+	action.count = 1;
+	action.duration = duration;
+	action.easing = easing;
+	action.floatPtr = dst;
+	action.targetFloat[0] = targetVal;
+	mActions.push_back(action);
+}
+
+void Funkin::Conductor::PushAction(glm::vec2* dst, glm::vec2 targetVal, float duration, Easing easing)
+{
+	Action action{};
+	action.count = 2;
+	action.duration = duration;
+	action.easing = easing;
+	action.floatPtr = glm::value_ptr(*dst);
+	action.targetFloat[0] = targetVal.x;
+	action.targetFloat[1] = targetVal.y;
+	mActions.push_back(action);
+}
+
+void Funkin::Conductor::PushAction(glm::vec3* dst, glm::vec3 targetVal, float duration, Easing easing)
+{
+	Action action{};
+	action.count = 3;
+	action.duration = duration;
+	action.easing = easing;
+	action.floatPtr = glm::value_ptr(*dst);
+	action.targetFloat[0] = targetVal.x;
+	action.targetFloat[1] = targetVal.y;
+	action.targetFloat[2] = targetVal.z;
+	mActions.push_back(action);
+}
+
+void Funkin::Conductor::PushAction(glm::vec4* dst, glm::vec4 targetVal, float duration, Easing easing)
+{
+	Action action{};
+	action.count = 4;
+	action.duration = duration;
+	action.easing = easing;
+	action.floatPtr = glm::value_ptr(*dst);
+	action.targetFloat[0] = targetVal.x;
+	action.targetFloat[1] = targetVal.y;
+	action.targetFloat[2] = targetVal.z;
+	action.targetFloat[3] = targetVal.w;
+	mActions.push_back(action);
+}
+
+void Funkin::Conductor::PushAction(float* dst, float targetVal, float duration, Easing easing, std::function<void()> cb)
+{
+	Action action{};
+	action.count = 1;
+	action.duration = duration;
+	action.easing = easing;
+	action.floatPtr = dst;
+	action.targetFloat[0] = targetVal;
+	action.cb = cb;
+	mActions.push_back(action);
+}
+
+void Funkin::Conductor::PushAction(glm::vec2* dst, glm::vec2 targetVal, float duration, Easing easing, std::function<void()> cb)
+{
+	Action action{};
+	action.count = 2;
+	action.duration = duration;
+	action.easing = easing;
+	action.floatPtr = glm::value_ptr(*dst);
+	action.targetFloat[0] = targetVal.x;
+	action.targetFloat[1] = targetVal.y;
+	action.cb = cb;
+	mActions.push_back(action);
+}
+
+void Funkin::Conductor::PushAction(glm::vec3* dst, glm::vec3 targetVal, float duration, Easing easing, std::function<void()> cb)
+{
+	Action action{};
+	action.count = 3;
+	action.duration = duration;
+	action.easing = easing;
+	action.floatPtr = glm::value_ptr(*dst);
+	action.targetFloat[0] = targetVal.x;
+	action.targetFloat[1] = targetVal.y;
+	action.targetFloat[2] = targetVal.z;
+	action.cb = cb;
+	mActions.push_back(action);
+}
+
+void Funkin::Conductor::PushAction(glm::vec4* dst, glm::vec4 targetVal, float duration, Easing easing, std::function<void()> cb)
+{
+	Action action{};
+	action.count = 4;
+	action.duration = duration;
+	action.easing = easing;
+	action.floatPtr = glm::value_ptr(*dst);
+	action.targetFloat[0] = targetVal.x;
+	action.targetFloat[1] = targetVal.y;
+	action.targetFloat[2] = targetVal.z;
+	action.targetFloat[3] = targetVal.w;
+	action.cb = cb;
+	mActions.push_back(action);
+}
+
+// End of hot shit
+
+Funkin::ChartNote& Funkin::Conductor::GetNoteByIndex(uint32_t sectionIndex, uint32_t noteIndex)
+{
+	return chart.sections[sectionIndex].notes[noteIndex];
+}
+
 uint32_t Funkin::Conductor::GetStepCount()
 {
 	return mStepCount;
@@ -544,7 +810,7 @@ void Funkin::Conductor::OnStep()
 {
 	for (auto& event : mScriptedEvents)
 	{
-		if (event.stepCount <= mStepCount && !event.executed)
+		if (event.stepCount == mStepCount)
 		{
 			event.event();
 			event.executed = true;
@@ -552,10 +818,11 @@ void Funkin::Conductor::OnStep()
 	}
 }
 
-void Funkin::Conductor::SpawnNote(Stratum::Scene* scene, ChartNote note)
+void Funkin::Conductor::SpawnNote(Stratum::Scene* scene, ChartNote note, uint32_t index, uint32_t sectionIndex)
 {
 	int l = note.noteType;
 	bool valid = false;
+	bool isOponent = false;
 
 	if (l <= 3 && note.mustHitSection) {
 		valid = true;
@@ -569,7 +836,27 @@ void Funkin::Conductor::SpawnNote(Stratum::Scene* scene, ChartNote note)
 	}
 
 	if (!valid)
+	{
+		l = note.noteType;
+
+		if (l <= 3 && !note.mustHitSection) {
+			valid = true;
+		}
+		else
+		{
+			l -= 4;
+			if (l >= 0 && l <= 3 && note.mustHitSection) {
+				valid = true;
+			}
+		}
+
+		isOponent = valid;
+	}
+
+	if (!valid)
+	{
 		return;
+	}
 
 	auto notesManager = scene->GetComponentManager<NoteComponent>(C_NOTE_COMPONENT_NAME);
 	auto noteHoldManager = scene->GetComponentManager<NoteHoldComponent>(C_NOTE_HOLD_COMPONENT_NAME);
@@ -580,38 +867,37 @@ void Funkin::Conductor::SpawnNote(Stratum::Scene* scene, ChartNote note)
 	auto& transform = scene->Transforms.Create(entity);
 	auto& buttonTransform = scene->Transforms.Get(noteButtons[l]);
 
-	auto& sprite = scene->SpriteRenderers.Create(entity);
+	enote.NoteIndex = index;
+	enote.SectionIndex = sectionIndex;
 
-	sprite.IsGui = true;
-	sprite.RenderLayer = NOTE_LAYER;
-	
-	if (l == 0)
+	if (!isOponent)
 	{
-		sprite.Rect = { glm::ivec2(630, 232), glm::ivec2(154, 157) };
-	}
-	if (l == 1)
-	{
-		sprite.Rect = { glm::ivec2(1850, 154), glm::ivec2(157, 154) };
-	}
-	if (l == 2)
-	{
-		sprite.Rect = { glm::ivec2(1850, 0), glm::ivec2(157, 154) };
-	}
-	if (l == 3)
-	{
-		sprite.Rect = { glm::ivec2(476, 232), glm::ivec2(154, 157) };
-	}
+		auto& sprite = scene->SpriteRenderers.Create(entity);
 
-	sprite.TextureHandle = scene->Resources.LoadTextureImage("textures/NOTE_assets.DDS");
+		sprite.IsGui = true;
+		sprite.RenderLayer = NOTE_LAYER;
+
+		if (l == 0)
+			sprite.Rect = { glm::ivec2(630, 232), glm::ivec2(154, 157) };
+		if (l == 1)
+			sprite.Rect = { glm::ivec2(1850, 154), glm::ivec2(157, 154) };
+		if (l == 2)
+			sprite.Rect = { glm::ivec2(1850, 0), glm::ivec2(157, 154) };
+		if (l == 3)
+			sprite.Rect = { glm::ivec2(476, 232), glm::ivec2(154, 157) };
+
+		sprite.TextureHandle = scene->Resources.LoadTextureImage("textures/NOTE_assets.DDS");
+	}
 
 	float y = (STRUM_LINE_Y + 0.0f + (SongTime - note.time) * (400.0f * chart.info.speed));
 
 	enote.Time = note.time;
 	enote.NoteType = l;
+	enote.IsOponent = isOponent;
 
 	transform.SetPosition(glm::vec3(buttonTransform.Position.x, y, 0.0f));
 
-	if (note.holdTime > 0.01f)
+	if (note.holdTime > 0.01f && !isOponent)
 	{
 		auto edict = scene->EntityManager.CreateEntity();
 		auto edictEnd = scene->EntityManager.CreateEntity();

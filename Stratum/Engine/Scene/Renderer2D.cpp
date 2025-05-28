@@ -77,7 +77,9 @@ void Renderer2D::PreRender(Scene* scene)
 		}
 	};
 
+	VirtualScreenSize *= 2.0f;
 	AABB screenAABB = { -VirtualScreenSize.x, -VirtualScreenSize.y, VirtualScreenSize.x, VirtualScreenSize.y };
+	VirtualScreenSize /= 2.0f;
 
 	for (auto entity : entities)
 	{

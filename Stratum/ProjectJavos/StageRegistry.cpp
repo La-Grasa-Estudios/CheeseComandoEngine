@@ -78,6 +78,7 @@ void Funkin::StageRegistry::AddStage(const std::string& name)
 	{
 		auto& characters = json["characters"];
 
+		if (characters.contains("bf")) 
 		{
 			StageCharacter bfChara{};
 			auto& bf = characters["bf"];
@@ -91,6 +92,22 @@ void Funkin::StageRegistry::AddStage(const std::string& name)
 			bfChara.CameraOffset.y = bf["cameraOffset"][1];
 
 			stage.Player = bfChara;
+		}
+
+		if (characters.contains("dad")) 
+		{
+			StageCharacter opponentChara{};
+			auto& bf = characters["dad"];
+
+			opponentChara.zIndex = bf["zIndex"];
+			opponentChara.Position.x = bf["position"][0];
+			opponentChara.Position.y = bf["position"][1];
+			opponentChara.Scale.x = bf["scale"][0];
+			opponentChara.Scale.y = bf["scale"][1];
+			opponentChara.CameraOffset.x = bf["cameraOffset"][0];
+			opponentChara.CameraOffset.y = bf["cameraOffset"][1];
+
+			stage.Oponent = opponentChara;
 		}
 	}
 

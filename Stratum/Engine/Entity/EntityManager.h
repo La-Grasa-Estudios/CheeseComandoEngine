@@ -25,13 +25,17 @@ namespace ECS
 		bool IsValid(edict_t entity);
 
 		void RegisterRemoval(const EntityRemovalEvent& func);
+
+		void Update();
 			
 		uint32_t LiveEntities = 0;
 		uint32_t MaxEntities = 0;
 
 	private:
 
+		std::vector<edict_t> mRemovalsPending;
 		std::vector<EntityRemovalEvent> mRemovals;
+
 		std::array<bool, C_MAX_ENTITIES> mValidEntities;
 		uint32_t mSearchStart = 0;
 	};

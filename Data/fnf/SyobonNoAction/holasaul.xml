@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="holasaul.png">
+	<!-- Created with Adobe Animate version 19.2.1.408 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="holasaul0000" x="2" y="2" width="142" height="200"/>
+	<SubTexture name="holasaul0001" x="146" y="2" width="142" height="200"/>
+	<SubTexture name="holasaul0002" x="290" y="2" width="142" height="200"/>
+	<SubTexture name="holasaul0003" x="434" y="2" width="142" height="200"/>
+	<SubTexture name="holasaul0004" x="578" y="2" width="142" height="200"/>
+	<SubTexture name="holasaul0005" x="722" y="2" width="142" height="200"/>
+	<SubTexture name="holasaul0006" x="2" y="204" width="142" height="200"/>
+	<SubTexture name="holasaul0007" x="146" y="204" width="142" height="200"/>
+	<SubTexture name="holasaul0008" x="290" y="204" width="142" height="200"/>
+	<SubTexture name="holasaul0009" x="434" y="204" width="142" height="200"/>
+	<SubTexture name="holasaul0010" x="578" y="204" width="142" height="200"/>
+	<SubTexture name="holasaul0011" x="722" y="204" width="142" height="200"/>
+	<SubTexture name="holasaul0012" x="2" y="406" width="142" height="200"/>
+	<SubTexture name="holasaul0013" x="146" y="406" width="142" height="200"/>
+	<SubTexture name="holasaul0014" x="290" y="406" width="142" height="200"/>
+	<SubTexture name="holasaul0015" x="434" y="406" width="142" height="200"/>
+	<SubTexture name="holasaul0016" x="578" y="406" width="142" height="200"/>
+	<SubTexture name="holasaul0017" x="578" y="406" width="142" height="200"/>
+	<SubTexture name="holasaul0018" x="578" y="406" width="142" height="200"/>
+	<SubTexture name="holasaul0019" x="578" y="406" width="142" height="200"/>
+	<SubTexture name="holasaul0020" x="578" y="406" width="142" height="200"/>
+	<SubTexture name="holasaul0021" x="578" y="406" width="142" height="200"/>
+	<SubTexture name="holasaul0022" x="578" y="406" width="142" height="200"/>
+	<SubTexture name="holasaul0023" x="578" y="406" width="142" height="200"/>
+</TextureAtlas>

@@ -20,8 +20,6 @@ void Funkin::PlayerSystem::Init(Stratum::Scene* scene)
 
 	auto animationListener = [this](void* sender, void** args, uint32_t argc)
 		{
-			auto playerManager = mScene->GetComponentManager<PlayerComponent>("player_component");
-			auto& entities = playerManager->GetEntities();
 			uint32_t noteType = (uint32_t)args[0];
 
 			const char* animations[4] =

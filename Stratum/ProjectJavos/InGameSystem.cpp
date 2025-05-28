@@ -33,6 +33,8 @@ Funkin::GameState gGameState;
 #undef min
 #undef max
 
+float gMissTimer = 0.0f;
+
 Funkin::InGameSystem::InGameSystem(const LoadChartParams& params) : mLoadParams(params)
 {
 	
@@ -83,12 +85,45 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 
 	StageRegistry::AddStage(mConductor->chart.info.stage);
 	CharaRegistry::AddCharacter(mConductor->chart.info.player1);
+	CharaRegistry::AddCharacter(mConductor->chart.info.player2);
 
 	StageRegistry::AddStage("syobon1-4");
 	StageRegistry::AddStage("syobon1-1");
 
+	CharaRegistry::AddCharacter("Syobon");
 	CharaRegistry::AddCharacter("syobon");
 	CharaRegistry::AddCharacter("cebollaconpelo");
+	CharaRegistry::AddCharacter("Fernan");
+	CharaRegistry::AddCharacter("FernanRene");
+	CharaRegistry::AddCharacter("FernanBebe");
+	CharaRegistry::AddCharacter("FernanJumpeado");
+	CharaRegistry::AddCharacter("rene");
+
+	CharaRegistry::GetCharacter("Fernan")->AddAnimation("leftAlt", "Fernan Left Alt", "idle", 30, false);
+	CharaRegistry::GetCharacter("Fernan")->AddAnimation("rightAlt", "Fernan Right Alt", "idle", 30, false);
+	CharaRegistry::GetCharacter("Fernan")->AddAnimation("upAlt", "Fernan Up Alt", "idle", 30, false);
+	CharaRegistry::GetCharacter("Fernan")->AddAnimation("downAlt", "Fernan Down Alt", "idle", 30, false);
+	CharaRegistry::GetCharacter("Fernan")->AddAnimation("ahh", "Fernan Goku2", "", 30, true);
+	CharaRegistry::GetCharacter("Fernan")->AddAnimation("llorapues", "Fernan Cry3", "", 8, false, true);
+	CharaRegistry::GetCharacter("Fernan")->AddAnimation("llorapues1", "Fernan Cry1", "", 8, false, true);
+	CharaRegistry::GetCharacter("Fernan")->AddAnimation("llorapues2", "Fernan Cry2", "", 8, false, true);
+	CharaRegistry::GetCharacter("Fernan")->AddAnimation("WTF", "Fernan Left Alt", "", 8, false, true);
+
+	CharaRegistry::GetCharacter("FernanJumpeado")->AddAnimation("no", "Fernan Empieza", "", 8, false, true);
+	CharaRegistry::GetCharacter("FernanJumpeado")->AddAnimation("nO", "Fernan No0", "", 8, false, true);
+	CharaRegistry::GetCharacter("FernanJumpeado")->AddAnimation("NO", "Fernan NOO", "", 8, false, true);
+
+	CharaRegistry::GetCharacter("FernanRene")->AddAnimation("eh", "Fernan Huh", "", 30, true);
+	CharaRegistry::GetCharacter("FernanRene")->AddAnimation("nosabe", "Fernan Jejnosab", "", 30, true);
+	CharaRegistry::GetCharacter("FernanRene")->AddAnimation("no", "Fernan Nono", "", 30, true);
+	CharaRegistry::GetCharacter("FernanRene")->SetCenter({});
+
+	CharaRegistry::GetCharacter("FernanBebe")->AddAnimation("repeat", "Fernan Beberepeat", "", 60, true);
+	CharaRegistry::GetCharacter("FernanBebe")->AddAnimation("nopodemos", "Fernan Nopodemos", "", 60, true);
+	CharaRegistry::GetCharacter("FernanBebe")->AddAnimation("sipodemos", "Fernan Sipodemos", "", 60, true);
+	CharaRegistry::GetCharacter("FernanBebe")->AddAnimation("queno", "Fernan Queno", "", 60, true);
+	CharaRegistry::GetCharacter("FernanBebe")->AddAnimation("waa", "Fernan Waaa", "", 60, false);
+	CharaRegistry::GetCharacter("FernanBebe")->AddAnimation("uahh", "Fernan UAHH", "", 60, true);
 
 	StageRegistry::SetStage(mConductor->chart.info.stage);
 
@@ -98,6 +133,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	voicesPath.append(mConductor->chart.info.song).append("/Voices.mp3");
 
 	this->SetPlayerCharacter(CharaRegistry::GetCharacter(mConductor->chart.info.player1));
+	this->SetOpponentCharacter(CharaRegistry::GetCharacter(mConductor->chart.info.player2));
 
 	for (int i = 0; i < 3; i++)
 	{
@@ -112,15 +148,47 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		{
 			voicesSource->SetVolume(0.2f);
 			missSources[rand() % 3]->Play();
+			gMissTimer = 0.4f;
 		};
-
 	auto hitListener = [this](void* sender, void** args, uint32_t argc)
 		{
 			voicesSource->SetVolume(1.0f);
 		};
+	auto opponentListener = [this](void* sender, void** args, uint32_t argc)
+		{
+			if (!mOponentCharacter || argc != 3)
+				return;
+
+			uint32_t noteType = (uint32_t)args[0];
+			uint32_t noteIndex = (uint32_t)args[1];
+			uint32_t sectionIndex = (uint32_t)args[2];
+
+			const char* animations[4] =
+			{
+				"left",
+				"down",
+				"up",
+				"right"
+			};
+
+			std::string anim = animations[noteType];
+
+			if (mConductor->GetNoteByIndex(sectionIndex, noteIndex).noteData.compare("No Animation") == 0)
+			{
+				return;
+			}
+
+			if (mConductor->GetNoteByIndex(sectionIndex, noteIndex).noteData.compare("Alt Animation") == 0)
+			{
+				anim.append("Alt");
+			}
+
+			mOponentCharacter->PlayAnimation(anim);
+		};
 
 	Stratum::EventHandler::RegisterListener(missListener, Stratum::EventHandler::GetEventID("miss_note"), true, true);
 	Stratum::EventHandler::RegisterListener(hitListener, Stratum::EventHandler::GetEventID("hit_note"), true, true);
+	Stratum::EventHandler::RegisterListener(opponentListener, Stratum::EventHandler::GetEventID("oponent_note"), true, true);
 
 	mConductor->RegisterEventHandler("StSetScreenBeat", [this](ChartEvent& event)
 		{
@@ -253,6 +321,8 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mConductor->chart.events.push_back(Event1dash1);
 
 	mScene->Resources.LoadTextureImage("fnf/SyobonNoAction/screen1.png");
+	mScene->Resources.LoadTextureImage("fnf/SyobonNoAction/screen2.png");
+	mScene->Resources.LoadTextureImage("fnf/SyobonNoAction/holasaul.png");
 
 	static Stratum::ECS::edict_t x64entity;
 	static Stratum::ECS::edict_t x64blackentity;
@@ -328,14 +398,242 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mConductor->AddScriptedEvent(1556, [this]() {
 		mConductor->EnableBot = false;
 		});
+	mConductor->AddScriptedEvent(1556, [this]() {
+		mConductor->EnableBot = false;
+		});
+	mConductor->AddScriptedEvent(1556, [this]() {
+		mConductor->EnableBot = false;
+		});
+	mConductor->AddScriptedEvent(773, [this]() {
+		CharaSprite* chara;
+		this->SetOpponentCharacter(chara = CharaRegistry::GetCharacter("Syobon"));
+		chara->CharaPosition = { -156.0f, 76.0f };
+		chara->CharaScale = { 0.825f, 0.825f };
+		});
+	mConductor->AddScriptedEvent(1183, [this]() {
+		this->SetOpponentCharacter(CharaRegistry::GetCharacter("Fernan"));
+		}); 
+	mConductor->AddScriptedEvent(1256, [this]() {
+		auto& sprite = mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity);
+		mConductor->PushAction(&sprite.Rotation.x, -3600, 1.0f, Easing::SineIn);
+		mConductor->PushAction(&mOponentCharacter->CharaPosition.y, -3600, 1.0f, Easing::SineIn);
+		});
+	mConductor->AddScriptedEvent(1274, [this]() {
+		this->SetOpponentCharacter(CharaRegistry::GetCharacter("FernanBebe"));
+		CharaRegistry::GetCharacter("FernanBebe")->CharaPosition.y += 1600;
+		CharaRegistry::GetCharacter("FernanBebe")->CharaPosition.x = -CharaRegistry::GetCharacter("FernanBebe")->CharaPosition.x;
+		mConductor->PushAction(&CharaRegistry::GetCharacter("FernanBebe")->CharaPosition.y,CharaRegistry::GetCharacter("FernanBebe")->CharaPosition.y - 1600, 2.0f, Easing::SineOut);
+		});
+	mConductor->AddScriptedEvent(1356, [this]() {
+		mOponentCharacter->PlayAnimation("uahh");
+		mConductor->PushAction(&CharaRegistry::GetCharacter("FernanBebe")->CharaScale.x, CharaRegistry::GetCharacter("FernanBebe")->CharaScale.x + 1.5f, 0.15f, Easing::Linear);
+		});
+	mConductor->AddScriptedEvent(1360, [this]() {
+		CharaRegistry::GetCharacter("FernanBebe")->CharaScale.x -= 1.5f;
+		mOponentCharacter->PlayAnimation("repeat");
+		});
+	mConductor->AddScriptedEvent(1379, [this]() {
+		mOponentCharacter->PlayAnimation("nopodemos");
+		});
+	mConductor->AddScriptedEvent(1391, [this]() {
+		mOponentCharacter->PlayAnimation("sipodemos");
+		});
+	mConductor->AddScriptedEvent(1400, [this]() {
+		mOponentCharacter->PlayAnimation("queno");
+		});
+	mConductor->AddScriptedEvent(1407, [this]() {
+		mOponentCharacter->PlayAnimation("sipodemos");
+		});
+	mConductor->AddScriptedEvent(1415, [this]() {
+		mOponentCharacter->PlayAnimation("waa");
+		});
+	mConductor->AddScriptedEvent(1420, [this]() {
+		auto manager = mScene->GetComponentManager<AnimatedEffectComponent>(C_ANIMATED_EFFECT_COMPONENT_NAME);
+		auto entity = mScene->EntityManager.CreateEntity();
+		auto& transform = mScene->Transforms.Create(entity);
+		auto& sprite = mScene->SpriteRenderers.Create(entity);
+		auto& animator = mScene->SpriteAnimators.Create(entity);
+		manager->Create(entity);
+
+		transform.SetPosition(glm::vec3(969.000, 609.000, 0.0f));
+
+		auto frames = SparrowReader::readXML("fnf/SyobonNoAction/holasaul.xml", "holasaul", false);
+
+		Stratum::SpriteAnimator::Animation animation = Stratum::SpriteAnimator::Animation()
+			.SetFrameRate(30)
+			.SetLoop(false)
+			.SetNextState("destroy")
+			.SetFrames(frames);
+
+		animator.AnimationMap["saul"] = animation;
+		animator.SetState("saul");
+
+		sprite.TextureHandle = mScene->Resources.LoadTextureImage("fnf/SyobonNoAction/holasaul.png");
+		sprite.RenderLayer = 10000;
+		});
+	mConductor->AddScriptedEvent(1536, [this]() {
+		this->SetOpponentCharacter(CharaRegistry::GetCharacter("Fernan"));
+		mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity).RenderLayer = 10000;
+		mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity).IsGui = true;
+		});
+	mConductor->AddScriptedEvent(1547, [this]() {
+		CharaRegistry::GetCharacter("Fernan")->PlayAnimation("WTF");
+		});
+	mConductor->AddScriptedEvent(1551, [this]() {
+		mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity).RenderLayer = 10000;
+		mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity).IsGui = false;
+		});
+	mConductor->AddScriptedEvent(2089, [this]() {
+		CharaSprite* chara;
+		this->SetOpponentCharacter(chara = CharaRegistry::GetCharacter("rene"));
+		chara->CharaPosition = { -746.0f, -212.0f };
+		chara->CharaScale = { 0.825f, 0.825f };
+		});
+	mConductor->AddScriptedEvent(2613, [this]() {
+		CharaRegistry::GetCharacter("FernanRene")->SetEnabled(true);
+		CharaRegistry::GetCharacter("FernanRene")->SetLayer(1000);
+		CharaRegistry::GetCharacter("FernanRene")->CharaPosition = { mScene->VirtualScreenSize.x + 9000.0f, 0.0f };
+		mConductor->PushAction(&CharaRegistry::GetCharacter("FernanRene")->CharaPosition, glm::vec2(0.0f), 0.13f, Easing::Linear);
+		});
+	mConductor->AddScriptedEvent(2615, [this]() {
+		auto oponent = CharaRegistry::GetCharacter("rene");
+		mScene->SpriteRenderers.Get(oponent->CharaEntity).SpriteColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		mConductor->PushAction(&oponent->CharaPosition, glm::vec2(oponent->CharaPosition.x - mScene->VirtualScreenSize.x / 2.0f, oponent->CharaPosition.y), 0.2f, Easing::ElasticInOut,
+			[this]() {
+				auto oponent = CharaRegistry::GetCharacter("rene");
+				auto& sprite = mScene->SpriteRenderers.Get(oponent->CharaEntity);
+				mScene->SpriteRenderers.Get(oponent->CharaEntity).SpriteColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+				mConductor->PushAction(&sprite.Rotation.x, 360, 0.8f, Easing::Random);
+				mConductor->PushAction(&oponent->CharaScale, oponent->CharaScale + glm::vec2(0.75f, 0), 0.8f, Easing::Random,
+					[this]() {
+						auto oponent = CharaRegistry::GetCharacter("rene");
+						auto& sprite = mScene->SpriteRenderers.Get(oponent->CharaEntity);
+						mConductor->PushAction(&oponent->CharaPosition, glm::vec2(oponent->CharaPosition.x - 1000.0f, oponent->CharaPosition.y), 0.4f, Easing::Random);
+						mConductor->PushAction(&sprite.Rotation.x, -360, 0.8f, Easing::Random);
+					});
+			});
+		});
+	mConductor->AddScriptedEvent(2648, [this]() {
+		CharaRegistry::GetCharacter("FernanRene")->PlayAnimation("eh");
+		});
+	mConductor->AddScriptedEvent(2676, [this]() {
+		CharaRegistry::GetCharacter("FernanRene")->PlayAnimation("no");
+		});
+	mConductor->AddScriptedEvent(2678, [this]() {
+		CharaRegistry::GetCharacter("FernanRene")->PlayAnimation("eh");
+		});
+	mConductor->AddScriptedEvent(2680, [this]() {
+		CharaRegistry::GetCharacter("FernanRene")->PlayAnimation("no");
+		});
+	mConductor->AddScriptedEvent(2682, [this]() {
+		CharaRegistry::GetCharacter("FernanRene")->PlayAnimation("eh");
+		});
+	mConductor->AddScriptedEvent(2684, [this]() {
+		CharaRegistry::GetCharacter("FernanRene")->PlayAnimation("no");
+		});
+	mConductor->AddScriptedEvent(2698, [this]() {
+		CharaRegistry::GetCharacter("FernanRene")->PlayAnimation("nosabe");
+		});
+	mConductor->AddScriptedEvent(2700, [this]() {
+		CharaRegistry::GetCharacter("FernanRene")->PlayAnimation("eh");
+		});
+	mConductor->AddScriptedEvent(2704, [this]() {
+		CharaRegistry::GetCharacter("FernanRene")->PlayAnimation("nosabe");
+		});
+	mConductor->AddScriptedEvent(2720, [this]() {
+		CharaRegistry::GetCharacter("FernanRene")->SetEnabled(false);
+		x64entity = mScene->EntityManager.CreateEntity();
+		x64blackentity = mScene->EntityManager.CreateEntity();
+		auto& sprite = mScene->SpriteRenderers.Create(x64entity);
+		auto& transform = mScene->Transforms.Create(x64entity);
+		auto& sprite1 = mScene->SpriteRenderers.Create(x64blackentity);
+		auto& transform1 = mScene->Transforms.Create(x64blackentity);
+
+		sprite1.SpriteColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+		sprite1.Rect.size = { 100000, 100000 };
+		sprite1.IsGui = true;
+		sprite1.RenderLayer = 101;
+		sprite.TextureHandle = mScene->Resources.LoadTextureImage("fnf/SyobonNoAction/screen2.png");
+		sprite.Rect.size = mScene->Resources.GetImageHandle(sprite.TextureHandle)->GetSize();
+		sprite.UseNearestTextureFilter = true;
+		sprite.RenderLayer = 102;
+		sprite.IsGui = true;
+		transform.SetScale(glm::vec3(0.25f));
+		});
+	mConductor->AddScriptedEvent(2727, [this]() {
+		mScene->EntityManager.DestroyEntity(x64blackentity);
+		mScene->EntityManager.DestroyEntity(x64entity);
+		this->SetOpponentCharacter(CharaRegistry::GetCharacter("FernanJumpeado"));
+		CharaRegistry::GetCharacter("FernanJumpeado")->CharaPosition.x = -CharaRegistry::GetCharacter("FernanJumpeado")->CharaPosition.x;
+		});
+	mConductor->AddScriptedEvent(2958, [this]() {
+		CharaRegistry::GetCharacter("FernanJumpeado")->PlayAnimation("no");
+		});
+	mConductor->AddScriptedEvent(2970, [this]() {
+		CharaRegistry::GetCharacter("FernanJumpeado")->PlayAnimation("nO");
+		});
+	mConductor->AddScriptedEvent(2976, [this]() {
+		CharaRegistry::GetCharacter("FernanJumpeado")->PlayAnimation("NO");
+		});
+	mConductor->AddScriptedEvent(2982, [this]() {
+		mConductor->PushAction(&mOponentCharacter->CharaScale, mOponentCharacter->CharaScale + glm::vec2(2.5f, 0.0f), 0.2f, Easing::SineInOut
+			, [this]() 
+			{
+				mOponentCharacter->SetEnabled(false);
+			});
+		});
+	mConductor->AddScriptedEvent(3108, [this]() {
+		this->SetOpponentCharacter(CharaRegistry::GetCharacter("Fernan"));
+		CharaRegistry::GetCharacter("Fernan")->CharaPosition.x -= 1000.0f;
+		mConductor->PushAction(&CharaRegistry::GetCharacter("Fernan")->CharaPosition.x, CharaRegistry::GetCharacter("Fernan")->CharaPosition.x + 1000.0f, 0.3f, Easing::SineOut);
+		});
+	mConductor->AddScriptedEvent(3239, [this]() {
+		CharaRegistry::GetCharacter("Fernan")->PlayAnimation("ahh");
+		mConductor->PushAction(&CharaRegistry::GetCharacter("Fernan")->CharaPosition, glm::vec2(0.0f, -200), 0.5f, Easing::SineOut);
+		});
+	mConductor->AddScriptedEvent(3255, [this]() {
+		this->SetOpponentCharacter(CharaRegistry::GetCharacter("Fernan"));
+		CharaRegistry::GetCharacter("Fernan")->SetEnabled(true);
+		mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity).RenderLayer = 10000;
+		});
+	mConductor->AddScriptedEvent(3784, [this]() {
+		mConductor->PushAction(&mOponentCharacter->CharaPosition, mOponentCharacter->CharaPosition + glm::vec2(160, -160), 0.35f, Easing::SineOut,
+			[this]() {
+				mConductor->PushAction(&mOponentCharacter->CharaPosition, mOponentCharacter->CharaPosition + glm::vec2(160, -160), 0.35f, Easing::SineOut);
+			});
+		});
+	mConductor->AddScriptedEvent(3800, [this]() {
+		mConductor->PushAction(&mOponentCharacter->CharaPosition, mOponentCharacter->CharaPosition - glm::vec2(320, -320), 0.35f, Easing::SineOut);
+		});
+	mConductor->AddScriptedEvent(3835, [this]() {
+		auto& sprite = mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity);
+		mConductor->PushAction(&sprite.Rotation.x, -20.0f, 1.7f * 4.0, Easing::SineInOut);
+		mConductor->PushAction(&mOponentCharacter->CharaScale, mOponentCharacter->CharaScale + glm::vec2(0.6f, 0.0f), 1.7f * 4.0, Easing::SineInOut);
+		mConductor->PushAction(&mOponentCharacter->CharaPosition, mOponentCharacter->CharaPosition - glm::vec2(0, 1200 * 2.0f), 1.7f * 4.0f, Easing::SineInOut);
+		});
+	mConductor->AddScriptedEvent(3856, [this]() {
+		mOponentCharacter->PlayAnimation("llorapues");
+		});
+	mConductor->AddScriptedEvent(3857, [this]() {
+		mOponentCharacter->PlayAnimation("llorapues");
+		});
+	mConductor->AddScriptedEvent(3858, [this]() {
+		mOponentCharacter->PlayAnimation("llorapues");
+		});
+	mConductor->AddScriptedEvent(3859, [this]() {
+		mOponentCharacter->PlayAnimation("llorapues");
+		});
 
 	pEarlyUpdate = true;
 
 	Stratum::Time::EndProfile();
 	Stratum::Time::BeginProfile();
 
-	//instSource->Seek(105 * 44100);
-	//voicesSource->Seek(105 * 44100);
+	ma_engine_set_volume(mScene->AudioEngine->GetEngine(), 1.0f);
+	ma_engine_set_gain_db(mScene->AudioEngine->GetEngine(), 4.0f);
+
+	//instSource->Seek(94 * 44100);
+	//voicesSource->Seek(94 * 44100);
 }
 
 void Funkin::InGameSystem::Update(Stratum::Scene* scene)
@@ -369,6 +667,18 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 		editor->RegisterCustomSystem(new CharaEditorSystem(mLoadParams.ChartPath));
 
 		scene->SwapScene(editor);
+	}
+
+	if (gMissTimer > 0.0f)
+	{
+		gMissTimer -= Stratum::gpGlobals->deltaTime;
+		if (gMissTimer <= 0.0f)
+		{
+			if (voicesSource)
+			{
+				voicesSource->SetVolume(1.0f);
+			}
+		}
 	}
 
 	if (startupVideo != Stratum::ECS::C_INVALID_ENTITY)
@@ -450,7 +760,7 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 
 void Funkin::InGameSystem::RenderImGui(Stratum::Scene* scene)
 {
-	return;
+	//return;
 	using namespace Stratum;
 
 	static int frameRate = 0;
@@ -498,6 +808,40 @@ void Funkin::InGameSystem::SetPlayerCharacter(CharaSprite* chara)
 		auto& sprite = mScene->SpriteRenderers.Get(chara->CharaEntity);
 		sprite.RenderLayer = stage->Player.zIndex;
 		sprite.IsGui = false;
+		sprite.FlipX = chara->FlippedHorizontally();
+		sprite.SpriteColor = glm::vec4(1.0f);
+		sprite.Rotation = {};
+	}
+}
+
+void Funkin::InGameSystem::SetOpponentCharacter(CharaSprite* chara)
+{
+	if (mOponentCharacter)
+	{
+		auto& sprite = mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity);
+		mOponentCharacter->SetEnabled(false);
+	}
+
+	mOponentCharacter = chara;
+
+	if (!chara)
+	{
+		return;
+	}
+
+	chara->SetEnabled(true);
+
+	if (auto stage = StageRegistry::GetCurrentStage())
+	{
+		mOponentCharacter->CharaPosition = stage->Oponent.Position;
+		mOponentCharacter->CharaScale = stage->Oponent.Scale;
+
+		auto& sprite = mScene->SpriteRenderers.Get(chara->CharaEntity);
+		sprite.RenderLayer = stage->Oponent.zIndex;
+		sprite.IsGui = false;
+		sprite.FlipX = !chara->FlippedHorizontally();
+		sprite.SpriteColor = glm::vec4(1.0f);
+		sprite.Rotation = {};
 	}
 }
 

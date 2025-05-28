@@ -33,13 +33,10 @@ void ECS::EntityManager::DestroyEntity(edict_t entity)
 {
 	if (!IsValid(entity))
 		return;
-	for (size_t i = 0; i < mRemovals.size(); i++)
-	{
-		mRemovals[i](entity);
-	}
-	LiveEntities -= 1;
-	mValidEntities[entity - 1] = false;
-	mSearchStart = std::min(mSearchStart, entity - 1);
+	// This needs to be here to delay the entity destruction until the end of the frame
+	// because we might be using the iterator on some of the component managers and that
+	// can cause a crash, bad.
+	mRemovalsPending.push_back(entity);
 }
 
 void ECS::EntityManager::DestroyAll()
@@ -51,6 +48,7 @@ void ECS::EntityManager::DestroyAll()
 			DestroyEntity(i+1);
 		}
 	}
+	Update(); // Need to manually clear the removal queue
 }
 
 bool ECS::EntityManager::IsValid(edict_t entity)
@@ -61,4 +59,20 @@ bool ECS::EntityManager::IsValid(edict_t entity)
 void ECS::EntityManager::RegisterRemoval(const EntityRemovalEvent& func)
 {
 	mRemovals.push_back(func);
+}
+
+void ECS::EntityManager::Update()
+{
+	// Delete all entities that are pending 
+	for (auto entity : mRemovalsPending)
+	{
+		for (size_t i = 0; i < mRemovals.size(); i++)
+		{
+			mRemovals[i](entity);
+		}
+		LiveEntities -= 1;
+		mValidEntities[entity - 1] = false;
+		mSearchStart = std::min(mSearchStart, entity - 1);
+	}
+	mRemovalsPending.clear();
 }

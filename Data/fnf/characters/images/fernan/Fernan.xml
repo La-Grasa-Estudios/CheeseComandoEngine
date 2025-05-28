@@ -1,0 +1,223 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="Fernan.png">
+	<!-- Created with Adobe Animate version 19.2.1.408 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="Fernan AAHH0000" x="2" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan AAHH0001" x="2" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan AAHH0002" x="2" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan AAHH0003" x="2" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan AAHH0004" x="2" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan AAHH0005" x="2" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan AAHH0006" x="2" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan AAHH0007" x="2" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan AAHH0008" x="2" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan AAHH0009" x="2" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10000" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10001" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10002" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10003" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10004" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10005" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10006" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10007" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10008" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10009" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10010" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10011" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10012" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10013" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10014" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10015" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10016" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10017" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10018" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10019" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10020" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10021" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10022" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry10023" x="355" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20000" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20001" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20002" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20003" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20004" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20005" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20006" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20007" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20008" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20009" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20010" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20011" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20012" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20013" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20014" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20015" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20016" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20017" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20018" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20019" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20020" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20021" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20022" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry20023" x="708" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry30000" x="1061" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry30001" x="1061" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry30002" x="1061" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry30003" x="1061" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry30004" x="1061" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry30005" x="1061" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry30006" x="1061" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry30007" x="1061" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry30008" x="1061" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Cry30009" x="1061" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Down0000" x="1414" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Down0001" x="1414" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Down0002" x="1767" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Down0003" x="1767" y="2" width="351" height="200"/>
+	<SubTexture name="Fernan Down0004" x="2" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Down0005" x="2" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Down0006" x="2" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Down0007" x="2" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Down0008" x="2" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Down0009" x="2" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Down Alt0000" x="355" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Down Alt0001" x="355" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Down Alt0002" x="708" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Down Alt0003" x="708" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Down Alt0004" x="1061" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Down Alt0005" x="1061" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Down Alt0006" x="1061" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Down Alt0007" x="1061" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Down Alt0008" x="1061" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Down Alt0009" x="1061" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku10000" x="1414" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku10001" x="1414" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku10002" x="1414" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku10003" x="1414" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku10004" x="1414" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku10005" x="1414" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku10006" x="1414" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku10007" x="1414" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku10008" x="1414" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku10009" x="1414" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku20000" x="1767" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku20001" x="1767" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku20002" x="1767" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku20003" x="1767" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku20004" x="1767" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku20005" x="1767" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku20006" x="1767" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku20007" x="1767" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku20008" x="1767" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Goku20009" x="1767" y="204" width="351" height="200"/>
+	<SubTexture name="Fernan Idle0000" x="2" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle0001" x="2" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle0002" x="355" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle0003" x="355" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle0004" x="708" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle0005" x="708" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle0006" x="1061" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle0007" x="1414" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle0008" x="1414" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle0009" x="1414" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle0010" x="1414" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle0011" x="1414" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle0012" x="1414" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle0013" x="1414" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle0014" x="1414" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle Alt0000" x="1767" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle Alt0001" x="1767" y="406" width="351" height="200"/>
+	<SubTexture name="Fernan Idle Alt0002" x="2" y="608" width="351" height="200"/>
+	<SubTexture name="Fernan Idle Alt0003" x="2" y="608" width="351" height="200"/>
+	<SubTexture name="Fernan Idle Alt0004" x="355" y="608" width="351" height="200"/>
+	<SubTexture name="Fernan Idle Alt0005" x="355" y="608" width="351" height="200"/>
+	<SubTexture name="Fernan Idle Alt0006" x="708" y="608" width="351" height="200"/>
+	<SubTexture name="Fernan Idle Alt0007" x="1061" y="608" width="351" height="200"/>
+	<SubTexture name="Fernan Idle Alt0008" x="1414" y="608" width="351" height="200"/>
+	<SubTexture name="Fernan Idle Alt0009" x="1414" y="608" width="351" height="200"/>
+	<SubTexture name="Fernan Idle Alt0010" x="1414" y="608" width="351" height="200"/>
+	<SubTexture name="Fernan Idle Alt0011" x="1414" y="608" width="351" height="200"/>
+	<SubTexture name="Fernan Idle Alt0012" x="1414" y="608" width="351" height="200"/>
+	<SubTexture name="Fernan Idle Alt0013" x="1414" y="608" width="351" height="200"/>
+	<SubTexture name="Fernan Idle Alt0014" x="1414" y="608" width="351" height="200"/>
+	<SubTexture name="Fernan Left0000" x="1767" y="608" width="351" height="200"/>
+	<SubTexture name="Fernan Left0001" x="1767" y="608" width="351" height="200"/>
+	<SubTexture name="Fernan Left0002" x="2" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left0003" x="2" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left0004" x="355" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left0005" x="355" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left0006" x="355" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left0007" x="355" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left0008" x="355" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left0009" x="355" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left Alt0000" x="708" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left Alt0001" x="708" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left Alt0002" x="1061" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left Alt0003" x="1061" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left Alt0004" x="1414" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left Alt0005" x="1767" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left Alt0006" x="1767" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left Alt0007" x="1767" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left Alt0008" x="1767" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan Left Alt0009" x="1767" y="810" width="351" height="200"/>
+	<SubTexture name="Fernan QUE0000" x="2" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan QUE0001" x="2" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan QUE0002" x="2" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan QUE0003" x="2" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan QUE0004" x="2" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan QUE0005" x="2" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan QUE0006" x="2" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan QUE0007" x="2" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan QUE0008" x="2" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan QUE0009" x="2" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan Right0000" x="355" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan Right0001" x="355" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan Right0002" x="708" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan Right0003" x="708" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan Right0004" x="1061" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan Right0005" x="1414" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan Right0006" x="1414" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan Right0007" x="1414" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan Right0008" x="1414" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan Right0009" x="1414" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan Right Alt0000" x="1767" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan Right Alt0001" x="1767" y="1012" width="351" height="200"/>
+	<SubTexture name="Fernan Right Alt0002" x="2" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Right Alt0003" x="2" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Right Alt0004" x="355" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Right Alt0005" x="708" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Right Alt0006" x="708" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Right Alt0007" x="708" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Right Alt0008" x="708" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Right Alt0009" x="708" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Up0000" x="1061" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Up0001" x="1061" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Up0002" x="1414" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Up0003" x="1414" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Up0004" x="1767" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Up0005" x="1767" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Up0006" x="1767" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Up0007" x="1767" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Up0008" x="1767" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Up0009" x="1767" y="1214" width="351" height="200"/>
+	<SubTexture name="Fernan Up Alt0000" x="2" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Up Alt0001" x="2" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Up Alt0002" x="355" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Up Alt0003" x="355" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Up Alt0004" x="708" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Up Alt0005" x="1061" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Up Alt0006" x="1061" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Up Alt0007" x="1061" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Up Alt0008" x="1061" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Up Alt0009" x="1061" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Vamos0000" x="1414" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Vamos0001" x="1414" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Vamos0002" x="1414" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Vamos0003" x="1414" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Vamos0004" x="1414" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Vamos0005" x="1414" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Vamos0006" x="1414" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Vamos0007" x="1414" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Vamos0008" x="1414" y="1416" width="351" height="200"/>
+	<SubTexture name="Fernan Vamos0009" x="1414" y="1416" width="351" height="200"/>
+</TextureAtlas>

@@ -23,7 +23,9 @@ namespace Funkin
 		void PostUpdate(Stratum::Scene* scene) final;
 		void RenderImGui(Stratum::Scene* scene) final;
 		void SetPlayerCharacter(CharaSprite* chara);
+		void SetOpponentCharacter(CharaSprite* chara);
 		CharaSprite* GetPlayerCharacter();
+		CharaSprite* GetOpponentCharacter();
 
 	private:
 
@@ -46,5 +48,6 @@ namespace Funkin
 		Stratum::Scene* mScene;
 		Conductor* mConductor;
 		CharaSprite* mPlayerCharacter = NULL;
+		CharaSprite* mOponentCharacter = NULL;
 	};
 }
