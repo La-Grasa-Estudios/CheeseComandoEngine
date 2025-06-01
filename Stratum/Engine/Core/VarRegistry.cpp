@@ -6,8 +6,13 @@
 #include "Logger.h"
 #include "VFS/ZVFS.h"
 
+// String manipulation in C++ is ugly
+// Didn't use any library since the point of making a custom game engine is making (almost) everything from scratch
+
 using namespace ENGINE_NAMESPACE;
 
+// I'm using an ugly extern somewhere else
+// Don't change the names or the signature of these two
 bool isNumber(std::string token)
 {
     return std::regex_match(token, std::regex(("((\\+|-)?[[:digit:]]+)(\\.(([[:digit:]]+)?))?")));

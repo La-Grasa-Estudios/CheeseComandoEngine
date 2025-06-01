@@ -53,6 +53,9 @@ Renderer2D::Renderer2D()
 
 void Renderer2D::PreRender(Scene* scene)
 {
+	// Did too much thinking about Sparrow animated atlas
+	// Finally works! (Thanks DeepSeek)
+
 	Z_PROFILE_SCOPE("Renderer2D::PreRender");
 
 	if (!mSpriteBatch)
@@ -77,6 +80,7 @@ void Renderer2D::PreRender(Scene* scene)
 		}
 	};
 
+	// Maybe implement proper frustum culling (Or fix this one can be faster since we are checking against an AABB and not 6 planes)
 	VirtualScreenSize *= 2.0f;
 	AABB screenAABB = { -VirtualScreenSize.x, -VirtualScreenSize.y, VirtualScreenSize.x, VirtualScreenSize.y };
 	VirtualScreenSize /= 2.0f;
@@ -117,12 +121,13 @@ void Renderer2D::PreRender(Scene* scene)
 		instance.batch.transform = transform.ModelMatrix;
 		instance.zIndex = renderer.RenderLayer;
 
+		// WE NEED TO ANIMATE IT LOL
 		if (scene->SpriteAnimators.HasComponent(entity))
 		{
 			auto frame = scene->SpriteAnimators.Get(entity).GetCurrentRect();
 
 			auto offset = glm::vec2(frame.Offset);
-			auto frameSize = glm::vec2(frame.FrameSize);
+			auto frameSize = glm::vec2(frame.Rect.size);
 
 			if (frame.Rotated && frame.FrameSize != frame.Rect.size)
 			{
@@ -136,13 +141,11 @@ void Renderer2D::PreRender(Scene* scene)
 			}
 
 			instance.batch.rect = frame.Rect;
-			instance.batch.RenderSize = frameSize + offset;
+			instance.batch.RenderSize = frameSize;
 
-			instance.batch.offset = -offset;
+			instance.batch.offset = offset;
 
-			//auto animOffset = glm::vec2(-frame.Offset) * flipMult;
-			//instance.batch.transform = glm::translate(instance.batch.transform, glm::vec3(animOffset, 0.0f));
-
+			// Rotate it, didn't see this in the starling reference sheet until too late, that's why its here
 			if (frame.Rotated)
 				instance.batch.transform = glm::rotate(instance.batch.transform, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		}
@@ -162,6 +165,7 @@ void Renderer2D::PreRender(Scene* scene)
 		}
 	}
 
+	// Parallel sorting :D
 	JobManager::Execute([&] { mRenderQueue.Sort(); });
 	JobManager::Execute([&] { mGuiRenderQueue.Sort(); });
 
@@ -176,22 +180,6 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 
 	if (mMainPipeline->ShaderDesc.RenderTarget != pOutput)
 		mMainPipeline->SetRenderTarget(pOutput);
-
-	float scaledWidth = pOutput->GetSize().x;
-	float scaledHeight = pOutput->GetSize().y;
-
-	int scaleFactor = 1;
-	int k = 1000;
-
-	for (; scaleFactor < k && scaledWidth / (scaleFactor + 1) >= 320 && scaledHeight / (scaleFactor + 1) >= 180; scaleFactor++) {}
-
-	scaledWidth = scaledWidth / (float)scaleFactor;
-	scaledHeight = scaledHeight / (float)scaleFactor;
-	int screenWidth = (int)glm::ceil(scaledWidth);
-	int screenHeight = (int)glm::ceil(scaledHeight);
-
-	glm::vec2 size = (glm::vec2(scaledWidth, scaledHeight) / 2.0f) * 11.0f;
-	VirtualScreenSize = size;
 
 	Render::Viewport viewport{};
 
@@ -222,8 +210,33 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 
 void Renderer2D::Submit()
 {
+	// Separated so i can easily implement multithreaded submission when i get a cpu bottleneck
+	// Cpu rendering takes about 1ms so i don't care lol
 	mCmdBuffer->Submit();
 }
+
+void Renderer2D::UpdateScreenSize(const glm::ivec2& size)
+{
+	// Stole this from an older project of mine because i forgot how to implement proper UI scaling lmao
+	float scaledWidth = size.x;
+	float scaledHeight = size.y;
+
+	int scaleFactor = 1;
+	int k = 1000;
+
+	for (; scaleFactor < k && scaledWidth / (scaleFactor + 1) >= 320 && scaledHeight / (scaleFactor + 1) >= 180; scaleFactor++) {}
+
+	scaledWidth = scaledWidth / (float)scaleFactor;
+	scaledHeight = scaledHeight / (float)scaleFactor;
+	int screenWidth = (int)glm::ceil(scaledWidth);
+	int screenHeight = (int)glm::ceil(scaledHeight);
+
+	glm::vec2 ssize = (glm::vec2(scaledWidth, scaledHeight) / 2.0f) * 11.0f;
+	VirtualScreenSize = ssize;
+}
+
+// This works for the game i'm making now as of 17/05/2025
+// But can easily be expanded so i can use the ECS to specify camera parameters
 
 void Renderer2D::SetCameraPosition(const glm::vec2& position)
 {
@@ -257,6 +270,7 @@ void Renderer2D::SetGuiCameraRotation(float rotation)
 
 void Renderer2D::RenderCamera(Camera2D* camera, RenderQueue2D* renderQueue, Scene* scene, Render::Framebuffer* pOutput)
 {
+	// Bindless rendering ftw :D
 	mSpriteBatch->Begin();
 
 	for (int j = 0; j < renderQueue->instances.size(); j++)

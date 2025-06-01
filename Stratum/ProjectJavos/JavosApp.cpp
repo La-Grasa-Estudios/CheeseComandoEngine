@@ -1,6 +1,6 @@
 #include "JavosApp.h"
 
-#include "InGameSystem.h"
+#include "LoadingScreenSystem.h"
 
 #undef min
 #undef max
@@ -17,7 +17,7 @@ void Funkin::JavosApp::OnInit()
 	auto scene = new Stratum::Scene();
 	SetScene(scene);
 
-	scene->RegisterCustomSystem(new InGameSystem(params));
+	scene->RegisterCustomSystem(new LoadingScreenSystem(params));
 }
 
 void Funkin::JavosApp::OnFrameUpdate()

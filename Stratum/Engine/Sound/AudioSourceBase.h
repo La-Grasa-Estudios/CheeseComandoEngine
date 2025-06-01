@@ -14,6 +14,7 @@ struct AudioSourceParams
 	bool DoStop = false;
 	bool IsReady = false;
 	bool ShouldPlay = false;
+	bool IsLooping = false;
 	float Volume = 1.0f;
 	float Pitch = 1.0f;
 	float Pan = 0.5f;
@@ -47,6 +48,8 @@ public:
 
 	virtual void UpdateSource() {}
 	virtual void AttachToNode(ma_node* pNode, uint32_t index, uint32_t inputIndex);
+
+	void SetLooping(bool looping);
 	
 	bool Removed = false;
 

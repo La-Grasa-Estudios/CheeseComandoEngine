@@ -37,7 +37,7 @@ float gMissTimer = 0.0f;
 
 Funkin::InGameSystem::InGameSystem(const LoadChartParams& params) : mLoadParams(params)
 {
-	
+	mLoadingDone.store(false);
 }
 
 Funkin::InGameSystem::~InGameSystem()
@@ -53,6 +53,7 @@ static Stratum::ECS::edict_t startupVideo = Stratum::ECS::C_INVALID_ENTITY;
 
 void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 {
+	startupVideo = 0;
 	gGameState = {};
 	mScene = scene;
 
@@ -77,6 +78,8 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 
 	mConductor->LoadChart(mScene, mLoadParams.ChartPath);
 
+	mLoadingStage.fetch_add(1);
+
 	if (!mLoadParams.OverrideStage.empty())
 		mConductor->chart.info.stage = mLoadParams.OverrideStage;
 
@@ -84,8 +87,16 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		mConductor->chart.info.player1 = mLoadParams.OverridePlayer1;
 
 	StageRegistry::AddStage(mConductor->chart.info.stage);
+
+	mLoadingStage.fetch_add(1);
+
 	CharaRegistry::AddCharacter(mConductor->chart.info.player1);
+
+	mLoadingStage.fetch_add(1);
+
 	CharaRegistry::AddCharacter(mConductor->chart.info.player2);
+
+	mLoadingStage.fetch_add(1);
 
 	StageRegistry::AddStage("syobon1-4");
 	StageRegistry::AddStage("syobon1-1");
@@ -126,6 +137,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	CharaRegistry::GetCharacter("FernanBebe")->AddAnimation("uahh", "Fernan UAHH", "", 60, true);
 
 	StageRegistry::SetStage(mConductor->chart.info.stage);
+	mLoadingStage.fetch_add(1);
 
 	std::string instPath = C_SONG_PATH_PREFIX;
 	std::string voicesPath = "fnf/songs/";
@@ -144,51 +156,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		scene->AudioEngine->AddSource(missSources[i]);
 	}
 
-	auto missListener = [this](void* sender, void** args, uint32_t argc)
-		{
-			voicesSource->SetVolume(0.2f);
-			missSources[rand() % 3]->Play();
-			gMissTimer = 0.4f;
-		};
-	auto hitListener = [this](void* sender, void** args, uint32_t argc)
-		{
-			voicesSource->SetVolume(1.0f);
-		};
-	auto opponentListener = [this](void* sender, void** args, uint32_t argc)
-		{
-			if (!mOponentCharacter || argc != 3)
-				return;
-
-			uint32_t noteType = (uint32_t)args[0];
-			uint32_t noteIndex = (uint32_t)args[1];
-			uint32_t sectionIndex = (uint32_t)args[2];
-
-			const char* animations[4] =
-			{
-				"left",
-				"down",
-				"up",
-				"right"
-			};
-
-			std::string anim = animations[noteType];
-
-			if (mConductor->GetNoteByIndex(sectionIndex, noteIndex).noteData.compare("No Animation") == 0)
-			{
-				return;
-			}
-
-			if (mConductor->GetNoteByIndex(sectionIndex, noteIndex).noteData.compare("Alt Animation") == 0)
-			{
-				anim.append("Alt");
-			}
-
-			mOponentCharacter->PlayAnimation(anim);
-		};
-
-	Stratum::EventHandler::RegisterListener(missListener, Stratum::EventHandler::GetEventID("miss_note"), true, true);
-	Stratum::EventHandler::RegisterListener(hitListener, Stratum::EventHandler::GetEventID("hit_note"), true, true);
-	Stratum::EventHandler::RegisterListener(opponentListener, Stratum::EventHandler::GetEventID("oponent_note"), true, true);
+	mLoadingStage.fetch_add(1);
 
 	mConductor->RegisterEventHandler("StSetScreenBeat", [this](ChartEvent& event)
 		{
@@ -199,7 +167,6 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 			if (offset != 0)
 				gGameState.BeatOffset = offset;
 		});
-
 	mConductor->RegisterEventHandler("StFadeToWhite", [this](ChartEvent& event)
 		{
 			auto& whiteSprite = mScene->SpriteRenderers.Get(mWhiteSprite);
@@ -239,14 +206,14 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 
 	instSource = Stratum::CreateRef<Stratum::MP3AudioSource>(instPath.c_str(), scene->AudioEngine->GetEngine());
 	scene->AudioEngine->AddSource(instSource);
-	instSource->Play();
 
 	if (mConductor->chart.info.needsVoices)
 	{
 		voicesSource = Stratum::CreateRef<Stratum::MP3AudioSource>(voicesPath.c_str(), scene->AudioEngine->GetEngine());
 		scene->AudioEngine->AddSource(voicesSource);
-		voicesSource->Play();
 	}
+
+	mLoadingStage.fetch_add(1);
 
 	ChartEvent EventSyobon{};
 	ChartEvent EventCebolla{};
@@ -352,7 +319,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 			gGameState.DoBeatEveryNthBeat = 999999999;
 		});
 
-	mConductor->AddScriptedEvent(255, [this]() {
+	mConductor->AddScriptedEvent(257, [this]() {
 
 		x64entity = mScene->EntityManager.CreateEntity();
 		x64blackentity = mScene->EntityManager.CreateEntity();
@@ -398,6 +365,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mConductor->AddScriptedEvent(1556, [this]() {
 		mConductor->EnableBot = false;
 		});
+
 	mConductor->AddScriptedEvent(1556, [this]() {
 		mConductor->EnableBot = false;
 		});
@@ -413,12 +381,18 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mConductor->AddScriptedEvent(1183, [this]() {
 		this->SetOpponentCharacter(CharaRegistry::GetCharacter("Fernan"));
 		}); 
-	mConductor->AddScriptedEvent(1256, [this]() {
+	mConductor->AddScriptedEvent(1200, [this]() {
+		mOponentCharacter->CharaPosition.y += 200;
+		auto& sprite = mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity);
+		sprite.Center = {};
+		mConductor->PushAction(&sprite.Rotation.x, 30, ActionParameters(0.9f, 28.0f), Easing::Sine);
+		});
+	mConductor->AddScriptedEvent(1218, [this]() {
 		auto& sprite = mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity);
 		mConductor->PushAction(&sprite.Rotation.x, -3600, 1.0f, Easing::SineIn);
 		mConductor->PushAction(&mOponentCharacter->CharaPosition.y, -3600, 1.0f, Easing::SineIn);
 		});
-	mConductor->AddScriptedEvent(1274, [this]() {
+	mConductor->AddScriptedEvent(1270, [this]() {
 		this->SetOpponentCharacter(CharaRegistry::GetCharacter("FernanBebe"));
 		CharaRegistry::GetCharacter("FernanBebe")->CharaPosition.y += 1600;
 		CharaRegistry::GetCharacter("FernanBebe")->CharaPosition.x = -CharaRegistry::GetCharacter("FernanBebe")->CharaPosition.x;
@@ -475,6 +449,8 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		this->SetOpponentCharacter(CharaRegistry::GetCharacter("Fernan"));
 		mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity).RenderLayer = 10000;
 		mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity).IsGui = true;
+		auto& sprite = mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity);
+		sprite.Center = { 0.0f, 1.0f };
 		});
 	mConductor->AddScriptedEvent(1547, [this]() {
 		CharaRegistry::GetCharacter("Fernan")->PlayAnimation("WTF");
@@ -603,7 +579,11 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 			});
 		});
 	mConductor->AddScriptedEvent(3800, [this]() {
+		mOponentCharacter->CharaPosition.y += 200;
 		mConductor->PushAction(&mOponentCharacter->CharaPosition, mOponentCharacter->CharaPosition - glm::vec2(320, -320), 0.35f, Easing::SineOut);
+		auto& sprite = mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity);
+		mConductor->PushAction(&sprite.Rotation.x, 30.0f, ActionParameters(1.3f, 30.0f), Easing::Sine);
+		sprite.Center = {};
 		});
 	mConductor->AddScriptedEvent(3835, [this]() {
 		auto& sprite = mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity);
@@ -626,18 +606,77 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 
 	pEarlyUpdate = true;
 
+	mLoadingStage.fetch_add(1);
+
 	Stratum::Time::EndProfile();
 	Stratum::Time::BeginProfile();
 
 	ma_engine_set_volume(mScene->AudioEngine->GetEngine(), 1.0f);
 	ma_engine_set_gain_db(mScene->AudioEngine->GetEngine(), 4.0f);
+	
+	mLoadingDone.store(true);
+}
 
-	//instSource->Seek(94 * 44100);
-	//voicesSource->Seek(94 * 44100);
+void Funkin::InGameSystem::OnActivate(Stratum::Scene* scene)
+{
+	auto missListener = [this](void* sender, void** args, uint32_t argc)
+		{
+			voicesSource->SetVolume(0.2f);
+			missSources[rand() % 3]->Play();
+			gMissTimer = 0.4f;
+		};
+	auto hitListener = [this](void* sender, void** args, uint32_t argc)
+		{
+			voicesSource->SetVolume(1.0f);
+		};
+	auto opponentListener = [this](void* sender, void** args, uint32_t argc)
+		{
+			if (!mOponentCharacter || argc != 3)
+				return;
+
+			uint32_t noteType = (uint32_t)args[0];
+			uint32_t noteIndex = (uint32_t)args[1];
+			uint32_t sectionIndex = (uint32_t)args[2];
+
+			const char* animations[4] =
+			{
+				"left",
+				"down",
+				"up",
+				"right"
+			};
+
+			std::string anim = animations[noteType];
+
+			if (mConductor->GetNoteByIndex(sectionIndex, noteIndex).noteData.compare("No Animation") == 0)
+			{
+				return;
+			}
+
+			if (mConductor->GetNoteByIndex(sectionIndex, noteIndex).noteData.compare("Alt Animation") == 0)
+			{
+				anim.append("Alt");
+			}
+
+			mOponentCharacter->PlayAnimation(anim);
+		};
+
+	Stratum::EventHandler::RegisterListener(missListener, Stratum::EventHandler::GetEventID("miss_note"), true, true);
+	Stratum::EventHandler::RegisterListener(hitListener, Stratum::EventHandler::GetEventID("hit_note"), true, true);
+	Stratum::EventHandler::RegisterListener(opponentListener, Stratum::EventHandler::GetEventID("oponent_note"), true, true);
 }
 
 void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 {
+
+	if (!mHasSongStarted)
+	{
+		mHasSongStarted = true;
+		instSource->Play();
+		if (voicesSource)
+			voicesSource->Play();
+	}
+
 	if (mConductor->BeatCountF < 3.0f)
 	{
 		if (voicesSource)
@@ -722,24 +761,40 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 		whiteSprite.SpriteColor.a = glm::mix(1.0f, 0.0f, mFadeToWhiteTime / mFadeToWhiteBaseTime);
 	}
 
-	if ((mConductor->BeatCount + gGameState.BeatOffset) % gGameState.DoBeatEveryNthBeat == 0)
+	if (gGameState.DoBeatEveryNthBeat != 1)
 	{
-		float mult = 1.0f;
-
-		if (gGameState.DoBeatEveryNthBeat == 2 && (mConductor->BeatCount + gGameState.BeatOffset) % 4 == 0)
+		if ((mConductor->BeatCount + gGameState.BeatOffset) % gGameState.DoBeatEveryNthBeat == 0)
 		{
-			mult = 1.8f;
-		}
+			float mult = 1.0f;
 
-		if (!DoBeat)
-		{
-			GuiZoomLevel += 0.035f * mult;
-			ZoomLevel += 0.025f * mult;
-			DoBeat = true;
+			if (gGameState.DoBeatEveryNthBeat == 2 && (mConductor->BeatCount + gGameState.BeatOffset) % 4 == 0)
+			{
+				mult = 1.8f;
+			}
+
+			if (!DoBeat)
+			{
+				GuiZoomLevel += 0.035f * mult;
+				ZoomLevel += 0.025f * mult;
+				DoBeat = true;
+			}
 		}
 	}
+	else
+	{
+		static uint32_t lastBeat = 0;
 
-	if ((mConductor->BeatCount + gGameState.BeatOffset) % gGameState.DoBeatEveryNthBeat != 0 && DoBeat)
+		if (lastBeat != mConductor->BeatCount)
+		{
+			lastBeat = mConductor->BeatCount;
+			GuiZoomLevel += 0.035f;
+			ZoomLevel += 0.025f;
+			DoBeat = true;
+		}
+
+	}
+
+	if (((mConductor->BeatCount + gGameState.BeatOffset) % gGameState.DoBeatEveryNthBeat != 0 || gGameState.DoBeatEveryNthBeat == 1) && DoBeat)
 		DoBeat = false;
 
 	ZoomLevel = glm::mix(ZoomLevel, 1.0f, 5.0f * Stratum::gpGlobals->deltaTime);
@@ -760,7 +815,7 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 
 void Funkin::InGameSystem::RenderImGui(Stratum::Scene* scene)
 {
-	//return;
+	return;
 	using namespace Stratum;
 
 	static int frameRate = 0;
@@ -848,6 +903,16 @@ void Funkin::InGameSystem::SetOpponentCharacter(CharaSprite* chara)
 Funkin::CharaSprite* Funkin::InGameSystem::GetPlayerCharacter()
 {
 	return mPlayerCharacter;
+}
+
+float Funkin::InGameSystem::GetLoadingProgress()
+{
+	return mLoadingStage.load() / 8.0f;
+}
+
+bool Funkin::InGameSystem::IsLoadingDone()
+{
+	return mLoadingDone.load();
 }
 
 void Funkin::InGameSystem::UpdateStage()

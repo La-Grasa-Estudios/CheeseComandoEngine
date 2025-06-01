@@ -79,6 +79,8 @@ public:
 	void Render(Scene* scene, Render::Framebuffer* pOutput);
 	void Submit();
 
+	void UpdateScreenSize(const glm::ivec2& size);
+
 	glm::vec2 VirtualScreenSize = {};
 
 	void SetCameraPosition(const glm::vec2& position);

@@ -146,7 +146,14 @@ void MP3AudioSource::UpdateSource()
             }
             if (readed == 0)
             {
-                break;
+                if (p_Params.IsLooping)
+                {
+                    m_SeekTo = 0;
+                }
+                else
+                {
+                    break;
+                }
             }
         }
 

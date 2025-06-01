@@ -30,6 +30,17 @@ namespace Funkin
 		BackIn,
 		BackOut,
 		BackInOut,
+		Sine,
+		Cosine,
+	};
+
+	struct ActionParameters
+	{
+		float duration;
+		float amplitude = 1.0f;
+		ActionParameters() = default;
+		ActionParameters(const float dur);
+		ActionParameters(const float dur, const float amp);
 	};
 
 	class Conductor : public Stratum::ISceneSystem
@@ -58,15 +69,15 @@ namespace Funkin
 		std::string GetPlayer1Name() const;
 		std::string GetPlayer2Name() const;
 
-		void PushAction(float* dst, float targetVal, float duration, Easing easing);
-		void PushAction(glm::vec2* dst, glm::vec2 targetVal, float duration, Easing easing);
-		void PushAction(glm::vec3* dst, glm::vec3 targetVal, float duration, Easing easing);
-		void PushAction(glm::vec4* dst, glm::vec4 targetVal, float duration, Easing easing);
+		void PushAction(float* dst, float targetVal, ActionParameters params, Easing easing);
+		void PushAction(glm::vec2* dst, glm::vec2 targetVal, ActionParameters params, Easing easing);
+		void PushAction(glm::vec3* dst, glm::vec3 targetVal, ActionParameters params, Easing easing);
+		void PushAction(glm::vec4* dst, glm::vec4 targetVal, ActionParameters params, Easing easing);
 
-		void PushAction(float* dst, float targetVal, float duration, Easing easing, std::function<void()> cb);
-		void PushAction(glm::vec2* dst, glm::vec2 targetVal, float duration, Easing easing, std::function<void()> cb);
-		void PushAction(glm::vec3* dst, glm::vec3 targetVal, float duration, Easing easing, std::function<void()> cb);
-		void PushAction(glm::vec4* dst, glm::vec4 targetVal, float duration, Easing easing, std::function<void()> cb);
+		void PushAction(float* dst, float targetVal, ActionParameters params, Easing easing, std::function<void()> cb);
+		void PushAction(glm::vec2* dst, glm::vec2 targetVal, ActionParameters params, Easing easing, std::function<void()> cb);
+		void PushAction(glm::vec3* dst, glm::vec3 targetVal, ActionParameters params, Easing easing, std::function<void()> cb);
+		void PushAction(glm::vec4* dst, glm::vec4 targetVal, ActionParameters params, Easing easing, std::function<void()> cb);
 
 		uint32_t GetStepCount();
 
@@ -88,7 +99,7 @@ namespace Funkin
 		{
 			Easing easing;
 			uint8_t count;
-			float duration;
+			ActionParameters params;
 			float time;
 			float* floatPtr;
 			float targetFloat[4];

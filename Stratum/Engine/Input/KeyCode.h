@@ -2,6 +2,8 @@
 
 #include <SDL3/SDL_keycode.h>
 
+// Why isn't this on the Stratum namespace?
+// Idc since a lot of code is now using this from the global namespace
 enum class KeyCode {
 
     A = 4,

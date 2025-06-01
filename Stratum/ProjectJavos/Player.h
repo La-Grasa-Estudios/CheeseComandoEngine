@@ -23,6 +23,7 @@ namespace Funkin
 		
 		PlayerSystem(Conductor* conductor, GameState* gameState);
 		void Init(Stratum::Scene* scene) override;
+		void OnActivate(Stratum::Scene* scene) override;
 		void Update(Stratum::Scene* scene) override;
 		void PostUpdate(Stratum::Scene* scene) override;
 		void SetCharacter(CharaSprite* pCharaSprite);

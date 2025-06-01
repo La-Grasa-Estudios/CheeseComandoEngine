@@ -1,5 +1,7 @@
 #include "Application.h"
 
+// WTH when i remove this the engine doesn't compile?
+// Opengl support was removed 3 years ago!
 #define OPENGL_RENDERER
 
 #include "Renderer/RendererContext.h"
@@ -30,6 +32,8 @@
 
 using namespace ENGINE_NAMESPACE;
 
+
+// Remnant of the old fury engine branch
 ConsoleVar* g_GameRscDir;
 Render::GraphicsPipeline* g_GraphicsPipeline;
 
@@ -51,12 +55,17 @@ Application::Application(ApplicationInfo& appInfo)
 void Application::Run(std::vector<std::string> args)
 {
 	gpGlobals = new GlobalVars();
+
+	// I know how to update the build date every time it compiles
+	// BUT i don't like the fact that every debug session i need to recompile a single file
+	// Pls microsoft, add a feature so i can run a command when there is a recompilation happening
 #ifdef _DEBUG
 	Z_INFO("Stratum Engine {} @ {} ", __DATE__, __TIME__);
 #endif
 
 	ZVFS::Init();
 
+	// Idk why the engine crashes with a segfault without this hack
 	m_Console.Focused();
 	
 	ZVFS::Mount("Pak");
@@ -186,7 +195,7 @@ void Application::Run(std::vector<std::string> args)
 
 		if (str == "-singlethread")
 		{
-			SingleThreaded = true;
+			SingleThreaded = true; // This poor guy is ignored lol
 		}
 
 	}
@@ -218,6 +227,9 @@ void Application::Run(std::vector<std::string> args)
 
 	if (gdprop.DedicatedVideoMemory / 1024.0f / 1024.0f < 800)
 	{
+		// I need to implement a platform abstraction again
+		// Need to investigate how to run AVX2 compiled code on non AVX2 compatible cpus
+		// So i can display an error and don't simply crash without saying anything
 		//Platform::ShowSystemMessageBox("Insufficient Video Memory", "Your system has less than 1GB of video ram, glitches may occur!", Platform::MessageBoxButtons::OK, Platform::MessageBoxIcons::Warning);
 	}
 
@@ -246,11 +258,13 @@ void Application::Run(std::vector<std::string> args)
 
 	EventHandler::InvokeEvent(EventHandler::GetEventID("init_input"), this);
 
+	// Remove this on retail builds?
 	ShaderCompiler::build_object("shaders/video_gbar_to_rgba.hlsl", "Data/shaders/video_gbar_to_rgba.cso", ShaderCompiler::shader_type::vertex, 1);
 	ShaderCompiler::build_object("shaders/deferred_gbuffer_opaque.hlsl", "Data/shaders/deferred_gbuffer_opaque.cso", ShaderCompiler::shader_type::vertex);
 
 	ShaderCompiler::build_object("shaders/2d/2d_sprite.hlsl", "Data/shaders/2d/2d_sprite.cso", ShaderCompiler::shader_type::vertex);
 
+	// I just left this thing here bc i'm lazy, doesn't mean anything rn
 	Z_INFO("Printing cmdline args");
 
 	bool EnableVids = true;
@@ -268,11 +282,14 @@ void Application::Run(std::vector<std::string> args)
 
 	}
 
+	// $h1t i need to account for the swapchain in the vram usage, currently reports 0mb at startup 
+	// Only affects texture streaming but the difference is about 10mb so not high priority lol
 	Z_INFO("{}, VRAM: {} MB, SHARED: {} MB, USED: {} MB", gdprop.Description,
 		gdprop.DedicatedVideoMemory / 1024 / 1024,
 		gdprop.SharedVideoMemory / 1024 / 1024,
 		gdprop.UsedVideoMemory / 1024 / 1024);
 
+	// Inspired by source engine :)
 	RenderStartupMedia();
 
 	EventHandler::InvokeEvent(EventHandler::GetEventID("late_init"), this);
@@ -281,7 +298,6 @@ void Application::Run(std::vector<std::string> args)
 
 	if (!m_Window->CloseRequested())
 	{
-
 		VarRegistry::ParseConsoleVar("exec startup", autoExecLog);
 
 		OnInit();
@@ -294,10 +310,10 @@ void Application::Run(std::vector<std::string> args)
 
 	EventHandler::InvokeEvent(EventHandler::GetEventID("post_init"), this);
 
-	m_Window->SetVSync(false);
-
 	MainLoop();
 
+	// Still here bc of an old fury branch where i had a dedicated render thread
+	// Now multithreading is implemented like id tech 7 (A lot of jobs)
 	g_FinishUpdateThread.store(true);
 
 	Render::ShapeProvider::Release();
@@ -311,7 +327,7 @@ void Application::Run(std::vector<std::string> args)
 
 	m_Window->Destroy();
 
-	m_RenderContext = NULL;
+	m_RenderContext = NULL; // RHI segfaults if i call release on this, idc since we are closing anyway, just a different way of doing that
 }
 
 void Application::MainLoop()
@@ -334,10 +350,7 @@ void Application::MainLoop()
 		float FrameDeltaDiff = (Time::DeltaTime - LastFrameDelta) * 1000.0f;
 		LastFrameDelta = Time::DeltaTime;
 
-		if (FrameDeltaDiff > MaxStutterTime)
-		{
-			LogStutters = true;
-		}
+		LogStutters = true;
 
 		Time::BeginProfile();
 		Time::ClearGPU();
@@ -429,21 +442,34 @@ void Application::MainLoop()
 
 		if (LogStutters)
 		{
-			Z_WARN("Detected stutter! frame got {:.3f}ms over 33ms max delta", FrameDeltaDiff);
-			Z_WARN("Logging last frame scope");
-
+			float total = 0.0f;
 			auto stats = EngineStats::GetTimes();
 
 			for (int i = 0; i < stats.size(); i++)
 			{
 				ScopedTime& time = stats[i];
-				Z_INFO("{}: {:.3f}ms", time.name, time.time);
+				total += time.time;
 			}
 
-			if (stats.empty())
+			if (total > 33.0f)
 			{
-				Z_WARN("Timing stats are empty! maybe this is the first frame?");
+				Z_WARN("Frame got {:.3f}ms over 33ms max!", total);
+				Z_WARN("Frame scope");
+
+				auto stats = EngineStats::GetTimes();
+
+				for (int i = 0; i < stats.size(); i++)
+				{
+					ScopedTime& time = stats[i];
+					Z_INFO("{}: {:.3f}ms", time.name, time.time);
+				}
+
+				if (stats.empty())
+				{
+					Z_WARN("Timing stats are empty! maybe this is the first frame?");
+				}
 			}
+			
 		}
 		LogStutters = false;
 
@@ -619,6 +645,7 @@ void Application::RenderStartupMedia()
 
 void Application::InternalUpdate()
 {
+	// TO DO: Move this to main loop
 	Z_PROFILE_SCOPE("Application::InternalUpdate");
 	gpGlobals->gametic++;
 	Input::Update();
@@ -636,6 +663,16 @@ void Application::SetScene(Scene* scene)
 	mCurrentScene = scene;
 	gpGlobals->gametic = 0;
 
+	// If this pointer has been asigned scene has been probably initialized somewhere else (Async scene loading)
+	if (scene && !scene->RenderPath3D)
+		InitSceneResources(scene);
+
+	if (scene)
+		m_RenderPath3D->RenderPath2D->UpdateScreenSize(m_Window->GetFramebuffer()->GetSize());
+}
+
+void Application::InitSceneResources(Scene* scene)
+{
 	if (scene)
 	{
 		m_RenderPath3D->SetScene(scene);

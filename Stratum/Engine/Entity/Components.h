@@ -180,13 +180,13 @@ enum class GuiAnchorPoint
 {
 	CENTER,
 	TOP,
-	DOWN,
+	BOTTOM,
 	LEFT,
 	RIGHT,
 	TOP_LEFT,
 	TOP_RIGHT,
-	DOWN_LEFT,
-	DOWN_RIGHT,
+	BOTTOM_LEFT,
+	BOTTOM_RIGHT,
 };
 
 struct GuiAnchorComponent

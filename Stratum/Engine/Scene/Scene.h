@@ -25,11 +25,14 @@ public:
 	virtual ~ISceneSystem() {};
 
 	virtual void Init(Scene* scene) = 0;
+	virtual void OnActivate(Scene* scene) {};
+
 	virtual void Update(Scene* scene) = 0;
 	virtual void PostUpdate(Scene* scene) = 0;
 	virtual void RenderImGui(Scene* scene) {};
 private:
 	bool mInitialized = false;
+	bool mHasBeenActivated = false;
 protected:
 	bool pEarlyUpdate = false;
 };

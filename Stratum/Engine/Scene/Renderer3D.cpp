@@ -91,6 +91,7 @@ void Renderer3D::Render(Scene* scene, Render::Framebuffer* pOutput)
 {
 	using namespace Render;
 
+	RenderPath2D->UpdateScreenSize(pOutput->GetSize());
 	RenderPath2D->Render(scene, pOutput);
 	ResizeRenderBuffers(pOutput->GetSize());
 

@@ -1,7 +1,7 @@
 #include "StageEditorSystem.h"
 
 #include "StageInfo.h"
-#include "InGameSystem.h"
+#include "LoadingScreenSystem.h"
 #include "SparrowReader.h"
 #include "GameState.h"
 #include "ChartLoader.h"
@@ -64,7 +64,7 @@ void Funkin::StageEditorSystem::Update(Stratum::Scene* scene)
 		LoadChartParams params;
 		params.ChartPath = mLoadedWith;
 		auto scene = new Stratum::Scene();
-		scene->RegisterCustomSystem(new InGameSystem(params));
+		scene->RegisterCustomSystem(new LoadingScreenSystem(params));
 		mScene->SwapScene(scene);
 	}
 

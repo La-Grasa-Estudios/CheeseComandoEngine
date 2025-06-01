@@ -49,7 +49,7 @@ void RendererContext::InitializeApi(RendererAPI api)
     }
     if (api == RendererAPI::DX11)
     {
-        //pBackend = new BackendInitializerD3D11();
+        //pBackend = new BackendInitializerD3D11(); No more d3d11 bitch
     }
     set_api(api);
 }

@@ -5,6 +5,9 @@
 #include "znmsp.h"
 #include "Core/Ref.h"
 
+// Straight from my old java code
+// Ins't the prettiest thing in the world but it does the job of a fixed memory pool
+
 BEGIN_ENGINE
 
 struct MemoryPool {

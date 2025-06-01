@@ -72,3 +72,8 @@ void AudioSourceBase::AttachToNode(ma_node* pNode, uint32_t index, uint32_t inpu
 	ma_node_detach_all_output_buses(&p_Sound);
 	ma_node_attach_output_bus(pNode, index, &p_Sound, inputIndex);
 }
+
+void AudioSourceBase::SetLooping(bool looping)
+{
+	p_Params.IsLooping = looping;
+}

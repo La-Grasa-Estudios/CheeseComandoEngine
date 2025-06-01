@@ -8,6 +8,12 @@
 
 bool g_IsMouseGrabbed = false;
 
+// TO DO: Add support for input layers
+// Need that so UI can capture clicks and key presses and don't send it through the actual game logic
+// Maybe rewrite the entire thing? (Originally GLFW then SDL ass ugly port)
+// This thing comes from 2019
+// There is a reason the engine is called Stratum lol
+
 void ENGINE_NAMESPACE::Input::Init(SDL_Window* window)
 {
 	m_Window = window;

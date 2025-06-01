@@ -66,6 +66,14 @@ void Scene::UpdateSystems()
 			mSystems[i]->Init(this);
 			mSystems[i]->mInitialized = true;
 		}
+	}
+	for (int i = 0; i < mSystems.size(); i++)
+	{
+		if (!mSystems[i]->mHasBeenActivated)
+		{
+			mSystems[i]->OnActivate(this);
+			mSystems[i]->mHasBeenActivated = true;
+		}
 		mSystems[i]->Update(this);
 	}
 }
@@ -401,9 +409,9 @@ void Scene::UpdateGuiAnchors()
 		{
 			Position = glm::vec3(anchor.Position.x, VirtualScreenSize.y - anchor.Position.y, 1.0f);
 		}
-		if (anchor.AnchorPoint == GuiAnchorPoint::DOWN)
+		if (anchor.AnchorPoint == GuiAnchorPoint::BOTTOM)
 		{
-			Position = glm::vec3(anchor.Position.x, VirtualScreenSize.y + anchor.Position.y, 1.0f);
+			Position = glm::vec3(anchor.Position.x, -VirtualScreenSize.y + anchor.Position.y, 1.0f);
 		}
 
 		if (anchor.AnchorPoint == GuiAnchorPoint::LEFT)
@@ -424,13 +432,13 @@ void Scene::UpdateGuiAnchors()
 			Position = glm::vec3(VirtualScreenSize.x - anchor.Position.x, VirtualScreenSize.y - anchor.Position.y, 1.0f);
 		}
 
-		if (anchor.AnchorPoint == GuiAnchorPoint::DOWN_LEFT)
+		if (anchor.AnchorPoint == GuiAnchorPoint::BOTTOM_LEFT)
 		{
-			Position = glm::vec3(VirtualScreenSize.x + anchor.Position.x, VirtualScreenSize.y + anchor.Position.y, 1.0f);
+			Position = glm::vec3(VirtualScreenSize.x + anchor.Position.x, -VirtualScreenSize.y + anchor.Position.y, 1.0f);
 		}
-		if (anchor.AnchorPoint == GuiAnchorPoint::DOWN_RIGHT)
+		if (anchor.AnchorPoint == GuiAnchorPoint::BOTTOM_RIGHT)
 		{
-			Position = glm::vec3(VirtualScreenSize.x - anchor.Position.x, VirtualScreenSize.y + anchor.Position.y, 1.0f);
+			Position = glm::vec3(VirtualScreenSize.x - anchor.Position.x, -VirtualScreenSize.y + anchor.Position.y, 1.0f);
 		}
 
 		transform.SetPosition(Position);
@@ -489,7 +497,8 @@ void Scene::UpdateVideoPlayers()
 				uint32_t count = surface.VideoResolution.x * surface.VideoResolution.y;
 				auto data = frame->native()->data[0];
 
-				JobManager::Dispatch(count, 8192, [&](JobDispatchArgs args)
+				// TO DO: Move to async GPU compute
+				JobManager::Dispatch(count, 65535, [&](JobDispatchArgs args)
 					{
 						uint32_t index = args.jobIndex * 4;
 						uint8_t r = data[index + 0];
@@ -518,7 +527,13 @@ void Scene::UpdateVideoPlayers()
 		if (!VideoSurfaces.mAllocatedArray[i] && VideoSurfaces.mComponentArray[i].mDecoder)
 		{
 			VideoDecode* decode = reinterpret_cast<VideoDecode*>(VideoSurfaces.mComponentArray[i].mDecoder);
-			delete decode;
+			// This is hot shit.
+			// But for some reason without this the whole engine stutters to hell.
+			// TO DO: Make our own abstraction of the libav library
+			std::thread t([decode]() {
+				delete decode;
+			});
+			t.detach();
 			VideoSurfaces.mComponentArray[i].mDecoder = 0;
 			Resources.ReleaseImage(VideoSurfaces.mComponentArray[i].TextureHandle);
 		}

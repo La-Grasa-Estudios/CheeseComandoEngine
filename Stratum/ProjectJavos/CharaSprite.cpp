@@ -93,7 +93,9 @@ void Funkin::CharaSprite::Update()
 	auto& transform = mScene->Transforms.Get(CharaEntity);
 	auto& renderer = mScene->SpriteRenderers.Get(CharaEntity);
 
-	if ((gGameState.pConductor->BeatCount + gGameState.BeatOffset) % gGameState.DoBeatEveryNthBeat == 0)
+	uint32_t doDanceEvery = glm::max(gGameState.DoBeatEveryNthBeat, 2U);
+
+	if ((gGameState.pConductor->BeatCount + gGameState.BeatOffset) % doDanceEvery == 0)
 	{
 		mDoBeat = true;
 	}

@@ -22,6 +22,8 @@ SpriteBatch::SpriteBatch(SceneResources* pResources)
 	     size.x, size.y, // (1,0) = 5
 	};
 
+	// It took soo much time to get this right in HLSL land
+	// This sheet here helped me a lot to understand which corners are what uvs
 	// (0,0) = 0, 0
 	// (0,1) = 0, 1
 	// (1,0) = 1, 0
@@ -46,11 +48,18 @@ void SpriteBatch::Begin()
 
 void SpriteBatch::DrawSprite(const SpriteInstance& instance)
 {
+	auto offset = instance.offset;
 
-	auto spriteTransform = glm::translate(glm::identity<glm::mat4>(), glm::vec3(instance.center * (glm::vec2(instance.RenderSize) - instance.offset), 0.0f));
-	spriteTransform = glm::translate(spriteTransform, glm::vec3(instance.offset, 0.0f));
+	glm::vec2 scaleFactor = glm::vec2(instance.rect.size) / glm::vec2(instance.RenderSize);
 
-	spriteTransform = glm::scale(spriteTransform, glm::vec3(instance.RenderSize, 0.0f));
+	glm::vec2 pivotOffset = glm::vec2(instance.offset) / glm::vec2(instance.RenderSize);
+
+	auto spriteTransform = glm::identity<glm::mat4>();
+
+	spriteTransform = glm::scale(spriteTransform, glm::vec3(scaleFactor, 1.0f));
+	spriteTransform = glm::translate(spriteTransform, glm::vec3(-pivotOffset, 0.0f));
+	spriteTransform = glm::scale(spriteTransform, glm::vec3(glm::vec2(instance.RenderSize) * scaleFactor, 1.0f));
+	spriteTransform = glm::translate(spriteTransform, glm::vec3(instance.center, 0.0f));
 
 	spriteTransform = instance.transform * spriteTransform;
 
@@ -77,16 +86,18 @@ void SpriteBatch::DrawSprite(const SpriteInstance& instance)
 			float x1 = (instance.rect.position.x + instance.rect.size.x) / size.x;
 			float y1 = (instance.rect.position.y + instance.rect.size.y) / size.y;
 
+			// Looks awful but i need it bc of 16 byte alignment
 			renderable.uvs[0] = { glm::vec2{ x0, y0 }, glm::vec2{ x0, y1 } };
 			renderable.uvs[1] = { glm::vec2{ x1, y0 }, glm::vec2{ x1, y1 } };
 
 		}
 		else
 		{
-			renderable.texture = -1;
+			renderable.texture = -1; // Shader automatically colors it white
 		}
 	}
 
+	// Is bit manipulation slow on modern gpus?
 	if (instance.useNearestFilter)
 	{
 		renderable.flags |= FLAG_SPRITE_NEAREST;
@@ -99,7 +110,7 @@ void SpriteBatch::DrawSprite(const SpriteInstance& instance)
 void SpriteBatch::End(Render::GraphicsCommandBuffer* pCmdBuffer)
 {
 
-	if (mRenderQueue.empty())
+	if (mRenderQueue.empty()) // No need to render if there isn't anything in the queue
 		return;
 
 	pCmdBuffer->ClearVertexBuffers();
@@ -108,6 +119,8 @@ void SpriteBatch::End(Render::GraphicsCommandBuffer* pCmdBuffer)
 	for (auto& renderable : mRenderQueue)
 	{
 
+		// I love push constants
+		// How did i live w/o them in d3d11, this thing alone was enough to justify porting the engine to d3d12
 		pCmdBuffer->PushConstants(&renderable, sizeof(SpriteRenderable));
 		pCmdBuffer->Draw(6, 0);
 
@@ -117,5 +130,5 @@ void SpriteBatch::End(Render::GraphicsCommandBuffer* pCmdBuffer)
 
 void SpriteBatch::SetResources(SceneResources* pRsc)
 {
-	mResources = pRsc;
+	mResources = pRsc; // This used to crash when changing scenes, my bad since i didn't test scene changing until 3 years after i started developing this branch of the engine, now it works and is very fast (<0.5ms) :D
 }

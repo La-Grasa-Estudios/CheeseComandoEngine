@@ -342,6 +342,7 @@
     <ClInclude Include="ProjectJavos\GameState.h" />
     <ClInclude Include="ProjectJavos\InGameSystem.h" />
     <ClInclude Include="ProjectJavos\JavosApp.h" />
+    <ClInclude Include="ProjectJavos\LoadingScreenSystem.h" />
     <ClInclude Include="ProjectJavos\Player.h" />
     <ClInclude Include="ProjectJavos\SparrowReader.h" />
     <ClInclude Include="ProjectJavos\StageEditorSystem.h" />
@@ -467,6 +468,7 @@
     <ClCompile Include="ProjectJavos\GameScene.cpp" />
     <ClCompile Include="ProjectJavos\InGameSystem.cpp" />
     <ClCompile Include="ProjectJavos\JavosApp.cpp" />
+    <ClCompile Include="ProjectJavos\LoadingScreenSystem.cpp" />
     <ClCompile Include="ProjectJavos\main.cpp" />
     <ClCompile Include="ProjectJavos\Player.cpp" />
     <ClCompile Include="ProjectJavos\SparrowReader.cpp" />

@@ -9,12 +9,15 @@
 #include <Core/Timer.h>
 #include <Core/Logger.h>
 
+#include <thread>
+
 using namespace ENGINE_NAMESPACE;
 
 SceneResources::~SceneResources()
 {
 	for (int i = 0; i < mBuffersRefCount.size(); i++) mBuffersRefCount[i] = 0;
 	for (int i = 0; i < mMaterialsRefCount.size(); i++) mMaterialsRefCount[i] = 0;
+	// Maybe wait for the graphics device to be idle?
 	GarbageCollect();
 }
 
@@ -59,7 +62,8 @@ void SceneResources::ReleaseBufferHandle(DescriptorHandle handle)
 
 void SceneResources::CreateMeshHandle(Render::Mesh* mesh)
 {
-
+	// Not used anywhere for now
+	// Need to keep this in case we use the old mesh api
 	int32_t vertexBufferIndex = AllocateBufferHandle();
 	int32_t indexBufferIndex = AllocateBufferHandle();
 
@@ -162,6 +166,9 @@ Render::Material* SceneResources::GetMaterial(DescriptorHandle handle)
 
 	auto mat = mMaterials[handle].pMaterial;
 
+	// I didn't think this enough when making it
+	// Now i'm stuck with this until i have the balls to refactor the whole deferred renderer
+
 	mMaterials[handle].FrameIndex = Render::RendererContext::s_Context->FrameCount;
 
 	if (mat->Diffuse.GetTexture() && mat->Diffuse.BindlessIndex == -1)
@@ -200,6 +207,8 @@ Render::Buffer* SceneResources::GetBuffer(DescriptorHandle handle)
 
 bool SceneResources::IsMaterialDirty(DescriptorHandle handle)
 {
+	// Same as GetMaterial()
+
 	if (handle == -1)
 	{
 		return false;
@@ -222,6 +231,8 @@ DescriptorHandle SceneResources::LoadTextureImage(const std::string& path)
 	}
 
 	auto texture = Render::TextureLoader::LoadFileToImage(path, NULL);
+
+	// Need to wait right here, right now, if we don't wait the imageresource can go to a commandlist without being properly copied by the CopyEngine
 
 #ifdef _DEBUG
 	Timer timer;
@@ -255,6 +266,7 @@ DescriptorHandle SceneResources::LoadTextureImage(const std::string& path)
 
 Render::BindlessDescriptorIndex SceneResources::CreateTextureImage(const Render::ImageDescription& desc)
 {
+	// Same as above but create it without default data :D
 	Ref<Render::ImageResource> image = CreateRef<Render::ImageResource>(desc);
 	auto handle = mDescriptorTable->AllocateDescriptor(nvrhi::BindingSetItem::Texture_SRV(0, image->Handle));
 	mTextures[handle] = image;
@@ -272,6 +284,7 @@ Render::ImageResource* SceneResources::GetImageHandle(const DescriptorHandle han
 
 void SceneResources::ReleaseImage(Render::BindlessDescriptorIndex handle)
 {
+	// TO DO: Add command list side tracking to avoid deleting images while being used by the gpu
 	if (mTextures.contains(handle))
 		mTextures.erase(handle);
 	handle.Release();
@@ -312,5 +325,6 @@ int32_t SceneResources::AllocateBufferHandle()
 
 void SceneResources::_ReleaseBufferHandle(int32_t handle)
 {
+	// Same shit as release image, but with fancier ref counting
 	mBuffersRefCount[handle] -= 1;
 }

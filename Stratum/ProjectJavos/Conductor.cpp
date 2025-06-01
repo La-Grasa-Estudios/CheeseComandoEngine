@@ -299,10 +299,10 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 	// Big lag spike! (TO DO: Fix the engine/get a good pc)
 	// Simulate last 16 steps (Also helps during developments when skipping parts of the song)
-	if (simulatedSteps > 1024)
+	if (simulatedSteps > 64)
 	{
-		mStepCount += simulatedSteps - 1024;
-		simulatedSteps = 1024;
+		mStepCount += simulatedSteps - 64;
+		simulatedSteps = 64;
 	}
 
 	// Need to do this to avoid skipping steps in case of lag
@@ -599,7 +599,7 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 		act.time += Stratum::gpGlobals->deltaTime;
 
-		float interp = glm::clamp(act.time / act.duration, 0.0f, 1.0f);
+		float interp = glm::clamp(act.time / act.params.duration, 0.0f, 1.0f);
 
 		for (int i = 0; i < act.count; i++)
 		{
@@ -643,6 +643,13 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 			case Easing::BackInOut:
 				val = glm::mix(act.srcFloat[i], act.targetFloat[i], easeInOutBack(interp));
 				break;
+			case Easing::Sine:
+				interp = glm::sin((interp * PI) / 2.0f);
+				val = glm::mix(act.srcFloat[i], act.targetFloat[i], glm::sin(interp * (PI * 2) * act.params.amplitude));
+				break;
+			case Easing::Cosine:
+				val = glm::mix(act.srcFloat[i], act.targetFloat[i], glm::cos(interp * (PI * 2) * act.params.amplitude));
+				break;
 			default:
 				break;
 			}
@@ -650,7 +657,7 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 			act.floatPtr[i] = val;
 		}
 
-		if (act.time >= act.duration)
+		if (act.time >= act.params.duration)
 		{
 			if (act.cb)
 			{
@@ -690,22 +697,22 @@ std::string Funkin::Conductor::GetPlayer2Name() const
 
 // Some hot shit incoming, but it does the job
 
-void Funkin::Conductor::PushAction(float* dst, float targetVal, float duration, Easing easing)
+void Funkin::Conductor::PushAction(float* dst, float targetVal, ActionParameters params, Easing easing)
 {
 	Action action{};
 	action.count = 1;
-	action.duration = duration;
+	action.params = params;
 	action.easing = easing;
 	action.floatPtr = dst;
 	action.targetFloat[0] = targetVal;
 	mActions.push_back(action);
 }
 
-void Funkin::Conductor::PushAction(glm::vec2* dst, glm::vec2 targetVal, float duration, Easing easing)
+void Funkin::Conductor::PushAction(glm::vec2* dst, glm::vec2 targetVal, ActionParameters params, Easing easing)
 {
 	Action action{};
 	action.count = 2;
-	action.duration = duration;
+	action.params = params;
 	action.easing = easing;
 	action.floatPtr = glm::value_ptr(*dst);
 	action.targetFloat[0] = targetVal.x;
@@ -713,11 +720,11 @@ void Funkin::Conductor::PushAction(glm::vec2* dst, glm::vec2 targetVal, float du
 	mActions.push_back(action);
 }
 
-void Funkin::Conductor::PushAction(glm::vec3* dst, glm::vec3 targetVal, float duration, Easing easing)
+void Funkin::Conductor::PushAction(glm::vec3* dst, glm::vec3 targetVal, ActionParameters params, Easing easing)
 {
 	Action action{};
 	action.count = 3;
-	action.duration = duration;
+	action.params = params;
 	action.easing = easing;
 	action.floatPtr = glm::value_ptr(*dst);
 	action.targetFloat[0] = targetVal.x;
@@ -726,11 +733,11 @@ void Funkin::Conductor::PushAction(glm::vec3* dst, glm::vec3 targetVal, float du
 	mActions.push_back(action);
 }
 
-void Funkin::Conductor::PushAction(glm::vec4* dst, glm::vec4 targetVal, float duration, Easing easing)
+void Funkin::Conductor::PushAction(glm::vec4* dst, glm::vec4 targetVal, ActionParameters params, Easing easing)
 {
 	Action action{};
 	action.count = 4;
-	action.duration = duration;
+	action.params = params;
 	action.easing = easing;
 	action.floatPtr = glm::value_ptr(*dst);
 	action.targetFloat[0] = targetVal.x;
@@ -740,11 +747,11 @@ void Funkin::Conductor::PushAction(glm::vec4* dst, glm::vec4 targetVal, float du
 	mActions.push_back(action);
 }
 
-void Funkin::Conductor::PushAction(float* dst, float targetVal, float duration, Easing easing, std::function<void()> cb)
+void Funkin::Conductor::PushAction(float* dst, float targetVal, ActionParameters params, Easing easing, std::function<void()> cb)
 {
 	Action action{};
 	action.count = 1;
-	action.duration = duration;
+	action.params = params;
 	action.easing = easing;
 	action.floatPtr = dst;
 	action.targetFloat[0] = targetVal;
@@ -752,11 +759,11 @@ void Funkin::Conductor::PushAction(float* dst, float targetVal, float duration, 
 	mActions.push_back(action);
 }
 
-void Funkin::Conductor::PushAction(glm::vec2* dst, glm::vec2 targetVal, float duration, Easing easing, std::function<void()> cb)
+void Funkin::Conductor::PushAction(glm::vec2* dst, glm::vec2 targetVal, ActionParameters params, Easing easing, std::function<void()> cb)
 {
 	Action action{};
 	action.count = 2;
-	action.duration = duration;
+	action.params = params;
 	action.easing = easing;
 	action.floatPtr = glm::value_ptr(*dst);
 	action.targetFloat[0] = targetVal.x;
@@ -765,11 +772,11 @@ void Funkin::Conductor::PushAction(glm::vec2* dst, glm::vec2 targetVal, float du
 	mActions.push_back(action);
 }
 
-void Funkin::Conductor::PushAction(glm::vec3* dst, glm::vec3 targetVal, float duration, Easing easing, std::function<void()> cb)
+void Funkin::Conductor::PushAction(glm::vec3* dst, glm::vec3 targetVal, ActionParameters params, Easing easing, std::function<void()> cb)
 {
 	Action action{};
 	action.count = 3;
-	action.duration = duration;
+	action.params = params;
 	action.easing = easing;
 	action.floatPtr = glm::value_ptr(*dst);
 	action.targetFloat[0] = targetVal.x;
@@ -779,11 +786,11 @@ void Funkin::Conductor::PushAction(glm::vec3* dst, glm::vec3 targetVal, float du
 	mActions.push_back(action);
 }
 
-void Funkin::Conductor::PushAction(glm::vec4* dst, glm::vec4 targetVal, float duration, Easing easing, std::function<void()> cb)
+void Funkin::Conductor::PushAction(glm::vec4* dst, glm::vec4 targetVal, ActionParameters params, Easing easing, std::function<void()> cb)
 {
 	Action action{};
 	action.count = 4;
-	action.duration = duration;
+	action.params = params;
 	action.easing = easing;
 	action.floatPtr = glm::value_ptr(*dst);
 	action.targetFloat[0] = targetVal.x;
@@ -1048,4 +1055,12 @@ void Funkin::Conductor::AddScoreNoteHit(uint32_t time)
 	score = glm::ceil(score);
 
 	PlayerScore += (int32_t)score;
+}
+
+Funkin::ActionParameters::ActionParameters(const float dur) : duration(dur)
+{
+}
+
+Funkin::ActionParameters::ActionParameters(const float dur, const float amp) : duration(dur), amplitude(amp)
+{
 }

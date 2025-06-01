@@ -67,6 +67,7 @@ public:
 	/// </summary>
 	/// <param name="scene"></param>
 	void SetScene(Scene* scene);
+	void InitSceneResources(Scene* scene);
 
 	virtual void OnEarlyInit();
 	virtual void OnInit();

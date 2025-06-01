@@ -12,6 +12,7 @@
 
 using namespace ENGINE_NAMESPACE;
 
+// DXIL brute force include implementation
 struct ZVFSDxcIncludeHandler : public IDxcIncludeHandler
 {
 	CComPtr<IDxcUtils> pUtils;
@@ -136,6 +137,7 @@ struct ZVFSDxcIncludeHandler : public IDxcIncludeHandler
 	ULONG STDMETHODCALLTYPE Release(void) override { return 0; }
 };
 
+// Maybe use a LUT?
 static ShaderReflectionResourceDimension ConvertD3DDimensionToEngine(D3D_SRV_DIMENSION dimension)
 {
 	switch (dimension)
@@ -173,6 +175,8 @@ std::vector<uint8_t> ShaderCompiler::GetShaderBinary(RefBinaryStream& ss, Shader
 	std::string stage = "STAGE_";
 	LPCWSTR shaderTarget = NULL;
 
+	// Most pre 2017 gpus don't support shader model 6.6+
+	// Need to stick to 6.5 (sad)
 	switch (type)
 	{
 	case ShaderCompiler::shader_type::fragment:
@@ -211,16 +215,17 @@ std::vector<uint8_t> ShaderCompiler::GetShaderBinary(RefBinaryStream& ss, Shader
 
 	std::vector<LPCWSTR> pszArgs =
 	{
-		inputStr.c_str(),            // Optional shader source file name for error reporting
-		L"-E", L"main",              // Entry point.
-		L"-T", shaderTarget,            // Target.
-		L"-I", L"Engine/Include",            // Target.
-		L"-Zi",                      // Enable debug information (slim format)
-		//L"-O3",                      // Enable debug information (slim format)
-		L"-all_resources_bound",                      // Enable debug information (slim format)
-		L"-Qembed_debug",                      // Enable debug information (slim format)
+		inputStr.c_str(),
+		L"-E", L"main",    
+		L"-T", shaderTarget,       
+		L"-I", L"Engine/Include",       
+		L"-Zi",                      
+		//L"-O3",                    
+		L"-all_resources_bound",              
+		L"-Qembed_debug",         
 	};
 
+	// Why does windows use wchar, need to do this every time i need to interact with DXIL
 	for (auto s1 : defines)
 	{
 		std::wstring wstr = converter.from_bytes(s1);
@@ -297,6 +302,8 @@ std::vector<uint8_t> ShaderCompiler::GetShaderBinary(RefBinaryStream& ss, Shader
 		D3D12_SHADER_DESC shaderDesc{};
 		shaderReflection->GetDesc(&shaderDesc);
 
+		// Reflection!
+		// Now i don't need to manually create root signatures :DDD
 		for (int i = 0; i < shaderDesc.BoundResources; i++)
 		{
 			D3D12_SHADER_INPUT_BIND_DESC shaderInputBindDesc{};
@@ -430,6 +437,9 @@ bool ShaderCompiler::build_object(const char* input, const char* output, shader_
 
 	bool needsRecompile = false;
 
+	// VFS doesn't support timestamps rn
+	// This thing was before VFS was even a thing!
+	// TO DO: Add timestamps to the VFS
 	std::chrono::system_clock::time_point begin = std::chrono::system_clock::now();
 	auto since_epoch = begin.time_since_epoch();
 	long start = (long)(std::chrono::duration_cast<std::chrono::milliseconds>(since_epoch).count());
@@ -528,6 +538,8 @@ bool ShaderCompiler::build_object(const char* input, const char* output, shader_
 		spfMetaHeader.MetadataLen = MetaSize;
 	}
 
+	// Multicore compilation!
+	// This whole thing is ugly since this code has been evolving for 5 years at this point
 	JobManager::Dispatch(sourcePreprocessor.GetPermutationCount(), 1, [&](JobDispatchArgs args) {
 		int i = args.jobIndex;
 
@@ -549,6 +561,7 @@ bool ShaderCompiler::build_object(const char* input, const char* output, shader_
 				shader_type::vertex,
 				shader_type::fragment,
 			};
+			// Vertex & pixel (fragment is a remnant of ogl times) are now combined into a single cso file
 			for (int k = 0; k < 2; k++)
 			{
 				type = types[k];
@@ -638,7 +651,7 @@ bool ShaderCompiler::build_object(const char* input, const char* output, shader_
 					access.release();
 				}
 			}
-		}
+		} // Maybe merge logic somewhere?
 		else
 		{
 			std::vector<shaderbinding_t> shaderBindings;

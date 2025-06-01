@@ -1,11 +1,12 @@
 #pragma once
 
 #include "Common.h"
+#include "CharaSprite.h"
 
 #include <Scene/Scene.h>
 #include <Sound/AudioSystem.h>
 
-#include "CharaSprite.h"
+#include <atomic>
 
 namespace Funkin
 {
@@ -19,6 +20,8 @@ namespace Funkin
 		~InGameSystem() override;
 
 		void Init(Stratum::Scene* scene) final;
+		void OnActivate(Stratum::Scene* scene) final;
+
 		void Update(Stratum::Scene* scene) final;
 		void PostUpdate(Stratum::Scene* scene) final;
 		void RenderImGui(Stratum::Scene* scene) final;
@@ -26,6 +29,9 @@ namespace Funkin
 		void SetOpponentCharacter(CharaSprite* chara);
 		CharaSprite* GetPlayerCharacter();
 		CharaSprite* GetOpponentCharacter();
+
+		float GetLoadingProgress();
+		bool IsLoadingDone();
 
 	private:
 
@@ -49,5 +55,10 @@ namespace Funkin
 		Conductor* mConductor;
 		CharaSprite* mPlayerCharacter = NULL;
 		CharaSprite* mOponentCharacter = NULL;
+
+		bool mHasSongStarted = false;
+
+		std::atomic_uint mLoadingStage;
+		std::atomic_bool mLoadingDone;
 	};
 }
