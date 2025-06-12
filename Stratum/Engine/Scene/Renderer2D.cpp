@@ -3,6 +3,7 @@
 #include "Renderer/GraphicsPipeline.h"
 #include "Renderer/GraphicsCommandBuffer.h"
 #include "Renderer/ConstantBuffer.h"
+#include "Post/PostProcessingStack.h"
 #include <Core/EngineStats.h>
 
 #include "SpriteBatch.h"
@@ -11,10 +12,15 @@
 
 using namespace ENGINE_NAMESPACE;
 
+Render::PostProcessingStack* pStack;
+
 Renderer2D::Renderer2D()
 {
-	mPerFrameData = CreateRef<Render::ConstantBuffer>(sizeof(PerFrameData));
+	pStack = new Render::PostProcessingStack();
+
+	mPerFrameData = CreateRef<Render::ConstantBuffer>(sizeof(PerFrameData) * 2);
 	mCmdBuffer = CreateRef<Render::GraphicsCommandBuffer>();
+	mComputeCmdBuffer = CreateRef<Render::ComputeCommandBuffer>(mCmdBuffer.get());
 
 	mMainCamera = {};
 	mGuiCamera = {};
@@ -178,8 +184,28 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 
 	Z_PROFILE_SCOPE("Renderer2D::Render");
 
-	if (mMainPipeline->ShaderDesc.RenderTarget != pOutput)
-		mMainPipeline->SetRenderTarget(pOutput);
+	if (!mMainRenderTarget || mMainRenderTarget->GetSize() != pOutput->GetSize())
+	{
+		pStack->Init(pOutput->GetSize());
+
+		Render::ImageDescription imageDesc{};
+
+		imageDesc.AllowComputeResourceUsage = true;
+		imageDesc.AllowFramebufferUsage = true;
+		imageDesc.Width = pOutput->GetSize().x;
+		imageDesc.Height = pOutput->GetSize().y;
+		imageDesc.Format = Render::ImageFormat::R11G11B10_FLOAT; // HDR format
+		imageDesc.ClearValue = glm::vec4(0.0f);
+
+		mColorBufferRT = CreateRef<Render::ImageResource>(imageDesc);
+
+		Render::FramebufferDesc desc;
+		desc.Attachments.push_back({ mColorBufferRT.get() });
+
+		mMainRenderTarget = CreateRef<Render::Framebuffer>(desc);
+
+		mMainPipeline->SetRenderTarget(mMainRenderTarget);
+	}
 
 	Render::Viewport viewport{};
 
@@ -188,12 +214,39 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 
 	mCmdBuffer->Begin();
 
+	mCmdBuffer->RequireFramebufferState(mMainRenderTarget.get(), Render::ResourceState::ShaderResource, Render::ResourceState::RenderTarget);
 	mCmdBuffer->RequireFramebufferState(pOutput, Render::ResourceState::Present, Render::ResourceState::RenderTarget);
 
-	mCmdBuffer->ClearBuffer(pOutput, 0, glm::vec4(0.0f));
+	glm::mat4 matrices[2];
 
-	mCmdBuffer->CommitBarriers();
-	mCmdBuffer->SetFramebuffer(pOutput);
+	{
+		auto camera = &mMainCamera;
+		glm::mat4 proj = glm::ortho(-VirtualScreenSize.x, VirtualScreenSize.x, -VirtualScreenSize.y, VirtualScreenSize.y);
+		glm::mat4 view = glm::identity<glm::mat4>();
+
+		view = glm::translate(view, glm::vec3(-camera->Position, 0.0f));
+		view = glm::rotate(view, glm::radians(camera->Rotation), glm::vec3(0.0f, 0.0f, 1.0f));
+		view = glm::scale(view, glm::vec3(camera->Zoom, 1.0f));
+
+		matrices[0] = proj * view;
+	}
+
+	{
+		auto camera = &mGuiCamera;
+		glm::mat4 proj = glm::ortho(-VirtualScreenSize.x, VirtualScreenSize.x, -VirtualScreenSize.y, VirtualScreenSize.y);
+		glm::mat4 view = glm::identity<glm::mat4>();
+
+		view = glm::translate(view, glm::vec3(-camera->Position, 0.0f));
+		view = glm::rotate(view, glm::radians(camera->Rotation), glm::vec3(0.0f, 0.0f, 1.0f));
+		view = glm::scale(view, glm::vec3(camera->Zoom, 1.0f));
+
+		matrices[1] = proj * view;
+	}
+
+	mCmdBuffer->UpdateConstantBuffer(mPerFrameData.get(), &matrices);
+	mCmdBuffer->ClearBuffer(mMainRenderTarget.get(), 0, glm::vec4(0.0f));
+
+	mCmdBuffer->SetFramebuffer(mMainRenderTarget.get());
 	mCmdBuffer->SetPipeline(mMainPipeline.get());
 	mCmdBuffer->SetConstantBuffer(mPerFrameData.get(), 1);
 	mCmdBuffer->SetViewport(&viewport);
@@ -201,10 +254,47 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 	mCmdBuffer->SetTextureSampler(mNearestSampler.get(), 1);
 	mCmdBuffer->SetBindlessDescriptorTable(scene->BindlessTable);
 
-	RenderCamera(&mMainCamera, &mRenderQueue, scene, pOutput);
-	RenderCamera(&mGuiCamera, &mGuiRenderQueue, scene, pOutput);
+	mSpriteBatch->Begin();
 
-	mCmdBuffer->RequireFramebufferState(pOutput, Render::ResourceState::RenderTarget, Render::ResourceState::Present);
+	for (int j = 0; j < mRenderQueue.instances.size(); j++)
+	{
+		auto& instance = mRenderQueue.instances[j];
+
+		instance.batch.UserData = 0;
+
+		mSpriteBatch->DrawSprite(instance.batch);
+	}
+
+	for (int j = 0; j < mGuiRenderQueue.instances.size(); j++)
+	{
+		auto& instance = mGuiRenderQueue.instances[j];
+
+		instance.batch.UserData = 1;
+
+		mSpriteBatch->DrawSprite(instance.batch);
+	}
+
+	mSpriteBatch->End(mCmdBuffer.get());
+
+	Render::PostProcessingParameters params{};
+
+	params.gCommandBuffer = mCmdBuffer.get();
+	params.cCommandBuffer = mComputeCmdBuffer.get();
+	params.pBilinearTextureSampler = mBilinearSampler.get();
+	params.pNearestTextureSampler = mNearestSampler.get();
+	params.OutputResolution = pOutput->GetSize();
+	params.Resolution = pOutput->GetSize();
+	params.pOutputFramebuffer = pOutput;
+	params.pColorSampler = mColorBufferRT.get();
+
+	mCmdBuffer->SetBindlessDescriptorTable(NULL);
+	mCmdBuffer->SetFramebuffer(NULL);
+
+	mCmdBuffer->RequireFramebufferState(mMainRenderTarget.get(), Render::ResourceState::RenderTarget, Render::ResourceState::ShaderResource);
+
+	pStack->Render(params);
+
+	//mCmdBuffer->RequireFramebufferState(pOutput, Render::ResourceState::RenderTarget, Render::ResourceState::Present);
 	mCmdBuffer->End();
 }
 
@@ -271,26 +361,5 @@ void Renderer2D::SetGuiCameraRotation(float rotation)
 void Renderer2D::RenderCamera(Camera2D* camera, RenderQueue2D* renderQueue, Scene* scene, Render::Framebuffer* pOutput)
 {
 	// Bindless rendering ftw :D
-	mSpriteBatch->Begin();
-
-	for (int j = 0; j < renderQueue->instances.size(); j++)
-	{
-		auto& instance = renderQueue->instances[j];
-
-		mSpriteBatch->DrawSprite(instance.batch);
-	}
-
-	glm::mat4 proj = glm::ortho(-VirtualScreenSize.x, VirtualScreenSize.x, -VirtualScreenSize.y, VirtualScreenSize.y);
-	glm::mat4 view = glm::identity<glm::mat4>();
-
-	view = glm::translate(view, glm::vec3(-camera->Position, 0.0f));
-	view = glm::rotate(view, glm::radians(camera->Rotation), glm::vec3(0.0f, 0.0f, 1.0f));
-	view = glm::scale(view, glm::vec3(camera->Zoom, 1.0f));
-
-	glm::mat4 projView = proj * view;
-
-	mCmdBuffer->UpdateConstantBuffer(mPerFrameData.get(), &projView);
-	mCmdBuffer->CommitBarriers();
-
-	mSpriteBatch->End(mCmdBuffer.get());
+	
 }

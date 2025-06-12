@@ -4,6 +4,8 @@
 #include "RendererCommon.h"
 #include "SpriteBatch.h"
 
+#include "Renderer/ComputeCommandBuffer.h"
+
 #include "znmsp.h"
 
 #include <algorithm>
@@ -100,10 +102,14 @@ private:
 	Ref<Render::GraphicsPipeline> mMainPipeline;
 
 	Ref<Render::GraphicsCommandBuffer> mCmdBuffer;
+	Ref<Render::ComputeCommandBuffer> mComputeCmdBuffer;
 	Ref<Render::ConstantBuffer> mPerFrameData;
 
 	Ref<Render::TextureSampler> mBilinearSampler;
 	Ref<Render::TextureSampler> mNearestSampler;
+
+	Ref<Render::ImageResource> mColorBufferRT;
+	Ref<Render::Framebuffer> mMainRenderTarget;
 	
 	RenderQueue2D mRenderQueue;
 	RenderQueue2D mGuiRenderQueue;

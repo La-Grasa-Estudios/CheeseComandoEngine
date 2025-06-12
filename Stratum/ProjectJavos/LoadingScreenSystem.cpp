@@ -9,22 +9,24 @@
 #include <Util/Globals.h>
 #include <Thirdparty/imgui/imgui.h>
 
-// Little hack to access current app
+// Little engine hack to access current app
 extern Stratum::Application* g_CurrentApp;
 
+// Ideally these should be part of the class instance
+// Not actually needed since its guaranteed that there is only one instance of the class
 Funkin::InGameSystem* pIngameSystem;
 Stratum::Scene* pIngameScene;
-
 Stratum::ECS::edict_t loadingProgressEntity;
 Stratum::ECS::edict_t bgEntity;
 Stratum::ECS::edict_t pressEnterEntity;
-
 float gColor = 1.0f;
 bool doTransition = false;
 
 Funkin::LoadingScreenSystem::LoadingScreenSystem(const LoadChartParams& params)
 {
 	mLoadParams = params;
+	mLoadingScene = NULL;
+	mScene = NULL;
 }
 
 Funkin::LoadingScreenSystem::~LoadingScreenSystem()
@@ -90,6 +92,7 @@ void Funkin::LoadingScreenSystem::Init(Stratum::Scene* scene)
 
 	pIngameSystem = new InGameSystem(mLoadParams);
 
+	// TO DO: Allow replacing music per song
 	mMusicSource = Stratum::CreateRef<Stratum::MP3AudioSource>("fnf/music/loadingThemeLol.mp3", scene->AudioEngine->GetEngine());
 	scene->AudioEngine->AddSource(mMusicSource);
 	mMusicSource->SetLooping(true);
@@ -143,6 +146,7 @@ void Funkin::LoadingScreenSystem::Update(Stratum::Scene* scene)
 		sprite1.Enabled = false;
 	}
 
+	// Sweet fade to black transition
 	if (doTransition)
 	{
 		gColor -= Stratum::gpGlobals->deltaTime;

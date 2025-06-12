@@ -19,6 +19,14 @@ void Render::PostProcessingPass::Init(glm::ivec2 Resolution)
 {
 }
 
+void Render::PostProcessingPass::PreRender(const PostProcessingParameters& parameters)
+{
+}
+
 void Render::PostProcessingPass::Render(const PostProcessingParameters& parameters)
+{
+}
+
+void Render::PostProcessingPass::OnFirstUse(const PostProcessingParameters& parameters)
 {
 }

@@ -3,6 +3,7 @@
 #include "Passes/BloomPass.h"
 #include "Passes/LuminancePass.h"
 #include "Passes/TonemapPass.h"
+#include "Passes/ChromaticAberrationPass.h"
 
 using namespace ENGINE_NAMESPACE;
 
@@ -30,9 +31,11 @@ void Render::PostProcessingStack::RegisterPass(Ref<PostProcessingPass> pass)
 
 void Render::PostProcessingStack::Init(glm::ivec2 Resolution)
 {
+	Clear();
 
+	//RegisterPass(CreateRef<ChromaticAberrationPass>());
 	RegisterPass(CreateRef<BloomPass>());
-	RegisterPass(CreateRef<LuminancePass>());
+	//RegisterPass(CreateRef<LuminancePass>());
 	RegisterPass(CreateRef<TonemapPass>());
 
 	Sort(Resolution);
@@ -42,8 +45,30 @@ void Render::PostProcessingStack::Render(PostProcessingParameters& parameters)
 {
 	for (int i = 0; i < m_Passes.size(); i++)
 	{
-		//parameters.cCommandBuffer->ClearState();
+		m_Passes[i]->mUsedThisFrame = false;
+		m_Passes[i]->PreRender(parameters);
+	}
+	for (int i = 0; i < m_Passes.size(); i++)
+	{
+		for (auto dep : m_Passes[i]->mDependencies)
+		{
+			if (!dep->mUsedThisFrame)
+			{
+				dep->OnFirstUse(parameters);
+				dep->mUsedThisFrame = true;
+			}
+		}
+
 		m_Passes[i]->Render(parameters);
+	}
+	for (int i = 0; i < m_Passes.size(); i++)
+	{
+		// Need to call this in case it wasn't used this frame but for some reason is still registered
+		// Avoids invalid resource states and stuff like that
+		if (!m_Passes[i]->mUsedThisFrame)
+		{
+			m_Passes[i]->OnFirstUse(parameters);
+		}
 	}
 }
 
@@ -92,6 +117,20 @@ void Render::PostProcessingStack::Sort(glm::ivec2 Resolution)
 				for (auto& dep : dependencies)
 				{
 					pass->SetInput(m_Outputs[dep.name], dep.name);
+
+					bool duplicate = false;
+
+					for (auto dependency : pass->mDependencies)
+					{
+						if (dependency == m_PassesStr[dep.name])
+						{
+							duplicate = true;
+							break;
+						}
+					}
+
+					if (!duplicate)
+						pass->mDependencies.push_back(m_PassesStr[dep.name]);
 				}
 			}
 			else
@@ -110,6 +149,7 @@ void Render::PostProcessingStack::Sort(glm::ivec2 Resolution)
 			for (int i = 0; i < outputs.size(); i++)
 			{
 				RegisterOutput(outputs[i], names[i]);
+				m_PassesStr[names[i]] = pass;
 			}
 
 		}

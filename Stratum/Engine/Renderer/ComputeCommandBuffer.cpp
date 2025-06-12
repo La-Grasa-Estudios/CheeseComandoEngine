@@ -46,7 +46,8 @@ Render::ComputeCommandBuffer::ComputeCommandBuffer(GraphicsCommandBuffer* pCmdBu
 
 void Render::ComputeCommandBuffer::Begin()
 {
-	mAutomaticBarriers = true;
+	mTrackedResources.clear();
+	mAutomaticBarriers = false;
 	ClearState();
 	mCommandList->setEnableAutomaticBarriers(mAutomaticBarriers);
 	if (mIsOwner)
@@ -227,6 +228,28 @@ void Render::ComputeCommandBuffer::Barrier(Buffer* resource)
 void Render::ComputeCommandBuffer::CommitBarriers()
 {
 	mCommandList->commitBarriers();
+}
+
+void Render::ComputeCommandBuffer::RequireTextureState(ImageResource* pImage, ResourceState before, ResourceState after, nvrhi::TextureSubresourceSet subResources)
+{
+	if (!mTrackedResources.contains((uintptr_t)pImage->Handle.Get()))
+	{
+		mTrackedResources.insert((uintptr_t)pImage->Handle.Get());
+		mCommandList->beginTrackingTextureState(pImage->Handle, subResources, before);
+	}
+	mCommandList->setTextureState(pImage->Handle, subResources, after);
+	mCommitedAnyConstantBuffer = true;
+}
+
+void Render::ComputeCommandBuffer::RequireBufferState(Buffer* pBuffer, ResourceState before, ResourceState after)
+{
+	if (!mTrackedResources.contains((uintptr_t)pBuffer->Handle.Get()))
+	{
+		mTrackedResources.insert((uintptr_t)pBuffer->Handle.Get());
+		mCommandList->beginTrackingBufferState(pBuffer->Handle, before);
+	}
+	mCommandList->setBufferState(pBuffer->Handle, after);
+	mCommitedAnyConstantBuffer = true;
 }
 
 void Render::ComputeCommandBuffer::ToggleAutomaticBarrierPlacement()

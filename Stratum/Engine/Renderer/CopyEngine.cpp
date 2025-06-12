@@ -4,14 +4,16 @@
 
 using namespace ENGINE_NAMESPACE;
 
+
 void CopyEngine::Init()
 {
-	nvrhi::CommandListParameters params{};
-	params.setQueueType(nvrhi::CommandQueue::Graphics);
+	using namespace nvrhi;
+	CommandListParameters params{};
+	params.setQueueType(CommandQueue::Graphics); // Why d3d12 doens't allow copy queues to do transition barriers to gpu ready states?
 	s_CommandList = Render::RendererContext::GetDevice()->createCommandList(params);
 	s_EventQuery = Render::RendererContext::GetDevice()->createEventQuery();
 
-	s_CommandQueue = nvrhi::CommandQueue::Graphics;
+	s_CommandQueue = CommandQueue::Graphics;
 
 	if (Render::RendererContext::get_api() == Render::RendererAPI::DX11)
 	{

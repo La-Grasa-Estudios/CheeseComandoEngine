@@ -2,14 +2,16 @@ struct v2f
 {
 	float4 ClipPos : SV_Position;
     float2 TexCoord : TEXCOORD0;
+    nointerpolation uint instanceID : INSTANCEID;
 };
 
 struct i2v
 {
     float2 Position : TEXCOORD0;
+    uint instanceID : SV_InstanceID;
 };
 
-cbuffer DrawData : register(b0)
+struct SpriteInstance
 {
     float4x4 Transform;
     float4 uv1;
@@ -17,15 +19,24 @@ cbuffer DrawData : register(b0)
     float4 instanceColor;
     int texture;
     int flags;
+	uint userData;
+    uint padding;
+};
+
+cbuffer DrawData : register(b0)
+{
+    uint SpriteIndex;
 };
 
 static const int FLAG_NEAREST = 0x1;
+
+StructuredBuffer<SpriteInstance> Instances : register(t10);
 
 #ifdef STAGE_VERTEX
 
 cbuffer FrameData : register(b1)
 {
-    float4x4 ProjView;
+    float4x4 ProjView[2];
 };
 
 static const int uvLut[6] =
@@ -40,11 +51,14 @@ static const int swlut[6] =
 
 v2f main(in i2v input, in uint vertexID : SV_VertexID)
 {
-    float4 uv = uvLut[vertexID] == 0 ? uv1 : uv2;
+    SpriteInstance instance = Instances[input.instanceID];
+    float4 uv = uvLut[vertexID] == 0 ? instance.uv1 : instance.uv2;
     
 	v2f output;
-    output.ClipPos = mul(ProjView, mul(Transform, float4(float3(input.Position, 0.0), 1.0)));
+    output.ClipPos = mul(ProjView[instance.userData], mul(instance.Transform, float4(float3(input.Position, 0.0), 1.0)));
     output.TexCoord = swlut[vertexID] == 0 ? uv.xy : uv.zw;
+    output.instanceID = input.instanceID;
+    
 	return output;
 }
 
@@ -59,20 +73,23 @@ SamplerState NearestSampler : register(s1);
 float4 main(v2f input) : SV_Target
 {
     float4 color = 1.0.xxxx;
+    SpriteInstance instance = Instances[input.instanceID];
     
-    if (texture != -1)
+    if (instance.texture != -1)
     {
         float2 TexCoord = input.TexCoord;
         
-        bool useNearest = (flags & FLAG_NEAREST) != 0;
+        bool useNearest = (instance.flags & FLAG_NEAREST) != 0;
         
         if (useNearest)
-            color = Textures[texture].Sample(NearestSampler, TexCoord);
+            color = Textures[NonUniformResourceIndex(instance.texture)].Sample(NearestSampler, TexCoord);
         else
-            color = Textures[texture].Sample(BilinearSampler, TexCoord);
+            color = Textures[NonUniformResourceIndex(instance.texture)].Sample(BilinearSampler, TexCoord);
     }
     
-    return color * instanceColor;
+    color = color * instance.instanceColor;
+	
+    return color;
 }
 
 #endif

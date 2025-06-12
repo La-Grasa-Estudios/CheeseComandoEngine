@@ -501,9 +501,16 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 			}
 
 			auto& sustainTransform = scene->Transforms.Get(ent);
+			auto& sustainSprite = scene->SpriteRenderers.Get(ent);
+			auto& sustainEndSprite = scene->SpriteRenderers.Get(sustainNote.SustainEndSprite);
 			auto& sustainEndTransform = scene->Transforms.Get(sustainNote.SustainEndSprite);
 
 			float holdTime = SongTime - sustainNote.Time;
+
+			float colorStrenght = glm::abs(glm::sin(SongTime * glm::pi<float>() * GetConductorBeatMultiplier())) * 0.3f + 1.0f;
+
+			sustainSprite.SpriteColor = glm::vec4(glm::vec3(colorStrenght), 1.0f);
+			sustainEndSprite.SpriteColor = glm::vec4(glm::vec3(colorStrenght), 1.0f);
 
 			Stratum::EventHandler::InvokeEvent(mSustainNoteEvent, this, { (void*)sustainNote.NoteType }, 1);
 
@@ -549,6 +556,17 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 	for (int i = 0; i < 4; i++)
 	{
 		auto& animator = scene->SpriteAnimators.Get(noteButtons[i]);
+		auto& sprite = scene->SpriteRenderers.Get(noteButtons[i]);
+
+		if (animator.CurrentAnimation.compare("press") == 0)
+		{
+			sprite.SpriteColor = glm::vec4(glm::vec3(1.15f), 1.0f);
+		}
+		else
+		{
+			sprite.SpriteColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		}
+
 		if (inputsHold[i] && !botEnabled)
 		{
 			if (animator.CurrentAnimation.compare("default") == 0)
@@ -968,6 +986,7 @@ void Funkin::Conductor::SpawnNoteSplash(Stratum::Scene* scene, uint32_t noteType
 	sprite.TextureHandle = scene->Resources.LoadTextureImage("textures/noteSplashes.png");
 	sprite.RenderLayer = NOTE_EFFECT_LAYER;
 	sprite.IsGui = true;
+	sprite.SpriteColor *= 1.15f;
 
 	uint32_t offset = (rand() % 2) * 4;
 
@@ -998,6 +1017,7 @@ void Funkin::Conductor::SpawnSustainCover(Stratum::Scene* scene, uint32_t noteTy
 	sprite.TextureHandle = scene->Resources.LoadTextureImage(coverImageNames[noteType]);
 	sprite.RenderLayer = NOTE_EFFECT_LAYER;
 	sprite.IsGui = true;
+	sprite.SpriteColor *= 1.15f;
 
 	animator.AnimationMap["coverEnd"] = mNoteCoverEndAnimations[noteType];
 	animator.SetState("coverEnd");

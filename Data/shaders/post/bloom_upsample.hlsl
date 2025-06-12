@@ -28,7 +28,7 @@ v2f main(in uint vertexID : SV_VertexID)
 
 Texture2D srcTexture : register(t0);
 SamplerState bloomSampler : register(s0);
-static const float filterRadius = 0.003;
+static const float filterRadius = 0.004;
 
 float4 main(v2f input) : SV_Target
 {

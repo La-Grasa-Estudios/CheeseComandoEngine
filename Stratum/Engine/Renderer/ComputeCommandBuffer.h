@@ -9,6 +9,8 @@
 #include "ComputePipeline.h"
 #include "Buffer.h"
 
+#include <unordered_set>
+
 BEGIN_ENGINE
 
 namespace Render {
@@ -116,6 +118,9 @@ namespace Render {
 		void Barrier(Texture3D* resource);
 		void Barrier(Buffer* resource);
 
+		void RequireTextureState(ImageResource* pImage, ResourceState before, ResourceState after, nvrhi::TextureSubresourceSet subResources = nvrhi::AllSubresources);
+		void RequireBufferState(Buffer* pBuffer, ResourceState before, ResourceState after);
+
 		void CommitBarriers();
 
 		void ToggleAutomaticBarrierPlacement();
@@ -125,6 +130,8 @@ namespace Render {
 	private:
 
 		void UpdateComputeState();
+
+		std::unordered_set<uintptr_t> mTrackedResources;
 
 		nvrhi::CommandListHandle mCommandList;
 		nvrhi::IComputePipeline* mSetComputePipeline;
@@ -148,6 +155,7 @@ namespace Render {
 		bool mIsOwner = true;
 
 		ComputePipeline* mCurrentPipeline;
+
 	};
 }
 

@@ -75,6 +75,8 @@ void Render::LuminancePass::Render(const PostProcessingParameters& parameters)
 		.numPixels = static_cast<float>(parameters.Resolution.x / 8 * parameters.Resolution.y / 8)
 	};
 
+	parameters.gCommandBuffer->RequireTextureState(LuminanceImage.get(), ResourceState::ShaderResource, ResourceState::UnorderedAccess);
+
 	parameters.cCommandBuffer->SetTextureResource(parameters.pColorSampler, 0);
 	parameters.cCommandBuffer->SetBufferCompute(LuminanceBuffer.get(), 0);
 	parameters.cCommandBuffer->SetTextureCompute(LuminanceImage.get(), 1);
@@ -83,10 +85,17 @@ void Render::LuminancePass::Render(const PostProcessingParameters& parameters)
 
 	parameters.cCommandBuffer->PushConstants(&lumaPass, sizeof(LuminancePassParams));
 	parameters.cCommandBuffer->Dispatch((int)glm::ceil(parameters.Resolution.x / 8.0f / 16.0f), (int)glm::ceil(parameters.Resolution.y / 8.0f / 16.0f), 1);
+	
+	parameters.cCommandBuffer->Barrier(LuminanceBuffer.get());
+	parameters.cCommandBuffer->CommitBarriers();
 
 	parameters.cCommandBuffer->SetComputePipeline(LuminanceAverageShader.get());
 
 	parameters.cCommandBuffer->PushConstants(&lumaPass, sizeof(LuminancePassParams));
 	parameters.cCommandBuffer->Dispatch(1, 1, 1);
-	
+
+	parameters.gCommandBuffer->RequireTextureState(LuminanceImage.get(), ResourceState::UnorderedAccess, ResourceState::ShaderResource);
+
+	parameters.cCommandBuffer->CommitBarriers();
+
 }

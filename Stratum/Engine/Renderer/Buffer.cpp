@@ -69,6 +69,7 @@ Render::Buffer::Buffer(const BufferDescription& desc)
 	{
 		bufferDesc.setDebugName("Uav Buffer");
 		bufferDesc.setCanHaveUAVs(true);
+		bufferDesc.setInitialState(nvrhi::ResourceStates::UnorderedAccess);
 	}
 
 	if (desc.Format != nvrhi::Format::UNKNOWN)

@@ -4,13 +4,24 @@
 #define MAX_BUTTONS 64
 
 #include "znmsp.h"
-#include <glm/glm.hpp>
-
 #include "KeyCode.h"
+#include "InputLayer.h"
+
+#include <glm/glm.hpp>
+#include <vector>
 
 struct SDL_Window;
 
 BEGIN_ENGINE
+
+class BaseInputLayer : public InputLayer_Interface
+{
+public:
+	bool SetKey(int key, bool press) final;
+	bool SetMouse(int click, bool press) final;
+	bool SetGamepad(int button, bool press) final;
+	bool SetGamepadAxis(int axis, int16_t value) final;
+};
 
 enum class MouseInputMode {
 	Normal,
@@ -19,6 +30,7 @@ enum class MouseInputMode {
 };
 
 class Input {
+	friend BaseInputLayer;
 
 	static inline bool m_LastKeys[MAX_KEYS];
 	static inline bool m_Keys[MAX_KEYS];
@@ -76,7 +88,14 @@ public:
 	static glm::vec2 GetMousePosition();
 	static glm::vec2 GetMouseSpeed();
 
+	static void PushInputLayer(InputLayer_Interface* inputLayer);
+	static void PopInputLayer();
+
 	static void Update();
+
+private:
+
+	inline static std::vector<InputLayer_Interface*> sLayers;
 
 };
 

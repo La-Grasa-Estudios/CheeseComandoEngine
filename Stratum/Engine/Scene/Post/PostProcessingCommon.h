@@ -25,6 +25,8 @@ namespace Render
 
 		GraphicsCommandBuffer* gCommandBuffer;
 		ComputeCommandBuffer* cCommandBuffer;
+
+		void DispatchScreenSize(ComputeCommandBuffer* cmd, uint32_t cellSize, glm::ivec2 size) const;
 	};
 
 	struct PassOutput

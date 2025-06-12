@@ -1,10 +1,12 @@
 #include "Input.h"
+#include "InputLayer.h"
 #include "Core/Logger.h"
 #include "Event/EventHandler.h"
 
 #include <vcruntime_string.h>
-
 #include <SDL3/SDL.h>
+
+using namespace ENGINE_NAMESPACE;
 
 bool g_IsMouseGrabbed = false;
 
@@ -14,7 +16,34 @@ bool g_IsMouseGrabbed = false;
 // This thing comes from 2019
 // There is a reason the engine is called Stratum lol
 
-void ENGINE_NAMESPACE::Input::Init(SDL_Window* window)
+bool BaseInputLayer::SetKey(int key, bool press)
+{
+	Input::m_NextKeys[key] = press;
+	return true;
+}
+
+bool BaseInputLayer::SetMouse(int click, bool press)
+{
+	int button = click;
+	if (button == 1) button = 0;
+	if (button == 3) button = 1;
+	Input::m_NextMouse[button] = press;
+	return true;
+}
+
+bool BaseInputLayer::SetGamepad(int button, bool press)
+{
+	Input::m_GamePadButtons[button] = press;
+	return true;
+}
+
+bool BaseInputLayer::SetGamepadAxis(int axis, int16_t value)
+{
+	Input::m_GamepadAxis[axis] = value;
+	return true;
+}
+
+void Input::Init(SDL_Window* window)
 {
 	m_Window = window;
 	s_MousePosition = GetMousePosition();
@@ -33,51 +62,65 @@ void ENGINE_NAMESPACE::Input::Init(SDL_Window* window)
 		m_GamepadCount -= 1;
 
 		}, EventHandler::GetEventID("gamepad_remove"));
+
+	PushInputLayer(new BaseInputLayer()); // Push default input layer
 }
 
-void ENGINE_NAMESPACE::Input::SetKey(int key, bool press)
+void Input::SetKey(int key, bool press)
 {
-	m_NextKeys[key] = press;
+	for (int i = sLayers.size() - 1; i >= 0; i--)
+	{
+		auto layer = sLayers[i];
+		if (layer->SetKey(key, press)) break;
+	}
 }
 
-void ENGINE_NAMESPACE::Input::SetMouse(int click, bool press)
+void Input::SetMouse(int click, bool press)
 {
-	int button = click;
-	if (button == 1) button = 0;
-	if (button == 3) button = 1;
-	m_NextMouse[button] = press;
+	for (int i = sLayers.size() - 1; i >= 0; i--)
+	{
+		auto layer = sLayers[i];
+		if (layer->SetMouse(click, press)) break;
+	}
 }
 
-void ENGINE_NAMESPACE::Input::SetMousePos(glm::vec2 pos)
+void Input::SetMousePos(glm::vec2 pos)
 {
 	SDL_WarpMouseInWindow(m_Window, pos.x, pos.y);
 }
 
-void ENGINE_NAMESPACE::Input::SetGamepad(int button, bool press)
+void Input::SetGamepad(int button, bool press)
 {
-	m_GamePadButtons[button] = press;
+	for (int i = sLayers.size() - 1; i >= 0; i--)
+	{
+		auto layer = sLayers[i];
+		if (layer->SetGamepad(button, press)) break;
+	}
 }
 
-void ENGINE_NAMESPACE::Input::SetGamepadAxis(int axis, int16_t value)
+void Input::SetGamepadAxis(int axis, int16_t value)
 {
-	//Z_INFO("Axis! {}, Value: {}", axis, value);
-	m_GamepadAxis[axis] = value;
+	for (int i = sLayers.size() - 1; i >= 0; i--)
+	{
+		auto layer = sLayers[i];
+		if (layer->SetGamepadAxis(axis, value)) break;
+	}
 }
 
-void ENGINE_NAMESPACE::Input::SetInputMode(MouseInputMode mode)
+void Input::SetInputMode(MouseInputMode mode)
 {
 	int input = 0;
 	switch (mode)
 	{
-	case ENGINE_NAMESPACE::MouseInputMode::Normal:
+	case MouseInputMode::Normal:
 		input = 0;
 		g_IsMouseGrabbed = false;
 		break;
-	case ENGINE_NAMESPACE::MouseInputMode::Hidden:
+	case MouseInputMode::Hidden:
 		input = 1;
 		g_IsMouseGrabbed = false;
 		break;
-	case ENGINE_NAMESPACE::MouseInputMode::Disabled:
+	case MouseInputMode::Disabled:
 		input = 1;
 		g_IsMouseGrabbed = true;
 		break;
@@ -88,37 +131,37 @@ void ENGINE_NAMESPACE::Input::SetInputMode(MouseInputMode mode)
 	SDL_SetRelativeMouseMode((SDL_bool)input);
 }
 
-bool ENGINE_NAMESPACE::Input::GetKeyDown(KeyCode keyCode)
+bool Input::GetKeyDown(KeyCode keyCode)
 {
 	return m_Keys[(int)keyCode] && !m_LastKeys[(int)keyCode];
 }
 
-bool ENGINE_NAMESPACE::Input::GetKey(KeyCode keyCode)
+bool Input::GetKey(KeyCode keyCode)
 {
 	return m_Keys[(int)keyCode];
 }
 
-bool ENGINE_NAMESPACE::Input::GetMouseButton(int button)
+bool Input::GetMouseButton(int button)
 {
 	return m_Mouse[button];
 }
 
-bool ENGINE_NAMESPACE::Input::GetMouseButttonDown(int button)
+bool Input::GetMouseButttonDown(int button)
 {
 	return m_Mouse[button] && !m_LastMouse[button];;
 }
 
-bool ENGINE_NAMESPACE::Input::GetGamepadButton(int button)
+bool Input::GetGamepadButton(int button)
 {
 	return m_GamePadButtons[button];
 }
 
-bool ENGINE_NAMESPACE::Input::GetGamepadButtonDown(int button)
+bool Input::GetGamepadButtonDown(int button)
 {
 	return m_GamePadButtons[button] && !m_LastGamePadButtons[button];
 }
 
-float ENGINE_NAMESPACE::Input::GetGamepadAxis(int axis)
+float Input::GetGamepadAxis(int axis)
 {
 	float a = m_GamepadAxis[axis] / (float)(INT16_MAX);
 	bool s = a < 0.0f;
@@ -126,32 +169,43 @@ float ENGINE_NAMESPACE::Input::GetGamepadAxis(int axis)
 	return a * (s ? -1.0f : 1.0f);
 }
 
-bool ENGINE_NAMESPACE::Input::AnyKeyDown()
+bool Input::AnyKeyDown()
 {
 	return m_AnyKeyDown;
 }
 
-bool ENGINE_NAMESPACE::Input::AnyGamepadDown()
+bool Input::AnyGamepadDown()
 {
 	return m_AnyGamepadDown;
 }
 
-bool ENGINE_NAMESPACE::Input::HasGamepadConnected()
+bool Input::HasGamepadConnected()
 {
 	return m_GamepadCount > 0;
 }
 
-glm::vec2 ENGINE_NAMESPACE::Input::GetMousePosition()
+glm::vec2 Input::GetMousePosition()
 {
 	return s_ThreadedMousePos;
 }
 
-glm::vec2 ENGINE_NAMESPACE::Input::GetMouseSpeed()
+glm::vec2 Input::GetMouseSpeed()
 {
 	return s_MouseSpeed;
 }
 
-void ENGINE_NAMESPACE::Input::Update()
+void Input::PushInputLayer(InputLayer_Interface* inputLayer)
+{
+	sLayers.push_back(inputLayer);
+}
+
+void Input::PopInputLayer()
+{
+	delete sLayers.back();
+	sLayers.pop_back();
+}
+
+void Input::Update()
 {
 	memcpy(m_LastKeys, m_Keys, sizeof(m_Keys));
 	memcpy(m_Keys, m_NextKeys, sizeof(m_Keys));

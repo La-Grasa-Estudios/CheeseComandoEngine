@@ -21,6 +21,7 @@ namespace Render
 
 		void Init(glm::ivec2 Resolution) override;
 
+		void PreRender(const PostProcessingParameters& parameters) override;
 		void Render(const PostProcessingParameters& parameters) override;
 
 		Ref<Render::ComputePipeline> BloomFilterShader;

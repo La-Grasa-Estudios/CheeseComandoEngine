@@ -47,7 +47,8 @@ Render::BloomPass::~BloomPass()
 
 std::vector<Render::PassDependency> Render::BloomPass::GetDependencies()
 {
-    return { { LUMINANCE_PASS_OUTPUT, false } };
+    //return { { LUMINANCE_PASS_OUTPUT, false } };
+    return { };
 }
 
 void Render::BloomPass::GetOutputs(std::vector<Ref<ImageResource>>& outputs, std::vector<std::string>& names)
@@ -96,23 +97,25 @@ void Render::BloomPass::Init(glm::ivec2 Resolution)
 	BloomDownsampleShader->ShaderDesc.RenderTarget = BloomMipRt[0].get();
 }
 
-void Render::BloomPass::Render(const PostProcessingParameters& parameters)
+void Render::BloomPass::PreRender(const PostProcessingParameters& parameters)
 {
+	parameters.gCommandBuffer->RequireTextureState(BloomMipChainImageResource[0].get(), ResourceState::ShaderResource, ResourceState::UnorderedAccess);
 	parameters.cCommandBuffer->SetTextureResource(parameters.pColorSampler, 0);
 	parameters.cCommandBuffer->SetComputePipeline(BloomFilterShader.get());
 	parameters.cCommandBuffer->SetTextureCompute(BloomMipChainImageResource[0].get(), 0);
-	parameters.cCommandBuffer->SetTextureResource(LuminanceImage.get(), 1);
-
 	parameters.cCommandBuffer->Dispatch((int)glm::ceil(parameters.Resolution.x / 2 / 16.0f), (int)glm::ceil(parameters.Resolution.y / 2 / 16.0f), 1);
+}
 
+void Render::BloomPass::Render(const PostProcessingParameters& parameters)
+{
 	glm::ivec2 res = parameters.Resolution;
 
+	parameters.gCommandBuffer->RequireTextureState(BloomMipChainImageResource[0].get(), ResourceState::UnorderedAccess, ResourceState::ShaderResource);
+
 	parameters.gCommandBuffer->SetPipeline(BloomDownsampleShader.get());
-	parameters.gCommandBuffer->PushConstants(&res, sizeof(glm::ivec2));
 
 	for (int i = 1; i < bloomMipCount; i++)
 	{
-
 		Viewport bloomMipVp{};
 
 		bloomMipVp.width = parameters.Resolution.x / (2 << i);
@@ -120,14 +123,24 @@ void Render::BloomPass::Render(const PostProcessingParameters& parameters)
 
 		parameters.gCommandBuffer->SetViewport(&bloomMipVp);
 
+		parameters.gCommandBuffer->RequireFramebufferState(BloomMipRt[i].get(), ResourceState::ShaderResource, ResourceState::RenderTarget);
+		
+		if (i > 1)
+			parameters.gCommandBuffer->RequireTextureState(BloomMipChainImageResource[i - 1].get(), ResourceState::RenderTarget, ResourceState::ShaderResource);
+		
 		parameters.gCommandBuffer->SetFramebuffer(BloomMipRt[i].get());
 		parameters.gCommandBuffer->SetTextureResource(BloomMipChainImageResource[i - 1].get(), 0);
+		parameters.gCommandBuffer->PushConstants(&res, sizeof(glm::ivec2));
 
 		parameters.gCommandBuffer->Draw(3, 0);
-
 	}
 
 	parameters.gCommandBuffer->SetPipeline(BloomUpsampleShader.get());
+
+	for (int i = bloomMipCount - 2; i >= 0; i--)
+	{
+		parameters.gCommandBuffer->RequireFramebufferState(BloomMipRt[i].get(), ResourceState::ShaderResource, ResourceState::RenderTarget);
+	}
 
 	for (int i = bloomMipCount - 2; i >= 0; i--)
 	{
@@ -138,12 +151,14 @@ void Render::BloomPass::Render(const PostProcessingParameters& parameters)
 		bloomMipVp.height = parameters.Resolution.y / (2 << i);
 
 		parameters.gCommandBuffer->SetViewport(&bloomMipVp);
-
+		parameters.gCommandBuffer->RequireTextureState(BloomMipChainImageResource[i + 1].get(), ResourceState::RenderTarget, ResourceState::ShaderResource);
 		parameters.gCommandBuffer->SetFramebuffer(BloomMipRt[i].get());
 		parameters.gCommandBuffer->SetTextureResource(BloomMipChainImageResource[i + 1].get(), 0);
 
 		parameters.gCommandBuffer->Draw(3, 0);
 
 	}
+
+	parameters.gCommandBuffer->RequireTextureState(BloomMipChainImageResource[0].get(), ResourceState::RenderTarget, ResourceState::ShaderResource);
 
 }

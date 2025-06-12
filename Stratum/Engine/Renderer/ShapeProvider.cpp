@@ -2,6 +2,9 @@
 
 using namespace ENGINE_NAMESPACE;
 
+// Quick way of generating meshes on the fly without loading them from files
+// If i delete the dummy vertices stuff doens't work for some reason
+
 Ref<Render::Mesh> g_FullScreenQuad;
 
 const glm::vec3 cube_positions[] =

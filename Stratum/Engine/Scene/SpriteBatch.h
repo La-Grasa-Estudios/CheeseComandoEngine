@@ -29,6 +29,7 @@ public:
 		glm::vec4 color;
 		DescriptorHandle texture;
 		bool useNearestFilter = false;
+		uint32_t UserData;
 	};
 
 	SpriteBatch(SceneResources* pResources);
@@ -46,6 +47,8 @@ public:
 		glm::vec4 Color;
 		DescriptorHandle texture;
 		uint32_t flags;
+		uint32_t userData;
+		uint32_t padding;
 	};
 
 private:
@@ -54,6 +57,8 @@ private:
 
 	std::vector<SpriteRenderable> mRenderQueue;
 
+	size_t mSpriteBufferSize = 0;
+	Ref<Render::Buffer> mSpriteBuffer;
 	Ref<Render::Buffer> mVbFlatQuad;
 	Ref<Render::VertexBuffer> mVbView;
 

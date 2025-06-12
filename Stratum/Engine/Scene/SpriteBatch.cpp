@@ -72,6 +72,7 @@ void SpriteBatch::DrawSprite(const SpriteInstance& instance)
 	renderable.uvs[1] = glm::vec4(1, 0, 1, 1);
 
 	renderable.Color = instance.color;
+	renderable.userData = instance.UserData;
 
 	if (instance.texture != -1)
 	{
@@ -113,18 +114,29 @@ void SpriteBatch::End(Render::GraphicsCommandBuffer* pCmdBuffer)
 	if (mRenderQueue.empty()) // No need to render if there isn't anything in the queue
 		return;
 
+	if (mSpriteBufferSize < mRenderQueue.size())
+	{
+		mSpriteBufferSize = mRenderQueue.size();
+		Render::BufferDescription desc{};
+		desc.Size = mSpriteBufferSize * sizeof(SpriteRenderable);
+		desc.Type = Render::BufferType::STORAGE;
+		desc.ComputeType = Render::BufferComputeType::STRUCTURED;
+		desc.StructuredStride = sizeof(SpriteRenderable);
+		desc.Immutable = false;
+		mSpriteBuffer = CreateRef<Render::Buffer>(desc);
+	}
+
+	pCmdBuffer->GetNativeCommandList()->writeBuffer(mSpriteBuffer->Handle, mRenderQueue.data(), mRenderQueue.size() * sizeof(SpriteRenderable), 0);
+	pCmdBuffer->RequireBufferState(mSpriteBuffer.get(), Render::ResourceState::CopyDest, Render::ResourceState::ShaderResource);
+	pCmdBuffer->CommitBarriers();
+
 	pCmdBuffer->ClearVertexBuffers();
 	pCmdBuffer->SetVertexBuffer(mVbView.get(), 0);
+	pCmdBuffer->SetBufferResource(mSpriteBuffer.get(), 10);
 
-	for (auto& renderable : mRenderQueue)
-	{
-
-		// I love push constants
-		// How did i live w/o them in d3d11, this thing alone was enough to justify porting the engine to d3d12
-		pCmdBuffer->PushConstants(&renderable, sizeof(SpriteRenderable));
-		pCmdBuffer->Draw(6, 0);
-
-	}
+	// Now all stuff is rendered in one single drawcall
+	// NonUniformResourceIndex is required to avoid artifacts on some gpus
+	pCmdBuffer->DrawInstanced(6, 0, mRenderQueue.size(), 0);
 
 }
 

@@ -15,6 +15,7 @@
 #include <Core/Time.h>
 #include <Core/Window.h>
 #include <Core/JobManager.h>
+#include <Core/VarRegistry.h>
 
 #include <Util/Globals.h>
 #include <Event/EventHandler.h>
@@ -318,7 +319,6 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 
 			gGameState.DoBeatEveryNthBeat = 999999999;
 		});
-
 	mConductor->AddScriptedEvent(257, [this]() {
 
 		x64entity = mScene->EntityManager.CreateEntity();
@@ -343,13 +343,17 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		transform.SetScale(glm::vec3(1.25f));
 
 		});
-
 	mConductor->AddScriptedEvent(272, [this]() {
 		mScene->EntityManager.DestroyEntity(x64blackentity);
 		mScene->EntityManager.DestroyEntity(x64entity);
 		gGameState.DoBeatEveryNthBeat = 4;
 		});
-
+	mConductor->AddScriptedEvent(773, [this]() {
+		CharaSprite* chara;
+		this->SetOpponentCharacter(chara = CharaRegistry::GetCharacter("Syobon"));
+		chara->CharaPosition = { -156.0f, 76.0f };
+		chara->CharaScale = { 0.825f, 0.825f };
+		});
 	mConductor->AddScriptedEvent(1536, [this]() {
 		CharaSprite* sprite;
 		this->SetPlayerCharacter(sprite = CharaRegistry::GetCharacter("syobon"));
@@ -357,26 +361,18 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		mScene->SpriteRenderers.Get(sprite->CharaEntity).RenderLayer = 10000;
 		mScene->SpriteRenderers.Get(sprite->CharaEntity).IsGui = true;
 		});
-
 	mConductor->AddScriptedEvent(1550, [this]() {
 		mConductor->EnableBot = true;
+		Stratum::VarRegistry::GetConsoleVar("r", "post_ca_enabled")->set(true);
 		});
-
-	mConductor->AddScriptedEvent(1556, [this]() {
-		mConductor->EnableBot = false;
-		});
-
 	mConductor->AddScriptedEvent(1556, [this]() {
 		mConductor->EnableBot = false;
 		});
 	mConductor->AddScriptedEvent(1556, [this]() {
 		mConductor->EnableBot = false;
 		});
-	mConductor->AddScriptedEvent(773, [this]() {
-		CharaSprite* chara;
-		this->SetOpponentCharacter(chara = CharaRegistry::GetCharacter("Syobon"));
-		chara->CharaPosition = { -156.0f, 76.0f };
-		chara->CharaScale = { 0.825f, 0.825f };
+	mConductor->AddScriptedEvent(1556, [this]() {
+		mConductor->EnableBot = false;
 		});
 	mConductor->AddScriptedEvent(1183, [this]() {
 		this->SetOpponentCharacter(CharaRegistry::GetCharacter("Fernan"));
@@ -464,6 +460,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		this->SetOpponentCharacter(chara = CharaRegistry::GetCharacter("rene"));
 		chara->CharaPosition = { -746.0f, -212.0f };
 		chara->CharaScale = { 0.825f, 0.825f };
+		Stratum::VarRegistry::GetConsoleVar("r", "post_ca_enabled")->set(false);
 		});
 	mConductor->AddScriptedEvent(2613, [this]() {
 		CharaRegistry::GetCharacter("FernanRene")->SetEnabled(true);
@@ -473,12 +470,12 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		});
 	mConductor->AddScriptedEvent(2615, [this]() {
 		auto oponent = CharaRegistry::GetCharacter("rene");
-		mScene->SpriteRenderers.Get(oponent->CharaEntity).SpriteColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		mScene->SpriteRenderers.Get(oponent->CharaEntity).SpriteColor = glm::vec4(1.5f, 0.0f, 0.0f, 1.0f);
 		mConductor->PushAction(&oponent->CharaPosition, glm::vec2(oponent->CharaPosition.x - mScene->VirtualScreenSize.x / 2.0f, oponent->CharaPosition.y), 0.2f, Easing::ElasticInOut,
 			[this]() {
 				auto oponent = CharaRegistry::GetCharacter("rene");
 				auto& sprite = mScene->SpriteRenderers.Get(oponent->CharaEntity);
-				mScene->SpriteRenderers.Get(oponent->CharaEntity).SpriteColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+				mScene->SpriteRenderers.Get(oponent->CharaEntity).SpriteColor = glm::vec4(1.5f, 0.0f, 0.0f, 1.0f);
 				mConductor->PushAction(&sprite.Rotation.x, 360, 0.8f, Easing::Random);
 				mConductor->PushAction(&oponent->CharaScale, oponent->CharaScale + glm::vec2(0.75f, 0), 0.8f, Easing::Random,
 					[this]() {
@@ -675,6 +672,9 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 		instSource->Play();
 		if (voicesSource)
 			voicesSource->Play();
+
+		// instSource->Seek(105 * 44100);
+		// voicesSource->Seek(105 * 44100);
 	}
 
 	if (mConductor->BeatCountF < 3.0f)
@@ -806,6 +806,7 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 	scene->RenderPath3D->RenderPath2D->SetCameraPosition(gGameState.CameraPosition);
 
 	UpdateStage();
+
 }
 
 void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
@@ -934,6 +935,7 @@ void Funkin::InGameSystem::UpdateStage()
 
 		if (nameTag.Name.starts_with("fb"))
 		{
+			sprite.SpriteColor = glm::vec4(glm::vec3(glm::abs(glm::sin(sprite.Rotation.x * 0.01f))) + 1.5f, 1.0f);
 			if (sprite.Rotation.x == 0.0f)
 			{
 				sprite.Rotation.x = rand() % 360;

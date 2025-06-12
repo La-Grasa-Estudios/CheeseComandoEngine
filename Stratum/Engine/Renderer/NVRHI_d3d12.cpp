@@ -7,6 +7,8 @@ using namespace ENGINE_NAMESPACE;
 #include "DX12/directx/d3dx12.h"
 
 #include "Core/Window.h"
+#include "Core/VarRegistry.h"
+#include "Core/Logger.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_syswm.h>
@@ -90,27 +92,123 @@ void Render::BackendInitializerD3D12::InitializeBackend(Internal::Window* pWindo
     ComPtr<IDXGIAdapter1> dxgiAdapter1;
     ComPtr<IDXGIAdapter4> dxgiAdapter4;
 
+	int32_t adapterIndex = -1;
+
+    if (auto var = VarRegistry::GetConsoleVar("r", "adapter"))
+    {
+		adapterIndex = var->asInt();
+    }
+
+    ID3D12Device* pDevice;
+    std::string error;
+    D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_10_0;
+
     SIZE_T maxDedicatedVideoMemory = 0;
     for (UINT i = 0; dxgiFactory->EnumAdapters1(i, &dxgiAdapter1) != DXGI_ERROR_NOT_FOUND; ++i)
     {
         DXGI_ADAPTER_DESC1 dxgiAdapterDesc1;
         dxgiAdapter1->GetDesc1(&dxgiAdapterDesc1);
+        ComPtr<IDXGIAdapter4> dxgiAdapterTemp;
 
         // Check to see if the adapter can create a D3D12 device without actually 
         // creating it. The adapter with the largest dedicated video memory
         // is favored.
         if ((dxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
             SUCCEEDED(D3D12CreateDevice(dxgiAdapter1.Get(),
-                D3D_FEATURE_LEVEL_11_1, __uuidof(ID3D12Device), nullptr)) &&
-            dxgiAdapterDesc1.DedicatedVideoMemory > maxDedicatedVideoMemory)
+                D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), (void**) & pDevice)) &&
+            (dxgiAdapterDesc1.DedicatedVideoMemory > maxDedicatedVideoMemory || i == adapterIndex))
         {
+
             maxDedicatedVideoMemory = dxgiAdapterDesc1.DedicatedVideoMemory;
-            dxgiAdapter1.As(&dxgiAdapter4);
+            dxgiAdapter1.As(&dxgiAdapterTemp);
+            dxSharedData->Adapter = dxgiAdapterTemp;
+
+            D3D_FEATURE_LEVEL supportedLevels[] =
+            {
+                D3D_FEATURE_LEVEL_11_0,
+                D3D_FEATURE_LEVEL_11_1,
+                D3D_FEATURE_LEVEL_12_0,
+                D3D_FEATURE_LEVEL_12_1,
+            };
+
+            D3D12_FEATURE_DATA_D3D12_OPTIONS features;
+            D3D12_FEATURE_DATA_FEATURE_LEVELS levels;
+            D3D12_FEATURE_DATA_SHADER_MODEL sm;
+
+            sm.HighestShaderModel = D3D_SHADER_MODEL_6_5;
+
+            levels.pFeatureLevelsRequested = supportedLevels;
+            levels.NumFeatureLevels = 4;
+
+            pDevice->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &levels, sizeof(levels));
+            pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &features, sizeof(features));
+            pDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &sm, sizeof(sm));
+
+            level = levels.MaxSupportedFeatureLevel;
+
+            if (features.ResourceBindingTier <= D3D12_RESOURCE_BINDING_TIER_1)
+            {
+                // Device does not support enough SRVs at the same time on the resource heap
+                // Abort shit right now and continue searching for a reliable adapter
+                
+                error = "Adapter: ";
+                error.append(GetGraphicsDeviceProperties().Description);
+                error.append(" does not have the required capabilities!");
+                error.append("\nGot Tier ").append(std::to_string((int)features.ResourceBindingTier)).append(" expected atleast Tier 2.");
+                
+                dxSharedData->Adapter.Reset();
+                dxgiAdapter1.Reset();
+                dxgiAdapterTemp.Reset();
+            }
+
+            if (sm.HighestShaderModel < D3D_SHADER_MODEL_6_5)
+            {
+                dxgiAdapterTemp.Reset();
+                dxgiAdapter1.Reset();
+                dxSharedData->Adapter.Reset();
+            }
+
+            pDevice->Release();
+            pDevice = NULL;
+
+            if (i == adapterIndex)
+            {
+                // If the user specified an adapter index, we will use it.
+				// Otherwise, we will use the one with the most dedicated video memory.
+                if (dxgiAdapterTemp)
+                {
+                    dxgiAdapter4 = dxgiAdapterTemp;
+                    Z_INFO("Using {} as specified adapter", GetGraphicsDeviceProperties().Description);
+                    break;
+                }
+                else
+                {
+                    dxSharedData->Adapter = dxgiAdapter4;
+                    error.append("\nThe engine will continue to launch with: ");
+                    error.append(GetGraphicsDeviceProperties().Description);
+                    MessageBoxA(NULL, error.c_str(), "Incompatible graphics hardware!", MB_OK);
+                }
+            }
+
+            if (dxgiAdapterTemp)
+            {
+                dxgiAdapter4 = dxgiAdapterTemp;
+            }
         }
     }
 
     if (!dxgiAdapter4)
     {
+        error = "A graphics card with Microsoft DirectX 12 (Feature Level 11.0, SM 6.5, Tier 2) is required.";
+    }
+    else
+    {
+        error.clear();
+    }
+
+    if (!error.empty())
+    {
+        MessageBoxA(NULL, error.c_str(), "Incompatible graphics hardware!", MB_OK);
         exit(-1);
     }
 
@@ -125,7 +223,7 @@ void Render::BackendInitializerD3D12::InitializeBackend(Internal::Window* pWindo
     debugInterface->EnableDebugLayer();
 #endif
 
-    D3D12CreateDevice(dxgiAdapter4.Get(), D3D_FEATURE_LEVEL_11_1, IID_PPV_ARGS(&dxSharedData->Device));
+    D3D12CreateDevice(dxgiAdapter4.Get(), level, IID_PPV_ARGS(&dxSharedData->Device));
 
     // Enable debug messages in debug mode.
 #if defined(_DEBUG)
@@ -393,8 +491,6 @@ void Render::BackendInitializerD3D12::ImGuiEndFrame(RendererContext* pContext)
 
     auto commandList = (ID3D12GraphicsCommandList*)(mCommandList->getNativeObject(nvrhi::ObjectTypes::D3D12_GraphicsCommandList));
 
-    commandList->ResourceBarrier(1, &barrier);
-
     commandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
     commandList->OMSetRenderTargets(1, &dxSharedData->BackBufferRtvs[dxSharedData->FrameIndex], FALSE, nullptr);
 
@@ -412,7 +508,7 @@ void Render::BackendInitializerD3D12::ImGuiEndFrame(RendererContext* pContext)
     barriers[1].Transition.StateBefore = D3D12_RESOURCE_STATE_DEPTH_WRITE;
     barriers[1].Transition.pResource = pContext->NvDepthBuffers[pContext->FrameIndex]->getNativeObject(nvrhi::ObjectTypes::D3D12_Resource);
 
-    commandList->ResourceBarrier(1, barriers);
+    commandList->ResourceBarrier(2, barriers);
 
     mCommandList->close();
 

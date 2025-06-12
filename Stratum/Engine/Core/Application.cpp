@@ -198,6 +198,14 @@ void Application::Run(std::vector<std::string> args)
 			SingleThreaded = true; // This poor guy is ignored lol
 		}
 
+		if (str.starts_with("-adapter="))
+		{
+			std::string adapterId = str.substr(9);
+			Z_INFO("Using adapter: {}", adapterId);
+			VarRegistry::RegisterConsoleVar("r", "adapter", VarType::Int);
+			VarRegistry::ParseConsoleVar(std::string("r_adapter ").append(adapterId), autoExecLog);
+		}
+
 	}
 
 	m_RenderContext = CreateRef<Render::RendererContext>();
@@ -263,6 +271,15 @@ void Application::Run(std::vector<std::string> args)
 	ShaderCompiler::build_object("shaders/deferred_gbuffer_opaque.hlsl", "Data/shaders/deferred_gbuffer_opaque.cso", ShaderCompiler::shader_type::vertex);
 
 	ShaderCompiler::build_object("shaders/2d/2d_sprite.hlsl", "Data/shaders/2d/2d_sprite.cso", ShaderCompiler::shader_type::vertex);
+
+	ShaderCompiler::build_object("shaders/tone_map.hlsl", "Data/shaders/tone_map.cso", ShaderCompiler::shader_type::vertex);
+	ShaderCompiler::build_object("shaders/post/bloom_downsample.hlsl", "Data/shaders/post/bloom_downsample.cso", ShaderCompiler::shader_type::vertex);
+	ShaderCompiler::build_object("shaders/post/bloom_upsample.hlsl", "Data/shaders/post/bloom_upsample.cso", ShaderCompiler::shader_type::vertex);
+
+	ShaderCompiler::build_object("shaders/compute/compute_bloom_filter.hlsl", "Data/shaders/compute/compute_bloom_filter.cso", ShaderCompiler::shader_type::compute);
+	ShaderCompiler::build_object("shaders/compute/compute_luminance.hlsl", "Data/shaders/compute/compute_luminance.cso", ShaderCompiler::shader_type::compute);
+	ShaderCompiler::build_object("shaders/compute/compute_avg_luminance.hlsl", "Data/shaders/compute/compute_avg_luminance.cso", ShaderCompiler::shader_type::compute);
+	ShaderCompiler::build_object("shaders/compute/compute_chromatic_aberration.hlsl", "Data/shaders/compute/compute_chromatic_aberration.cso", ShaderCompiler::shader_type::compute);
 
 	// I just left this thing here bc i'm lazy, doesn't mean anything rn
 	Z_INFO("Printing cmdline args");

@@ -4,6 +4,9 @@
 
 BEGIN_ENGINE
 
+// Source engine (definitely not source engine)
+// Anyone?
+
 struct GlobalVars
 {
 	uint64_t gametic;
@@ -11,6 +14,6 @@ struct GlobalVars
 	float deltaTime;
 };
 
-extern GlobalVars* gpGlobals;
+extern GlobalVars* gpGlobals; // Stole the name straight from Source SDK lol
 
 END_ENGINE

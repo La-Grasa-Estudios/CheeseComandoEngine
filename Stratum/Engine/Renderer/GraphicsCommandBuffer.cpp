@@ -213,8 +213,8 @@ void Render::GraphicsCommandBuffer::SetFramebuffer(Framebuffer* framebuffer)
 	}
 	mSetFramebuffer = framebuffer->Handle;
 
-	mCommandList->setResourceStatesForFramebuffer(mSetFramebuffer);
-	mCommandList->commitBarriers();
+	//mCommandList->setResourceStatesForFramebuffer(mSetFramebuffer);
+	//mCommandList->commitBarriers();
 }
 
 void Render::GraphicsCommandBuffer::PushConstants(void* ptr, size_t size)
@@ -393,7 +393,6 @@ void Render::GraphicsCommandBuffer::UpdateConstantBuffer(ConstantBuffer* pBuffer
 		mTrackedResources.insert((uintptr_t)pBuffer->Handle.Get());
 		mCommandList->beginTrackingBufferState(pBuffer->Handle, nvrhi::ResourceStates::CopyDest);
 	}
-	mCommandList->setBufferState(pBuffer->Handle, nvrhi::ResourceStates::CopyDest);
 	mCommandList->writeBuffer(pBuffer->Handle, data, pBuffer->Size);
 	mCommandList->setBufferState(pBuffer->Handle, nvrhi::ResourceStates::ConstantBuffer);
 	mCommitedAnyConstantBuffer = true;
@@ -479,6 +478,7 @@ void Render::GraphicsCommandBuffer::SetAutomaticBarrierPlacement(bool _auto)
 
 void Render::GraphicsCommandBuffer::CommitBarriers()
 {
+	mCommitedAnyConstantBuffer = false;
 	mCommandList->commitBarriers();
 }
 

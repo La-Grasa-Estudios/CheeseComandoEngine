@@ -63,7 +63,7 @@ void Renderer3D::SetViewPose(const ViewPose& pose)
 
 void Renderer3D::PreRender(Scene* scene)
 {
-
+	/*
 	Render::Frustum frustum(mViewPose.ProjectionViewMatrix);
 
 	mainVisRenderQueue.Clear();
@@ -82,6 +82,7 @@ void Renderer3D::PreRender(Scene* scene)
 		}
 
 	}
+	*/
 
 	RenderPath2D->PreRender(scene);
 
@@ -93,6 +94,11 @@ void Renderer3D::Render(Scene* scene, Render::Framebuffer* pOutput)
 
 	RenderPath2D->UpdateScreenSize(pOutput->GetSize());
 	RenderPath2D->Render(scene, pOutput);
+
+	RenderPath2D->Submit();
+
+	return;
+
 	ResizeRenderBuffers(pOutput->GetSize());
 
 	Render::Viewport viewport{};

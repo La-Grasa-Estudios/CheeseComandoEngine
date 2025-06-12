@@ -24,6 +24,7 @@ namespace Render
 		void RegisterOutput(Ref<ImageResource> output, const std::string& name);
 		void Sort(glm::ivec2 Resolution);
 		std::unordered_map<std::string, Ref<ImageResource>> m_Outputs;
+		std::unordered_map<std::string, PostProcessingPass*> m_PassesStr;
 		std::vector<Ref<PostProcessingPass>> m_PassesUnsorted;
 		std::vector<Ref<PostProcessingPass>> m_Passes;
 	};

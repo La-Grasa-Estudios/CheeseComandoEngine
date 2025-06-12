@@ -176,6 +176,7 @@
     <ClInclude Include="Engine\EntryPoint.h" />
     <ClInclude Include="Engine\Event\EventHandler.h" />
     <ClInclude Include="Engine\Input\Input.h" />
+    <ClInclude Include="Engine\Input\InputLayer.h" />
     <ClInclude Include="Engine\Input\KeyCode.h" />
     <ClInclude Include="Engine\Media\av\BSF.hpp" />
     <ClInclude Include="Engine\Media\av\common.hpp" />
@@ -248,6 +249,7 @@
     <ClInclude Include="Engine\Renderer\Vertex.h" />
     <ClInclude Include="Engine\Renderer\VertexBuffer.h" />
     <ClInclude Include="Engine\Scene\Post\Passes\BloomPass.h" />
+    <ClInclude Include="Engine\Scene\Post\Passes\ChromaticAberrationPass.h" />
     <ClInclude Include="Engine\Scene\Post\Passes\LuminancePass.h" />
     <ClInclude Include="Engine\Scene\Post\Passes\Outputs.h" />
     <ClInclude Include="Engine\Scene\Post\Passes\TonemapPass.h" />
@@ -404,8 +406,10 @@
     <ClCompile Include="Engine\Renderer\Vertex.cpp" />
     <ClCompile Include="Engine\Renderer\VertexBuffer.cpp" />
     <ClCompile Include="Engine\Scene\Post\Passes\BloomPass.cpp" />
+    <ClCompile Include="Engine\Scene\Post\Passes\ChromaticAberrationPass.cpp" />
     <ClCompile Include="Engine\Scene\Post\Passes\LuminancePass.cpp" />
     <ClCompile Include="Engine\Scene\Post\Passes\TonemapPass.cpp" />
+    <ClCompile Include="Engine\Scene\Post\PostProcessingCommon.cpp" />
     <ClCompile Include="Engine\Scene\Post\PostProcessingPass.cpp" />
     <ClCompile Include="Engine\Scene\Post\PostProcessingStack.cpp" />
     <ClCompile Include="Engine\Scene\Renderer2D.cpp" />

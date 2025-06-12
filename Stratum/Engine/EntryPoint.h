@@ -29,9 +29,12 @@ void AppThread() {
 
 	g_CurrentApp->Run(args);
 
+	// Why did this delete used to crash on AMD gpus?
 	delete g_CurrentApp;
 }
 
+// Short main!
+// The cherno would be proud of BOTH these entry points
 int main(int argc, char** argv) {
 	g_argv = argv;
 	g_argc = argc;

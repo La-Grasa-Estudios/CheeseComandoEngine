@@ -5,6 +5,10 @@
 
 using namespace ENGINE_NAMESPACE;
 
+// This class is so freaking awful, so much that i want to just nuke it out of existence
+// I can't since this thing is still used in atleast 18 other files
+// Replaced with bindless buffers, use that don't be a bitch
+
 Render::Mesh::Mesh()
 {
 
