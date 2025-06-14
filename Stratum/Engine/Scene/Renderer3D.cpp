@@ -61,7 +61,7 @@ void Renderer3D::SetViewPose(const ViewPose& pose)
 	mViewPose = pose;
 }
 
-void Renderer3D::PreRender(Scene* scene)
+void Renderer3D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 {
 	/*
 	Render::Frustum frustum(mViewPose.ProjectionViewMatrix);
@@ -84,7 +84,7 @@ void Renderer3D::PreRender(Scene* scene)
 	}
 	*/
 
-	RenderPath2D->PreRender(scene);
+	RenderPath2D->PreRender(scene, pOutput);
 
 }
 
@@ -163,7 +163,7 @@ void Renderer3D::InitializePipelines()
 
 	Render::StaticBindingTable bindingTable =
 	{
-		nvrhi::BindingSetItem::ConstantBuffer(1, mPerFrameCB->Handle),
+		nvrhi::BindingSetItem::ConstantBuffer(1, mPerFrameCB->GetHandle()),
 	};
 
 	mDynamicOpaquePipeline = CreateRef<GraphicsPipeline>(description);

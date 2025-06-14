@@ -19,7 +19,12 @@ namespace Render {
 		void Begin();
 		void End();
 		void Submit();
-		void Wait();
+
+		void WaitForExecution(CommandListQueueInstance queueInstance, CommandQueue queue);
+		CommandListQueueInstance GetQueueExecutionInstance() const;
+		/// Do not use unless you wan't to batch commandlists with RendererContext::GetDevice()
+		void SetQueueInstance(CommandListQueueInstance queue); 
+		void TriggerWaitOnExecutionQueue(CommandQueue queue);
 
 		void UpdateConstantBuffer(ConstantBuffer* pBuffer, void* data);
 
@@ -27,8 +32,8 @@ namespace Render {
 
 	private:
 
+		uint64_t mCmdInstance = 0;
 		nvrhi::CommandListHandle mCommandList;
-		nvrhi::EventQueryHandle mEventQuery;
 
 	};
 }

@@ -1,12 +1,12 @@
 #include "DX12Utils.h"
 
-ComPtr<ID3D12CommandQueue> DX12::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE type)
+ComPtr<ID3D12CommandQueue> DX12::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE type, D3D12_COMMAND_QUEUE_PRIORITY priority)
 {
 
     D3D12_COMMAND_QUEUE_DESC desc = {};
 
     desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-    desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+    desc.Priority = priority;
     desc.Type = type;
 
     ComPtr<ID3D12CommandQueue> queue;

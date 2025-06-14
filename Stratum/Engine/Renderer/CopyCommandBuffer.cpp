@@ -5,7 +5,7 @@ using namespace ENGINE_NAMESPACE;
 Render::CopyCommandBuffer::CopyCommandBuffer()
 {
 	nvrhi::CommandListParameters params{};
-	params.queueType = nvrhi::CommandQueue::Graphics;
+	params.queueType = nvrhi::CommandQueue::Copy;
 
 	if (RendererContext::get_api() == RendererAPI::DX11)
 	{
@@ -13,11 +13,11 @@ Render::CopyCommandBuffer::CopyCommandBuffer()
 	}
 
 	mCommandList = RendererContext::GetDevice()->createCommandList(params);
-	mEventQuery = RendererContext::GetDevice()->createEventQuery();
 }
 
 void Render::CopyCommandBuffer::Begin()
 {
+	mCommandList->setEnableAutomaticBarriers(false);
 	mCommandList->open();
 }
 
@@ -28,30 +28,32 @@ void Render::CopyCommandBuffer::End()
 
 void Render::CopyCommandBuffer::Submit()
 {
-	RendererContext::GetDevice()->executeCommandList(mCommandList);
-
-	if (RendererContext::get_api() == RendererAPI::DX11)
-	{
-		RendererContext::GetDevice()->setEventQuery(mEventQuery, nvrhi::CommandQueue::Graphics);
-	}
-	else
-	{
-		RendererContext::GetDevice()->setEventQuery(mEventQuery, nvrhi::CommandQueue::Graphics);
-	}
-
+	mCmdInstance = RendererContext::GetDevice()->executeCommandList(mCommandList, CommandQueue::Copy);
 }
 
-void Render::CopyCommandBuffer::Wait()
+void Render::CopyCommandBuffer::WaitForExecution(CommandListQueueInstance queueInstance, CommandQueue queue)
 {
-	RendererContext::GetDevice()->waitEventQuery(mEventQuery);
+	RendererContext::GetDevice()->queueWaitForCommandList(nvrhi::CommandQueue::Copy, queue, queueInstance);
+}
+
+Render::CommandListQueueInstance Render::CopyCommandBuffer::GetQueueExecutionInstance() const
+{
+	return mCmdInstance;
+}
+
+void Render::CopyCommandBuffer::SetQueueInstance(CommandListQueueInstance queue)
+{
+	mCmdInstance = queue;
+}
+
+void Render::CopyCommandBuffer::TriggerWaitOnExecutionQueue(CommandQueue queue)
+{
+	RendererContext::GetDevice()->queueWaitForCommandList(queue, CommandQueue::Copy, mCmdInstance);
 }
 
 void Render::CopyCommandBuffer::UpdateConstantBuffer(ConstantBuffer* pBuffer, void* data)
 {
-	mCommandList->setBufferState(pBuffer->Handle, nvrhi::ResourceStates::CopyDest);
-	mCommandList->writeBuffer(pBuffer->Handle, data, pBuffer->Size);
-	mCommandList->setBufferState(pBuffer->Handle, nvrhi::ResourceStates::ConstantBuffer);
-	mCommandList->commitBarriers();
+	mCommandList->writeBuffer(pBuffer->GetHandle(), data, pBuffer->Size);
 }
 
 nvrhi::ICommandList* Render::CopyCommandBuffer::GetNativeCommandList()

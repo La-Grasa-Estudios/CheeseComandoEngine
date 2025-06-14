@@ -34,7 +34,10 @@ namespace Render {
 		/// Serializes the command buffer
 		void End(); 
 		/// Submits the command buffer to the respective graphics queue
-		void Submit(); 
+		void Submit();
+		void WaitForExecution(CommandListQueueInstance queueInstance, CommandQueue queue);
+
+		CommandListQueueInstance GetQueueExecutionInstance() const;
 
 		/// <summary>
 		/// Sets the graphics pipeline to be used on rendering
@@ -199,6 +202,7 @@ namespace Render {
 			bool operator()(const BoundBindlessTable& a, const BoundBindlessTable& b) const;
 		};
 
+		uint64_t mCmdInstance = 0;
 		std::unordered_set<uintptr_t> mTrackedResources;
 		nvrhi::TimerQueryHandle mTimerQuery;
 		bool mIsTimeQueryAvailable = true;

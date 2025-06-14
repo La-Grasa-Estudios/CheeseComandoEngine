@@ -20,6 +20,7 @@ public:
 	void UpdateSource() override;
 
 	void Seek(uint32_t samplePosition) override;
+	void Seek(float t) override;
 	uint32_t Position() override;
 	float PositionF() override;
 

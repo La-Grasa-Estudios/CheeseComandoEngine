@@ -10,6 +10,7 @@ using namespace ENGINE_NAMESPACE;
 Render::PostProcessingStack::PostProcessingStack()
 {
 	Clear();
+	m_AsyncCommandBuffer = CreateRef<ComputeCommandBuffer>(true);
 }
 
 void Render::PostProcessingStack::Clear()
@@ -129,7 +130,7 @@ void Render::PostProcessingStack::Sort(glm::ivec2 Resolution)
 						}
 					}
 
-					if (!duplicate)
+					if (!duplicate && m_PassesStr.contains(dep.name))
 						pass->mDependencies.push_back(m_PassesStr[dep.name]);
 				}
 			}

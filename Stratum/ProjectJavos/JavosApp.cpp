@@ -27,7 +27,7 @@ void Funkin::JavosApp::OnFrameUpdate()
 
 void Funkin::JavosApp::OnFrameRenderImGui()
 {
-	
+	Application::OnFrameRenderImGui();
 }
 
 void Funkin::JavosApp::Cleanup()

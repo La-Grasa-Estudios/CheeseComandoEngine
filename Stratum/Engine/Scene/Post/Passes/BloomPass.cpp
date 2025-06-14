@@ -111,8 +111,8 @@ void Render::BloomPass::Render(const PostProcessingParameters& parameters)
 	glm::ivec2 res = parameters.Resolution;
 
 	parameters.gCommandBuffer->RequireTextureState(BloomMipChainImageResource[0].get(), ResourceState::UnorderedAccess, ResourceState::ShaderResource);
-
 	parameters.gCommandBuffer->SetPipeline(BloomDownsampleShader.get());
+	parameters.gCommandBuffer->SetTextureSampler(parameters.pBilinearTextureSampler, 0);
 
 	for (int i = 1; i < bloomMipCount; i++)
 	{

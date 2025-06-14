@@ -258,7 +258,7 @@
     <ClInclude Include="Engine\Util\DoubleBufferArray.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Util\DoubleBufferResource.h">
+    <ClInclude Include="Engine\Util\CopySafeResource.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Util\Globals.h">
@@ -640,6 +640,9 @@
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Scene\Post\Passes\ChromaticAberrationPass.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Font\Font.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>

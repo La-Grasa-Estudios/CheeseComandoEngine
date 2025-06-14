@@ -5,6 +5,7 @@
 #include "SpriteBatch.h"
 
 #include "Renderer/ComputeCommandBuffer.h"
+#include "Renderer/CopyCommandBuffer.h"
 
 #include "znmsp.h"
 
@@ -77,7 +78,7 @@ public:
 
 	Renderer2D();
 
-	void PreRender(Scene* scene);
+	void PreRender(Scene* scene, Render::Framebuffer* pOutput);
 	void Render(Scene* scene, Render::Framebuffer* pOutput);
 	void Submit();
 
@@ -103,10 +104,14 @@ private:
 
 	Ref<Render::GraphicsCommandBuffer> mCmdBuffer;
 	Ref<Render::ComputeCommandBuffer> mComputeCmdBuffer;
+	Ref<Render::CopyCommandBuffer> mCopyCmdBuffer;
 	Ref<Render::ConstantBuffer> mPerFrameData;
 
 	Ref<Render::TextureSampler> mBilinearSampler;
 	Ref<Render::TextureSampler> mNearestSampler;
+
+	Ref<Render::TextureSampler> mBilinearClampSampler;
+	Ref<Render::TextureSampler> mNearestClampSampler;
 
 	Ref<Render::ImageResource> mColorBufferRT;
 	Ref<Render::Framebuffer> mMainRenderTarget;

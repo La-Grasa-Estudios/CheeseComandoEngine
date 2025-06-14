@@ -2,14 +2,16 @@
 
 #include "znmsp.h"
 
-#include "Entity/Components.h"
 #include "SceneResources.h"
+#include "Entity/Components.h"
+#include "Util/CopySafeResource.h"
 
 BEGIN_ENGINE
 
 namespace Render
 {
 	class GraphicsCommandBuffer;
+	class CopyCommandBuffer;
 	class Buffer;
 	class VertexBuffer;
 }
@@ -36,7 +38,8 @@ public:
 
 	void Begin();
 	void DrawSprite(const SpriteInstance& instance);
-	void End(Render::GraphicsCommandBuffer* pCmdBuffer);
+	void End(Render::CopyCommandBuffer* pCmdBuffer);
+	void Render(Render::GraphicsCommandBuffer* pCmdBuffer);
 
 	void SetResources(SceneResources* pRsc);
 
@@ -58,7 +61,7 @@ private:
 	std::vector<SpriteRenderable> mRenderQueue;
 
 	size_t mSpriteBufferSize = 0;
-	Ref<Render::Buffer> mSpriteBuffer;
+	CopySafeResource<Render::Buffer> mSpriteBuffer;
 	Ref<Render::Buffer> mVbFlatQuad;
 	Ref<Render::VertexBuffer> mVbView;
 

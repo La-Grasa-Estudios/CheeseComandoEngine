@@ -175,6 +175,7 @@
     <ClInclude Include="Engine\Entity\EntityManager.h" />
     <ClInclude Include="Engine\EntryPoint.h" />
     <ClInclude Include="Engine\Event\EventHandler.h" />
+    <ClInclude Include="Engine\Font\Font.h" />
     <ClInclude Include="Engine\Input\Input.h" />
     <ClInclude Include="Engine\Input\InputLayer.h" />
     <ClInclude Include="Engine\Input\KeyCode.h" />
@@ -285,7 +286,7 @@
     <ClInclude Include="Engine\Thirdparty\imgui\imstb_textedit.h" />
     <ClInclude Include="Engine\Thirdparty\imgui\imstb_truetype.h" />
     <ClInclude Include="Engine\Util\DoubleBufferArray.h" />
-    <ClInclude Include="Engine\Util\DoubleBufferResource.h" />
+    <ClInclude Include="Engine\Util\CopySafeResource.h" />
     <ClInclude Include="Engine\Util\Globals.h" />
     <ClInclude Include="Engine\Util\HeapArray.h" />
     <ClInclude Include="Engine\Util\PathUtils.h" />

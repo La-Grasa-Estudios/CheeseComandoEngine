@@ -11,7 +11,7 @@ namespace Internal {
 
 namespace Render {
 
-	inline static constexpr uint32_t MaxInFlightFrames = 2;
+	inline static constexpr uint32_t MaxInFlightFrames = 3;
 
 	enum class ClearBits {
 		COLOR_BIT = 1,
@@ -63,6 +63,7 @@ namespace Render {
 		virtual void InitializeBackend(Internal::Window* pWindow, RendererContext* pContext) = 0;
 		virtual void TerminateBackend(RendererContext* pContext) = 0;
 
+		virtual void BeginFrame() = 0;
 		virtual void Present(Internal::Window* pWindow, RendererContext* pContext) = 0;
 		virtual bool RequiresResize(Internal::Window* pWindow) = 0;
 
@@ -105,6 +106,7 @@ namespace Render {
 		void initialize(ENGINE_NAMESPACE::Internal::Window* window);
 		void Terminate();
 
+		void BeginFrame();
 		void present(ENGINE_NAMESPACE::Internal::Window* window);
 		void set_viewport(uint32_t x, uint32_t y) {}
 		void clear_front_buffer(uint32_t bits) {}

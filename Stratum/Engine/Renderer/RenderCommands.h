@@ -138,6 +138,8 @@ namespace Render {
 
 	typedef std::stringstream InmediateModeList;
 	typedef nvrhi::ResourceStates ResourceState;
+	typedef uint64_t CommandListQueueInstance;
+	typedef nvrhi::CommandQueue CommandQueue;
 
 }
 

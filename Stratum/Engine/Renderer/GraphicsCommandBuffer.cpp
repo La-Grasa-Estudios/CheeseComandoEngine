@@ -98,7 +98,17 @@ void Render::GraphicsCommandBuffer::End()
 
 void Render::GraphicsCommandBuffer::Submit()
 {
-	RendererContext::GetDevice()->executeCommandList(mCommandList);
+	mCmdInstance = RendererContext::GetDevice()->executeCommandList(mCommandList);
+}
+
+void Render::GraphicsCommandBuffer::WaitForExecution(CommandListQueueInstance queueInstance, CommandQueue queue)
+{
+	RendererContext::GetDevice()->queueWaitForCommandList(nvrhi::CommandQueue::Graphics, queue, queueInstance);
+}
+
+Render::CommandListQueueInstance Render::GraphicsCommandBuffer::GetQueueExecutionInstance() const
+{
+	return mCmdInstance;
 }
 
 void Render::GraphicsCommandBuffer::SetPipeline(GraphicsPipeline* pipeline)
@@ -135,7 +145,7 @@ void Render::GraphicsCommandBuffer::SetConstantBuffer(ConstantBuffer* buffer, ui
 		Z_WARN("CPU Thread stalled for {}ms waiting for resource to be in a ready state! Resource Pointer: {}", timer.GetMillis(), (void*)buffer);
 	}
 #endif
-	mConstantBuffers[slot] = buffer->Handle;
+	mConstantBuffers[slot] = buffer->GetHandle();
 	mBindingStateDirty = true;
 }
 
@@ -225,6 +235,8 @@ void Render::GraphicsCommandBuffer::PushConstants(void* ptr, size_t size)
 
 void Render::GraphicsCommandBuffer::SetTextureResource(ImageResource* texture, uint32_t slot)
 {
+	if (!texture)
+		return;
 #ifdef _DEBUG
 	Timer timer;
 	bool DidWait = false;
@@ -388,13 +400,13 @@ void Render::GraphicsCommandBuffer::ClearDepth(Framebuffer* framebuffer, float d
 
 void Render::GraphicsCommandBuffer::UpdateConstantBuffer(ConstantBuffer* pBuffer, void* data)
 {
-	if (!mTrackedResources.contains((uintptr_t)pBuffer->Handle.Get()))
+	if (!mTrackedResources.contains((uintptr_t)pBuffer->GetHandle()))
 	{
-		mTrackedResources.insert((uintptr_t)pBuffer->Handle.Get());
-		mCommandList->beginTrackingBufferState(pBuffer->Handle, nvrhi::ResourceStates::CopyDest);
+		mTrackedResources.insert((uintptr_t)pBuffer->GetHandle());
+		//mCommandList->beginTrackingBufferState(pBuffer->Handle, nvrhi::ResourceStates::CopyDest);
 	}
-	mCommandList->writeBuffer(pBuffer->Handle, data, pBuffer->Size);
-	mCommandList->setBufferState(pBuffer->Handle, nvrhi::ResourceStates::ConstantBuffer);
+	mCommandList->writeBuffer(pBuffer->GetHandle(), data, pBuffer->Size);
+	//mCommandList->setBufferState(pBuffer->Handle, nvrhi::ResourceStates::ConstantBuffer);
 	mCommitedAnyConstantBuffer = true;
 }
 

@@ -32,6 +32,7 @@ namespace Render {
 		void Submit(); // Submits the command buffer to the respective graphics queue
 		void Wait(); // If using async compute it syncs beetween the graphics and compute queue
 		void ClearState(); // Clears the whole compute state
+		void TriggerWaitOnExecutionQueue(CommandQueue queue);
 
 		void SetComputePipeline(ComputePipeline* pipeline); // Sets the compute pipeline
 
@@ -131,6 +132,7 @@ namespace Render {
 
 		void UpdateComputeState();
 
+		uint64_t mCmdInstance = 0;
 		std::unordered_set<uintptr_t> mTrackedResources;
 
 		nvrhi::CommandListHandle mCommandList;

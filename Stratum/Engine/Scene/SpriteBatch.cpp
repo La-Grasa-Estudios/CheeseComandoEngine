@@ -2,6 +2,7 @@
 
 #include "Renderer/ImageResource.h"
 #include "Renderer/GraphicsCommandBuffer.h"
+#include "Renderer/CopyCommandBuffer.h"
 #include "Renderer/Buffer.h"
 #include "Renderer/VertexBuffer.h"
 
@@ -108,9 +109,22 @@ void SpriteBatch::DrawSprite(const SpriteInstance& instance)
 
 }
 
-void SpriteBatch::End(Render::GraphicsCommandBuffer* pCmdBuffer)
+void SpriteBatch::Render(Render::GraphicsCommandBuffer* pCmdBuffer)
 {
+	if (mRenderQueue.empty()) // No need to render if there isn't anything in the queue
+		return;
 
+	pCmdBuffer->ClearVertexBuffers();
+	pCmdBuffer->SetVertexBuffer(mVbView.get(), 0);
+	pCmdBuffer->SetBufferResource(mSpriteBuffer.GetPointer(), 10);
+
+	// Now all stuff is rendered in one single drawcall
+	// NonUniformResourceIndex is required to avoid artifacts on some gpus
+	pCmdBuffer->DrawInstanced(6, 0, mRenderQueue.size(), 0);
+}
+
+void SpriteBatch::End(Render::CopyCommandBuffer* pCmdBuffer)
+{
 	if (mRenderQueue.empty()) // No need to render if there isn't anything in the queue
 		return;
 
@@ -123,21 +137,10 @@ void SpriteBatch::End(Render::GraphicsCommandBuffer* pCmdBuffer)
 		desc.ComputeType = Render::BufferComputeType::STRUCTURED;
 		desc.StructuredStride = sizeof(SpriteRenderable);
 		desc.Immutable = false;
-		mSpriteBuffer = CreateRef<Render::Buffer>(desc);
+		mSpriteBuffer = CopySafeResource<Render::Buffer>(desc);
 	}
 
 	pCmdBuffer->GetNativeCommandList()->writeBuffer(mSpriteBuffer->Handle, mRenderQueue.data(), mRenderQueue.size() * sizeof(SpriteRenderable), 0);
-	pCmdBuffer->RequireBufferState(mSpriteBuffer.get(), Render::ResourceState::CopyDest, Render::ResourceState::ShaderResource);
-	pCmdBuffer->CommitBarriers();
-
-	pCmdBuffer->ClearVertexBuffers();
-	pCmdBuffer->SetVertexBuffer(mVbView.get(), 0);
-	pCmdBuffer->SetBufferResource(mSpriteBuffer.get(), 10);
-
-	// Now all stuff is rendered in one single drawcall
-	// NonUniformResourceIndex is required to avoid artifacts on some gpus
-	pCmdBuffer->DrawInstanced(6, 0, mRenderQueue.size(), 0);
-
 }
 
 void SpriteBatch::SetResources(SceneResources* pRsc)

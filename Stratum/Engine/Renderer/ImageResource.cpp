@@ -22,7 +22,7 @@ Render::ImageResource::ImageResource(const ImageDescription& desc)
 
 	textureDesc.setIsRenderTarget(desc.AllowFramebufferUsage);
 
-	textureDesc.setInitialState(nvrhi::ResourceStates::ShaderResource);
+	textureDesc.setInitialState(nvrhi::ResourceStates::Common);
 	textureDesc.setKeepInitialState(false);
 
 	textureDesc.setDebugName("Image");
@@ -61,9 +61,10 @@ Render::ImageResource::ImageResource(const ImageDescription& desc)
 
 	textureDesc.setIsUAV(desc.AllowComputeResourceUsage);
 
-	if (!desc.Immutable)
+	if (desc.Immutable)
 	{
 		//textureDesc.setKeepInitialState(true);
+		textureDesc.setInitialState(nvrhi::ResourceStates::ShaderResource);
 	}
 
 	Handle = RendererContext::GetDevice()->createTexture(textureDesc);

@@ -43,6 +43,7 @@ public:
 	virtual bool IsPlaying();
 
 	virtual void Seek(uint32_t samplePosition);
+	virtual void Seek(float timeInSeconds);
 	virtual uint32_t Position();
 	virtual float PositionF() { return 0.0f; }
 

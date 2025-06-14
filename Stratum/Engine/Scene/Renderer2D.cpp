@@ -21,6 +21,7 @@ Renderer2D::Renderer2D()
 	mPerFrameData = CreateRef<Render::ConstantBuffer>(sizeof(PerFrameData) * 2);
 	mCmdBuffer = CreateRef<Render::GraphicsCommandBuffer>();
 	mComputeCmdBuffer = CreateRef<Render::ComputeCommandBuffer>(mCmdBuffer.get());
+	mCopyCmdBuffer = CreateRef<Render::CopyCommandBuffer>();
 
 	mMainCamera = {};
 	mGuiCamera = {};
@@ -55,9 +56,17 @@ Renderer2D::Renderer2D()
 	samplerDesc.Filter = Render::TextureFilterMode::POINT;
 
 	mNearestSampler = CreateRef<Render::TextureSampler>(samplerDesc);
+
+	samplerDesc.AddressMode = Render::TextureWrapMode::CLAMP;
+
+	mNearestClampSampler = CreateRef<Render::TextureSampler>(samplerDesc);
+
+	samplerDesc.AddressMode = Render::TextureWrapMode::CLAMP;
+	samplerDesc.Filter = Render::TextureFilterMode::ANISOTROPIC;
+	mBilinearClampSampler = CreateRef<Render::TextureSampler>(samplerDesc);
 }
 
-void Renderer2D::PreRender(Scene* scene)
+void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 {
 	// Did too much thinking about Sparrow animated atlas
 	// Finally works! (Thanks DeepSeek)
@@ -90,6 +99,29 @@ void Renderer2D::PreRender(Scene* scene)
 	VirtualScreenSize *= 2.0f;
 	AABB screenAABB = { -VirtualScreenSize.x, -VirtualScreenSize.y, VirtualScreenSize.x, VirtualScreenSize.y };
 	VirtualScreenSize /= 2.0f;
+
+	if (!mMainRenderTarget || mMainRenderTarget->GetSize() != pOutput->GetSize())
+	{
+		pStack->Init(pOutput->GetSize());
+
+		Render::ImageDescription imageDesc{};
+
+		imageDesc.AllowComputeResourceUsage = true;
+		imageDesc.AllowFramebufferUsage = true;
+		imageDesc.Width = pOutput->GetSize().x;
+		imageDesc.Height = pOutput->GetSize().y;
+		imageDesc.Format = Render::ImageFormat::R11G11B10_FLOAT; // HDR format
+		imageDesc.ClearValue = glm::vec4(0.0f);
+
+		mColorBufferRT = CreateRef<Render::ImageResource>(imageDesc);
+
+		Render::FramebufferDesc desc;
+		desc.Attachments.push_back({ mColorBufferRT.get() });
+
+		mMainRenderTarget = CreateRef<Render::Framebuffer>(desc);
+
+		mMainPipeline->SetRenderTarget(mMainRenderTarget);
+	}
 
 	for (auto entity : entities)
 	{
@@ -175,47 +207,27 @@ void Renderer2D::PreRender(Scene* scene)
 	JobManager::Execute([&] { mRenderQueue.Sort(); });
 	JobManager::Execute([&] { mGuiRenderQueue.Sort(); });
 
-
-}
-
-void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
-{
 	JobManager::Wait();
 
-	Z_PROFILE_SCOPE("Renderer2D::Render");
+	mSpriteBatch->Begin();
 
-	if (!mMainRenderTarget || mMainRenderTarget->GetSize() != pOutput->GetSize())
+	for (int j = 0; j < mRenderQueue.instances.size(); j++)
 	{
-		pStack->Init(pOutput->GetSize());
+		auto& instance = mRenderQueue.instances[j];
 
-		Render::ImageDescription imageDesc{};
+		instance.batch.UserData = 0;
 
-		imageDesc.AllowComputeResourceUsage = true;
-		imageDesc.AllowFramebufferUsage = true;
-		imageDesc.Width = pOutput->GetSize().x;
-		imageDesc.Height = pOutput->GetSize().y;
-		imageDesc.Format = Render::ImageFormat::R11G11B10_FLOAT; // HDR format
-		imageDesc.ClearValue = glm::vec4(0.0f);
-
-		mColorBufferRT = CreateRef<Render::ImageResource>(imageDesc);
-
-		Render::FramebufferDesc desc;
-		desc.Attachments.push_back({ mColorBufferRT.get() });
-
-		mMainRenderTarget = CreateRef<Render::Framebuffer>(desc);
-
-		mMainPipeline->SetRenderTarget(mMainRenderTarget);
+		mSpriteBatch->DrawSprite(instance.batch);
 	}
 
-	Render::Viewport viewport{};
+	for (int j = 0; j < mGuiRenderQueue.instances.size(); j++)
+	{
+		auto& instance = mGuiRenderQueue.instances[j];
 
-	viewport.width = pOutput->GetSize().x;
-	viewport.height = pOutput->GetSize().y;
+		instance.batch.UserData = 1;
 
-	mCmdBuffer->Begin();
-
-	mCmdBuffer->RequireFramebufferState(mMainRenderTarget.get(), Render::ResourceState::ShaderResource, Render::ResourceState::RenderTarget);
-	mCmdBuffer->RequireFramebufferState(pOutput, Render::ResourceState::Present, Render::ResourceState::RenderTarget);
+		mSpriteBatch->DrawSprite(instance.batch);
+	}
 
 	glm::mat4 matrices[2];
 
@@ -243,45 +255,51 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 		matrices[1] = proj * view;
 	}
 
-	mCmdBuffer->UpdateConstantBuffer(mPerFrameData.get(), &matrices);
+	mCopyCmdBuffer->Begin();
+
+	mCopyCmdBuffer->UpdateConstantBuffer(mPerFrameData.get(), matrices);
+	mSpriteBatch->End(mCopyCmdBuffer.get());
+
+	mCopyCmdBuffer->End();
+
+	mCopyCmdBuffer->Submit();
+
+}
+
+void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
+{
+
+	Z_PROFILE_SCOPE("Renderer2D::Render");
+
+	Render::Viewport viewport{};
+
+	viewport.width = pOutput->GetSize().x;
+	viewport.height = pOutput->GetSize().y;
+
+	mCmdBuffer->Begin();
+
+	mCmdBuffer->RequireFramebufferState(mMainRenderTarget.get(), Render::ResourceState::ShaderResource, Render::ResourceState::RenderTarget);
+	mCmdBuffer->RequireFramebufferState(pOutput, Render::ResourceState::Present, Render::ResourceState::RenderTarget);
+
 	mCmdBuffer->ClearBuffer(mMainRenderTarget.get(), 0, glm::vec4(0.0f));
 
 	mCmdBuffer->SetFramebuffer(mMainRenderTarget.get());
+	mCmdBuffer->SetViewport(&viewport);
+
 	mCmdBuffer->SetPipeline(mMainPipeline.get());
 	mCmdBuffer->SetConstantBuffer(mPerFrameData.get(), 1);
-	mCmdBuffer->SetViewport(&viewport);
 	mCmdBuffer->SetTextureSampler(mBilinearSampler.get(), 0);
 	mCmdBuffer->SetTextureSampler(mNearestSampler.get(), 1);
 	mCmdBuffer->SetBindlessDescriptorTable(scene->BindlessTable);
 
-	mSpriteBatch->Begin();
-
-	for (int j = 0; j < mRenderQueue.instances.size(); j++)
-	{
-		auto& instance = mRenderQueue.instances[j];
-
-		instance.batch.UserData = 0;
-
-		mSpriteBatch->DrawSprite(instance.batch);
-	}
-
-	for (int j = 0; j < mGuiRenderQueue.instances.size(); j++)
-	{
-		auto& instance = mGuiRenderQueue.instances[j];
-
-		instance.batch.UserData = 1;
-
-		mSpriteBatch->DrawSprite(instance.batch);
-	}
-
-	mSpriteBatch->End(mCmdBuffer.get());
+	mSpriteBatch->Render(mCmdBuffer.get());
 
 	Render::PostProcessingParameters params{};
 
 	params.gCommandBuffer = mCmdBuffer.get();
 	params.cCommandBuffer = mComputeCmdBuffer.get();
-	params.pBilinearTextureSampler = mBilinearSampler.get();
-	params.pNearestTextureSampler = mNearestSampler.get();
+	params.pBilinearTextureSampler = mBilinearClampSampler.get();
+	params.pNearestTextureSampler = mNearestClampSampler.get();
 	params.OutputResolution = pOutput->GetSize();
 	params.Resolution = pOutput->GetSize();
 	params.pOutputFramebuffer = pOutput;
@@ -294,7 +312,6 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 
 	pStack->Render(params);
 
-	//mCmdBuffer->RequireFramebufferState(pOutput, Render::ResourceState::RenderTarget, Render::ResourceState::Present);
 	mCmdBuffer->End();
 }
 
@@ -302,6 +319,7 @@ void Renderer2D::Submit()
 {
 	// Separated so i can easily implement multithreaded submission when i get a cpu bottleneck
 	// Cpu rendering takes about 1ms so i don't care lol
+	mCopyCmdBuffer->TriggerWaitOnExecutionQueue(Render::CommandQueue::Graphics);
 	mCmdBuffer->Submit();
 }
 

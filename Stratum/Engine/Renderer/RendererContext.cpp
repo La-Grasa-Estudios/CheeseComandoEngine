@@ -110,6 +110,11 @@ void RendererContext::Terminate()
     pBackend->TerminateBackend(this);
 }
 
+void RendererContext::BeginFrame()
+{
+    pBackend->BeginFrame();
+}
+
 void RendererContext::present(Internal::Window* window)
 {
 

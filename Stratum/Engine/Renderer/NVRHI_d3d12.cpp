@@ -9,6 +9,7 @@ using namespace ENGINE_NAMESPACE;
 #include "Core/Window.h"
 #include "Core/VarRegistry.h"
 #include "Core/Logger.h"
+#include "Core/EngineStats.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_syswm.h>
@@ -66,11 +67,16 @@ struct ExampleDescriptorHeapAllocator
 static ExampleDescriptorHeapAllocator g_pd3dSrvDescHeapAlloc;
 static ID3D12DescriptorHeap* g_pd3dSrvDescHeap = nullptr;
 
+uint32_t gFrameCount = 0;
+ID3D12Fence* gFrameFence = nullptr;
+void* gFrameFenceEvents[2];
+
 void Render::BackendInitializerD3D12::InitializeBackend(Internal::Window* pWindow, RendererContext* pContext)
 {
     dxSharedData = new DX12::DX12Data();
 
     dxSharedData->FrameCount = 0;
+    gFrameCount = 0;
 
     SDL_SysWMinfo wmInfo{};
     SDL_version sdlver;
@@ -236,14 +242,20 @@ void Render::BackendInitializerD3D12::InitializeBackend(Internal::Window* pWindo
     }
 #endif
 
-    dxSharedData->CommandQueue = DX12::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-    dxSharedData->CopyQueue = DX12::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+    dxSharedData->CommandQueue = DX12::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_QUEUE_PRIORITY_HIGH);
+    dxSharedData->CopyQueue = DX12::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY, D3D12_COMMAND_QUEUE_PRIORITY_NORMAL);
+
+    for (int i = 0; i < DX12::s_MaxInFlightFrames; i++)
+        gFrameFenceEvents[i] = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+
+    dxSharedData->Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&gFrameFence));
 
     nvrhi::d3d12::DeviceDesc deviceDesc;
     deviceDesc.errorCB = &pContext->mCallbackLogger;
     deviceDesc.pDevice = dxSharedData->Device.Get();
     deviceDesc.pGraphicsCommandQueue = dxSharedData->CommandQueue.Get();
     deviceDesc.pCopyCommandQueue = dxSharedData->CopyQueue.Get();
+    deviceDesc.enableHeapDirectlyIndexed = true;
 
     pContext->pDevice = nvrhi::d3d12::createDevice(deviceDesc);
 
@@ -261,7 +273,7 @@ void Render::BackendInitializerD3D12::InitializeBackend(Internal::Window* pWindo
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
     // It is recommended to always allow tearing if tearing support is available.
-    swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+    swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
     dxSharedData->WindowSize = { swapChainDesc.Width, swapChainDesc.Height };
 
@@ -272,6 +284,8 @@ void Render::BackendInitializerD3D12::InitializeBackend(Internal::Window* pWindo
     dxgiSwapChain1.As(&dxgiSwapChain4);
 
     dxSharedData->SwapChain = dxgiSwapChain4;
+
+    dxgiSwapChain4->SetMaximumFrameLatency(DX12::s_MaxInFlightFrames);
 
     dxgiFactory->MakeWindowAssociation(dxSharedData->hWnd, DXGI_MWA_NO_ALT_ENTER);
 
@@ -366,19 +380,38 @@ void Render::BackendInitializerD3D12::TerminateBackend(RendererContext* pContext
     dxSharedData->Device->Release();
 }
 
+void Render::BackendInitializerD3D12::BeginFrame()
+{
+    //Z_PROFILE_SCOPE("D3D12::BeginFrame");
+    
+    // Don't deadlock on first frame (bad)
+
+    WaitForSingleObjectEx(
+        dxSharedData->SwapChain->GetFrameLatencyWaitableObject(),
+        1000, // 1 second timeout (shouldn't ever occur)
+        true
+    );
+
+    uint32_t frameIndex = dxSharedData->SwapChain->GetCurrentBackBufferIndex();
+	//::WaitForSingleObject(gFrameFenceEvents[frameIndex], INFINITE);
+}
+
 void Render::BackendInitializerD3D12::Present(Internal::Window* pWindow, RendererContext* pContext)
 {
-    uint32_t frameIndex = dxSharedData->FrameIndex;
+    //Z_PROFILE_SCOPE("D3D12::Present");
+
+    uint32_t frameIndex = dxSharedData->SwapChain->GetCurrentBackBufferIndex();
 
     uint32_t flags = pContext->m_VsyncState ? 0 : DXGI_PRESENT_ALLOW_TEARING;
 
     dxSharedData->SwapChain->Present(pContext->m_VsyncState, flags);
-    dxSharedData->BackBufferFence->Signal(dxSharedData->CommandQueue.Get());
+
+	//gFrameFence->SetEventOnCompletion(gFrameCount, gFrameFenceEvents[frameIndex]);
+	//dxSharedData->CommandQueue->Signal(gFrameFence, gFrameCount);
+    gFrameCount++;
 
     dxSharedData->FrameIndex = dxSharedData->SwapChain->GetCurrentBackBufferIndex();
     pContext->FrameIndex = dxSharedData->FrameIndex;
-
-    dxSharedData->BackBufferFence->WaitForSingleObject();
 
     glm::ivec2 size = pWindow->GetFramebuffer()->GetSize();
 
@@ -387,13 +420,8 @@ void Render::BackendInitializerD3D12::Present(Internal::Window* pWindow, Rendere
 
         dxSharedData->WindowSize = size;
 
-        uint64_t val = dxSharedData->BackBufferFence->Signal(dxSharedData->CommandQueue.Get());
-        dxSharedData->BackBufferFence->WaitForSingleObject(val);
-
         pContext->pDevice->waitForIdle();
         pContext->pDevice->runGarbageCollection();
-
-        dxSharedData->BackBufferFence->ResetValues();
 
         for (int i = 0; i < DX12::s_MaxInFlightFrames; i++)
         {
@@ -410,6 +438,8 @@ void Render::BackendInitializerD3D12::Present(Internal::Window* pWindow, Rendere
 
         dxSharedData->FrameIndex = dxSharedData->SwapChain->GetCurrentBackBufferIndex();
         pContext->FrameIndex = dxSharedData->FrameIndex;
+
+        dxSharedData->SwapChain->SetMaximumFrameLatency(DX12::s_MaxInFlightFrames);
 
         for (int i = 0; i < DX12::s_MaxInFlightFrames; ++i)
         {
@@ -443,7 +473,6 @@ void Render::BackendInitializerD3D12::Present(Internal::Window* pWindow, Rendere
 
     }
 
-    dxSharedData->FrameCount += 1;
 }
 
 bool Render::BackendInitializerD3D12::RequiresResize(Internal::Window* pWindow)

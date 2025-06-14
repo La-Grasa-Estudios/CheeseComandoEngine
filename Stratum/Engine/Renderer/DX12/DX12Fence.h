@@ -24,6 +24,6 @@ namespace DX12
 		Microsoft::WRL::ComPtr<ID3D12Fence> m_Fence;
 		uint64_t m_FenceValue;
 		uint64_t m_FrameFenceValues[DX12::s_MaxInFlightFrames] = {};
-		void* m_FenceEvent;
+		void* m_FenceEvent[DX12::s_MaxInFlightFrames];
 	};
 }

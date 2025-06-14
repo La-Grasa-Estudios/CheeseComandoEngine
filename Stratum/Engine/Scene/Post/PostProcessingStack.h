@@ -4,6 +4,7 @@
 #include "PostProcessingPass.h"
 
 #include "Renderer/GraphicsCommandBuffer.h"
+#include "Renderer/ComputeCommandBuffer.h"
 
 #include <unordered_map>
 
@@ -27,6 +28,7 @@ namespace Render
 		std::unordered_map<std::string, PostProcessingPass*> m_PassesStr;
 		std::vector<Ref<PostProcessingPass>> m_PassesUnsorted;
 		std::vector<Ref<PostProcessingPass>> m_Passes;
+		Ref<ComputeCommandBuffer> m_AsyncCommandBuffer;
 	};
 }
 

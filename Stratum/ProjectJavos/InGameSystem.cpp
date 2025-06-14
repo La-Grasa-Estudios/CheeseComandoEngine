@@ -673,8 +673,8 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 		if (voicesSource)
 			voicesSource->Play();
 
-		// instSource->Seek(105 * 44100);
-		// voicesSource->Seek(105 * 44100);
+		instSource->Seek(105.0f);
+		voicesSource->Seek(105.0f);
 	}
 
 	if (mConductor->BeatCountF < 3.0f)

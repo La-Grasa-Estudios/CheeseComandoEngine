@@ -15,7 +15,7 @@
 
 #include "Renderer/RendererContext.h"
 #include "Renderer/Buffer.h"
-#include "Renderer/GraphicsCommandBuffer.h"
+#include "Renderer/CopyCommandBuffer.h"
 
 #include "Media/VideoDecode.h"
 
@@ -33,7 +33,7 @@ Scene::Scene()
 	GuiAnchors.Init(&EntityManager);
 	VideoSurfaces.Init(&EntityManager);
 
-	mVideoCopyCommandBuffer = new Render::GraphicsCommandBuffer();
+	mVideoCopyCommandBuffer = new Render::CopyCommandBuffer();
 }
 
 Scene::~Scene()
@@ -451,7 +451,7 @@ void Scene::UpdateVideoPlayers()
 
 	auto& entities = VideoSurfaces.GetEntities();
 
-	mVideoCopyCommandBuffer->Begin();
+	bool VideoUpdateRequired = false;
 
 	for (auto entity : entities)
 	{
@@ -490,9 +490,12 @@ void Scene::UpdateVideoPlayers()
 			{
 				Render::ImageResource* pSurface = Resources.GetImageHandle(surface.TextureHandle);
 
+				if (!VideoUpdateRequired)
+					mVideoCopyCommandBuffer->Begin();
+
 				auto cmd = mVideoCopyCommandBuffer->GetNativeCommandList();
-				mVideoCopyCommandBuffer->RequireTextureState(pSurface, Render::ResourceState::ShaderResource, Render::ResourceState::CopyDest);
-				mVideoCopyCommandBuffer->CommitBarriers();
+				// mVideoCopyCommandBuffer->RequireTextureState(pSurface, Render::ResourceState::ShaderResource, Render::ResourceState::CopyDest);
+				// mVideoCopyCommandBuffer->CommitBarriers();
 
 				uint32_t count = surface.VideoResolution.x * surface.VideoResolution.y;
 				auto data = frame->native()->data[0];
@@ -514,9 +517,11 @@ void Scene::UpdateVideoPlayers()
 				JobManager::Wait();
 
 				cmd->writeTexture(pSurface->Handle, 0, 0, data, surface.VideoResolution.x * 4);
-				mVideoCopyCommandBuffer->RequireTextureState(pSurface, Render::ResourceState::CopyDest, Render::ResourceState::ShaderResource);
-				mVideoCopyCommandBuffer->CommitBarriers();
+				// mVideoCopyCommandBuffer->RequireTextureState(pSurface, Render::ResourceState::CopyDest, Render::ResourceState::ShaderResource);
+				// mVideoCopyCommandBuffer->CommitBarriers();
 				decode->PushFrame(frame);
+
+				VideoUpdateRequired = true;
 			}
 		}
 
@@ -539,6 +544,11 @@ void Scene::UpdateVideoPlayers()
 		}
 	}
 
-	mVideoCopyCommandBuffer->End();
-	mVideoCopyCommandBuffer->Submit();
+	if (VideoUpdateRequired)
+	{
+		mVideoCopyCommandBuffer->End();
+		mVideoCopyCommandBuffer->Submit();
+		mVideoCopyCommandBuffer->TriggerWaitOnExecutionQueue(Render::CommandQueue::Graphics);
+	}
+	
 }

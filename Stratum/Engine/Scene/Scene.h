@@ -48,6 +48,7 @@ namespace Internal
 namespace Render
 {
 	class GraphicsCommandBuffer;
+	class CopyCommandBuffer;
 }
 
 class Scene
@@ -112,7 +113,7 @@ private:
 	std::unordered_map<std::string, ECS::ComponentManager_Interface*> mCustomComponents;
 	std::vector<ISceneSystem*> mSystems;
 
-	Render::GraphicsCommandBuffer* mVideoCopyCommandBuffer;
+	Render::CopyCommandBuffer* mVideoCopyCommandBuffer;
 
 };
 

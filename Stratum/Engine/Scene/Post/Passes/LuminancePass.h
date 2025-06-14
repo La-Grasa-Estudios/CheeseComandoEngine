@@ -15,7 +15,7 @@ namespace Render
 		LuminancePass();
 
 		void GetOutputs(std::vector<Ref<ImageResource>>& outputs, std::vector<std::string>& names) override;
-		void Render(const PostProcessingParameters& parameters) override;
+		void PreRender(const PostProcessingParameters& parameters) override;
 
 		Ref<ImageResource> LuminanceImage;
 

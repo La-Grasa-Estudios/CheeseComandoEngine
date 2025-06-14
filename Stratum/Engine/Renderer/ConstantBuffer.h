@@ -24,10 +24,13 @@ namespace Render {
 
 		bool IsResourceReady(); // Used when defaultData is set in the constructor, returns true when the data is ready on the gpu
 
-		nvrhi::BufferHandle Handle;
+		nvrhi::IBuffer* GetHandle();
+
 		size_t Size; // Size of the constant buffer as specified in the constructor
 
 	private:
+
+		std::array<nvrhi::BufferHandle, Render::MaxInFlightFrames> mHandle;
 
 		bool mIsReady = false;
 

@@ -12,7 +12,7 @@ using namespace ENGINE_NAMESPACE;
 Render::ComputeCommandBuffer::ComputeCommandBuffer(bool async)
 {
 	nvrhi::CommandListParameters params{};
-	params.queueType = nvrhi::CommandQueue::Graphics;
+	params.queueType = nvrhi::CommandQueue::Compute;
 
 	if (RendererContext::get_api() == RendererAPI::DX11 || !async)
 	{
@@ -64,7 +64,7 @@ void Render::ComputeCommandBuffer::Submit()
 {
 	if (mIsOwner)
 	{
-		RendererContext::GetDevice()->executeCommandList(mCommandList);
+		mCmdInstance = RendererContext::GetDevice()->executeCommandList(mCommandList);
 
 		if (RendererContext::get_api() == RendererAPI::DX11)
 		{
@@ -72,9 +72,14 @@ void Render::ComputeCommandBuffer::Submit()
 		}
 		else
 		{
-			RendererContext::GetDevice()->setEventQuery(mEventQuery, nvrhi::CommandQueue::Graphics);
+			RendererContext::GetDevice()->setEventQuery(mEventQuery, mCommandList->getDesc().queueType);
 		}
 	}
+}
+
+void Render::ComputeCommandBuffer::TriggerWaitOnExecutionQueue(CommandQueue queue)
+{
+	RendererContext::GetDevice()->queueWaitForCommandList(queue, CommandQueue::Compute, mCmdInstance);
 }
 
 void Render::ComputeCommandBuffer::Wait()
@@ -124,7 +129,7 @@ void Render::ComputeCommandBuffer::SetConstantBuffer(ConstantBuffer* buffer, uin
 		Z_WARN("CPU Thread stalled for {}ms waiting for resource to be in a ready state! Resource Pointer: {}", timer.GetMillis(), (void*)buffer);
 	}
 #endif
-	mConstantBuffers[slot] = buffer->Handle;
+	mConstantBuffers[slot] = buffer->GetHandle();
 	mBindingStateDirty = true;
 }
 
@@ -204,9 +209,9 @@ void Render::ComputeCommandBuffer::Dispatch(uint32_t x, uint32_t y, uint32_t z)
 
 void Render::ComputeCommandBuffer::UpdateConstantBuffer(ConstantBuffer* pBuffer, void* data)
 {
-	mCommandList->setBufferState(pBuffer->Handle, nvrhi::ResourceStates::CopyDest);
-	mCommandList->writeBuffer(pBuffer->Handle, data, pBuffer->Size);
-	mCommandList->setBufferState(pBuffer->Handle, nvrhi::ResourceStates::ConstantBuffer);
+	mCommandList->setBufferState(pBuffer->GetHandle(), nvrhi::ResourceStates::CopyDest);
+	mCommandList->writeBuffer(pBuffer->GetHandle(), data, pBuffer->Size);
+	mCommandList->setBufferState(pBuffer->GetHandle(), nvrhi::ResourceStates::ConstantBuffer);
 	mCommitedAnyConstantBuffer = true;
 }
 

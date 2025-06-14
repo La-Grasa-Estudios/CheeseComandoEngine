@@ -7,7 +7,7 @@ Application* AppMain(std::vector<std::string> args)
 {
 	ApplicationInfo info;
 
-	info.IsImGuiEnabled = true;
+	info.IsImGuiEnabled = false;
 	info.VSyncEnabled = false;
 	info.ShouldWindowStartMaximized = true;
 	info.ShouldWindowNotResize = true;

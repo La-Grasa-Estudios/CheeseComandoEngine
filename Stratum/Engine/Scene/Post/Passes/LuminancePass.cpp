@@ -58,7 +58,7 @@ void Render::LuminancePass::GetOutputs(std::vector<Ref<ImageResource>>& outputs,
 	names.push_back(LUMINANCE_PASS_OUTPUT);
 }
 
-void Render::LuminancePass::Render(const PostProcessingParameters& parameters)
+void Render::LuminancePass::PreRender(const PostProcessingParameters& parameters)
 {
 
 	float tau = 0.6f;
@@ -75,27 +75,27 @@ void Render::LuminancePass::Render(const PostProcessingParameters& parameters)
 		.numPixels = static_cast<float>(parameters.Resolution.x / 8 * parameters.Resolution.y / 8)
 	};
 
-	parameters.gCommandBuffer->RequireTextureState(LuminanceImage.get(), ResourceState::ShaderResource, ResourceState::UnorderedAccess);
+	parameters.cAsyncBuffer->RequireTextureState(LuminanceImage.get(), ResourceState::ShaderResource, ResourceState::UnorderedAccess);
 
-	parameters.cCommandBuffer->SetTextureResource(parameters.pColorSampler, 0);
-	parameters.cCommandBuffer->SetBufferCompute(LuminanceBuffer.get(), 0);
-	parameters.cCommandBuffer->SetTextureCompute(LuminanceImage.get(), 1);
+	parameters.cAsyncBuffer->SetTextureResource(parameters.pColorSampler, 0);
+	parameters.cAsyncBuffer->SetBufferCompute(LuminanceBuffer.get(), 0);
+	parameters.cAsyncBuffer->SetTextureCompute(LuminanceImage.get(), 1);
 
-	parameters.cCommandBuffer->SetComputePipeline(LuminanceShader.get());
+	parameters.cAsyncBuffer->SetComputePipeline(LuminanceShader.get());
 
-	parameters.cCommandBuffer->PushConstants(&lumaPass, sizeof(LuminancePassParams));
-	parameters.cCommandBuffer->Dispatch((int)glm::ceil(parameters.Resolution.x / 8.0f / 16.0f), (int)glm::ceil(parameters.Resolution.y / 8.0f / 16.0f), 1);
+	parameters.cAsyncBuffer->PushConstants(&lumaPass, sizeof(LuminancePassParams));
+	parameters.cAsyncBuffer->Dispatch((int)glm::ceil(parameters.Resolution.x / 8.0f / 16.0f), (int)glm::ceil(parameters.Resolution.y / 8.0f / 16.0f), 1);
 	
-	parameters.cCommandBuffer->Barrier(LuminanceBuffer.get());
-	parameters.cCommandBuffer->CommitBarriers();
+	parameters.cAsyncBuffer->Barrier(LuminanceBuffer.get());
+	parameters.cAsyncBuffer->CommitBarriers();
 
-	parameters.cCommandBuffer->SetComputePipeline(LuminanceAverageShader.get());
+	parameters.cAsyncBuffer->SetComputePipeline(LuminanceAverageShader.get());
 
-	parameters.cCommandBuffer->PushConstants(&lumaPass, sizeof(LuminancePassParams));
-	parameters.cCommandBuffer->Dispatch(1, 1, 1);
+	parameters.cAsyncBuffer->PushConstants(&lumaPass, sizeof(LuminancePassParams));
+	parameters.cAsyncBuffer->Dispatch(1, 1, 1);
 
-	parameters.gCommandBuffer->RequireTextureState(LuminanceImage.get(), ResourceState::UnorderedAccess, ResourceState::ShaderResource);
+	parameters.cAsyncBuffer->RequireTextureState(LuminanceImage.get(), ResourceState::UnorderedAccess, ResourceState::ShaderResource);
 
-	parameters.cCommandBuffer->CommitBarriers();
+	parameters.cAsyncBuffer->CommitBarriers();
 
 }

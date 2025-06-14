@@ -1,25 +1,76 @@
 [ERROR] Failed to mount directory Pak
 [WARNING] No listeners found for event: init_window
 [WARNING] No listeners found for event: init_modules
-[WARNING] No listeners found for event: init_input
-[INFO] Printing cmdline args
 [INFO] Radeon RX 580 Series, VRAM: 8135 MB, SHARED: 8127 MB, USED: 0 MB
 [WARNING] No listeners found for event: init_media
 [WARNING] No listeners found for event: late_init
 [WARNING] Failed to open Data/config/startup.cfg
 [WARNING] Failed to open Data/config/autoexec.cfg
 [WARNING] No listeners found for event: post_init
-[WARNING] Frame got 214.161ms over 33ms max!
+[WARNING] Frame got 169.222ms over 33ms max!
 [WARNING] Frame scope
-[INFO] Application::InternalUpdate: 0.011ms
+[INFO] Application::InternalUpdate: 0.008ms
 [INFO] Scene::UpdateTransforms: 0.000ms
 [INFO] Scene::UpdateAnimators: 0.000ms
-[INFO] Scene::Update: 61.845ms
+[INFO] Scene::Update: 44.039ms
 [INFO] Application::FrameUpdate: 0.000ms
-[INFO] Scene::UpdateVideoPlayers: 0.649ms
-[INFO] Scene::UpdateGuiAnchors: 0.001ms
-[INFO] Scene::UpdateTransforms: 0.009ms
-[INFO] Scene::PostUpdate: 0.661ms
-[INFO] Renderer2D::PreRender: 1.690ms
-[INFO] Renderer2D::Render: 29.049ms
-[INFO] Application::Frame: 120.245ms
+[INFO] Scene::UpdateVideoPlayers: 0.304ms
+[INFO] Scene::UpdateGuiAnchors: 0.000ms
+[INFO] Scene::UpdateTransforms: 0.006ms
+[INFO] Scene::PostUpdate: 0.312ms
+[INFO] Renderer2D::PreRender: 36.112ms
+[INFO] Renderer2D::Render: 2.978ms
+[INFO] Application::Frame: 85.462ms
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Oh,, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Oh, yeah,, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Oh, yeah, come on, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Oh, yeah, come on TOOTHLESS!, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Oh, yeah, come on TOOTHLESS! Toohless!, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring What happend there?, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Let's see,, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Let's see, come on., .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Let's see, come on. it's coming down., .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Perfect., .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Perfect. Perfect., .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring See,, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring See, no,, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring See, no, no., .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring See, no, no. Let's see., .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring If I catch the mushroom I become super strong and destroy everything,, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring If I catch the mushroom I become super strong and destroy everything, I imagine., .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring See., .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring AAHHHHH!, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring [Music], .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Perfect., .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring WHAAAT?, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring I , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring I can't,, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring I can't, dammint, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby,, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby, repeat, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby, repeat after, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby, repeat after me, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring we, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring we can, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring we can not, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring (we can not), .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring we, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring we can, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring we can not, .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring (we can not), .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Event: [Subtitles] has not handlers registered! ignoring Hello!, .

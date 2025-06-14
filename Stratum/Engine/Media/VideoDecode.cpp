@@ -321,7 +321,7 @@ av::Ptr<av::Frame> VideoDecode::GetFrame()
 
 bool VideoDecode::Finished()
 {
-	return m_Stopped && m_Finished;
+	return m_Stopped && m_Finished && m_Queue.empty();
 }
 
 VideoParams VideoDecode::GetSize()

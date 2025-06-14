@@ -19,9 +19,12 @@ Render::ConstantBuffer::ConstantBuffer(size_t size, void* defaultData)
 		.setMaxVersions(16)
 		.setKeepInitialState(false)
 		.setCpuAccess(RendererContext::get_api() == RendererAPI::DX11 ? nvrhi::CpuAccessMode::Write : nvrhi::CpuAccessMode::None)
-		.setInitialState(isStatic ? nvrhi::ResourceStates::ConstantBuffer : nvrhi::ResourceStates::CopyDest)
+		.setInitialState(isStatic ? nvrhi::ResourceStates::ConstantBuffer : nvrhi::ResourceStates::Common)
 		.setDebugName("Constant Buffer");
-	Handle = RendererContext::GetDevice()->createBuffer(bufferDesc);
+
+	for (int i = 0; i < MaxInFlightFrames; i++)
+		mHandle[i] = RendererContext::GetDevice()->createBuffer(bufferDesc);
+
 	Size = size;
 
 	if (!defaultData)
@@ -30,11 +33,19 @@ Render::ConstantBuffer::ConstantBuffer(size_t size, void* defaultData)
 	}
 	else
 	{
-		auto cmd = CopyEngine::WriteBuffer(Handle, defaultData, dataSize, &mIsReady);
-		cmd.commandList->setPermanentBufferState(Handle, nvrhi::ResourceStates::ConstantBuffer);
-		CopyEngine::Submit(cmd);
+		for (int i = 0; i < MaxInFlightFrames; i++)
+		{
+			auto cmd = CopyEngine::WriteBuffer(mHandle[i], defaultData, dataSize, &mIsReady);
+			cmd.commandList->setPermanentBufferState(mHandle[i], nvrhi::ResourceStates::ConstantBuffer);
+			CopyEngine::Submit(cmd);
+		}
 	}
 
+}
+
+nvrhi::IBuffer* Render::ConstantBuffer::GetHandle()
+{
+	return mHandle[0];
 }
 
 Render::ConstantBuffer::~ConstantBuffer()

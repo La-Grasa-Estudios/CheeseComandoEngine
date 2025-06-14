@@ -190,6 +190,11 @@ void MP3AudioSource::Seek(uint32_t samplePosition)
     m_SeekTo = samplePosition;
 }
 
+void MP3AudioSource::Seek(float t)
+{
+    Seek(static_cast<uint32_t>(m_Mp3DecCtx.info.hz * t));
+}
+
 uint32_t MP3AudioSource::Position()
 {
     return m_Position;

@@ -6,6 +6,7 @@
 
 #include "Renderer/RendererContext.h"
 #include "Renderer/GraphicsCommandBuffer.h"
+#include "Renderer/CopyCommandBuffer.h"
 #include "Renderer/ShapeProvider.h"
 
 #include "Scene/Scene.h"
@@ -146,7 +147,6 @@ void Application::Run(std::vector<std::string> args)
 		ShaderCompiler::build_object(shaderPath.c_str(), shaderOut.c_str(), type, nbPerms);
 
 		};
-
 	g_GameRscDir = VarRegistry::RegisterConsoleVar("cl", "rsc_dir", VarType::String)->set("");
 	g_GameRscDir->setOnModifyCallback(
 		[this](ConsoleVar& var)
@@ -170,7 +170,6 @@ void Application::Run(std::vector<std::string> args)
 		VarRegistry::RunCfg(path);
 
 	};
-
 	VarRegistry::RegisterConsoleVar("", "say", VarType::Void)->func = [&](ConsoleVar& var, std::string args) {
 
 		if (args.empty()) return;
@@ -183,6 +182,7 @@ void Application::Run(std::vector<std::string> args)
 	VarRegistry::ParseConsoleVar("exec Engine/game", autoExecLog);
 
 	bool SingleThreaded = false;
+	bool EnableVids = true;
 
 	for (int i = 0; i < args.size(); i++)
 	{
@@ -206,10 +206,13 @@ void Application::Run(std::vector<std::string> args)
 			VarRegistry::ParseConsoleVar(std::string("r_adapter ").append(adapterId), autoExecLog);
 		}
 
+		if (str == "-novid")
+		{
+			EnableVids = false;
+		}
 	}
 
 	m_RenderContext = CreateRef<Render::RendererContext>();
-
 	g_RenderContext = m_RenderContext;
 
 	OnEarlyInit(); // Use this to hook into events and stuff
@@ -219,27 +222,17 @@ void Application::Run(std::vector<std::string> args)
 	m_RenderContext->InitializeApi(Render::RendererAPI::DX12);
 
 	m_Window = CreateScope<Internal::Window>(m_RenderContext.get(), windowName.c_str());
+	m_AudioEngine = CreateRef<AudioEngine>();
+
 	m_Window->SetInfo(Internal::WindowEnum::WINDOW_START_MAXIMIZED, m_AppInfo.ShouldWindowStartMaximized);
 	m_Window->SetInfo(Internal::WindowEnum::WINDOW_IMGUI, m_AppInfo.IsImGuiEnabled);
 	m_Window->SetInfo(Internal::WindowEnum::WINDOW_FULLSCREEN, m_AppInfo.Fullscreen);
 	m_Window->SetVSync(m_AppInfo.VSyncEnabled);
 
 	m_Window->Create(m_AppInfo.WindowedResolutionX, m_AppInfo.WindowedResolutionY);
-
-	//JobManager::Init(!m_RenderContext->IsCapabilitySupported(Render::RendererCapability::RENDERER_MULTITHREADED_CMD_LISTS) || SingleThreaded);
 	JobManager::Init(true);
 
 	EventHandler::InvokeEvent(EventHandler::GetEventID("init_window"), this);
-
-	Render::GraphicsDeviceProperties gdprop = m_RenderContext->GetGraphicsDeviceProperties();
-
-	if (gdprop.DedicatedVideoMemory / 1024.0f / 1024.0f < 800)
-	{
-		// I need to implement a platform abstraction again
-		// Need to investigate how to run AVX2 compiled code on non AVX2 compatible cpus
-		// So i can display an error and don't simply crash without saying anything
-		//Platform::ShowSystemMessageBox("Insufficient Video Memory", "Your system has less than 1GB of video ram, glitches may occur!", Platform::MessageBoxButtons::OK, Platform::MessageBoxIcons::Warning);
-	}
 
 	if (m_AppInfo.IsImGuiEnabled) {
 
@@ -257,14 +250,10 @@ void Application::Run(std::vector<std::string> args)
 
 	}
 
-	m_AudioEngine = CreateRef<AudioEngine>();
 	m_AudioEngine->Init();
-
-	EventHandler::InvokeEvent(EventHandler::GetEventID("init_modules"), this);
-
 	Input::Init(m_Window->GetHandle());
 
-	EventHandler::InvokeEvent(EventHandler::GetEventID("init_input"), this);
+	EventHandler::InvokeEvent(EventHandler::GetEventID("init_modules"), this);
 
 	// Remove this on retail builds?
 	ShaderCompiler::build_object("shaders/video_gbar_to_rgba.hlsl", "Data/shaders/video_gbar_to_rgba.cso", ShaderCompiler::shader_type::vertex, 1);
@@ -281,23 +270,7 @@ void Application::Run(std::vector<std::string> args)
 	ShaderCompiler::build_object("shaders/compute/compute_avg_luminance.hlsl", "Data/shaders/compute/compute_avg_luminance.cso", ShaderCompiler::shader_type::compute);
 	ShaderCompiler::build_object("shaders/compute/compute_chromatic_aberration.hlsl", "Data/shaders/compute/compute_chromatic_aberration.cso", ShaderCompiler::shader_type::compute);
 
-	// I just left this thing here bc i'm lazy, doesn't mean anything rn
-	Z_INFO("Printing cmdline args");
-
-	bool EnableVids = true;
-
-	for (int i = 0; i < args.size(); i++)
-	{
-		std::string str = args[i];
-
-		Z_INFO("[{}] {}", i, str);
-
-		if (str == "-novid")
-		{
-			EnableVids = false;
-		}
-
-	}
+	Render::GraphicsDeviceProperties gdprop = m_RenderContext->GetGraphicsDeviceProperties();
 
 	// $h1t i need to account for the swapchain in the vram usage, currently reports 0mb at startup 
 	// Only affects texture streaming but the difference is about 10mb so not high priority lol
@@ -383,6 +356,8 @@ void Application::MainLoop()
 
 		Time::BeginCPU();
 
+		m_RenderContext->BeginFrame();
+
 		JobManager::ExecuteMainJobs();
 		EventHandler::Process();
 
@@ -425,7 +400,7 @@ void Application::MainLoop()
 
 		if (mCurrentScene)
 		{
-			m_RenderPath3D->PreRender(mCurrentScene);
+			m_RenderPath3D->PreRender(mCurrentScene, m_Window->GetFramebuffer().get());
 			m_RenderPath3D->Render(mCurrentScene, m_Window->GetFramebuffer().get());
 		}
 
@@ -449,7 +424,7 @@ void Application::MainLoop()
 
 		}
 
-		On2DRender();
+		//On2DRender();
 
 		m_Window->Update();
 
@@ -515,8 +490,6 @@ void Application::RenderStartupMedia()
 
 		pipelineDesc.ShaderPath = "shaders/video_gbar_to_rgba.cso";
 
-		pipelineDesc.VertexLayout = Render::Vertex::GetLayout();
-
 		pipelineDesc.RenderTarget = m_Window->GetFramebuffer().get();
 
 		pipelineDesc.RasterizerState.DepthTest = false;
@@ -525,9 +498,8 @@ void Application::RenderStartupMedia()
 
 		Render::GraphicsPipeline videoPipeline(pipelineDesc);
 
-		auto fullScreenQuad = Render::ShapeProvider::GenerateFullScreenQuad();
-
 		Render::GraphicsCommandBuffer cmdBuffer{};
+		Render::CopyCommandBuffer copyCmdBuffer{};
 
 		while (std::getline(*vids->Stream(), line))
 		{
@@ -566,6 +538,7 @@ void Application::RenderStartupMedia()
 
 			while (!decode.Finished() && !m_Window->CloseRequested())
 			{
+				m_RenderContext->BeginFrame();
 
 				m_Window->SetVSync(false);
 
@@ -579,20 +552,23 @@ void Application::RenderStartupMedia()
 
 				accum += Time::DeltaTime;
 
-				cmdBuffer.Begin();
-
 				while (accum >= frameTime && !decode.Finished())
 				{
 					auto frame = decode.GetFrame();
 					if (frame)
 					{
-						auto cmd = cmdBuffer.GetNativeCommandList();
+						auto cmd = copyCmdBuffer.GetNativeCommandList();
 
-						cmdBuffer.RequireTextureState(surface.get(), Render::ResourceState::ShaderResource, Render::ResourceState::CopyDest);
-						cmdBuffer.CommitBarriers();
+						copyCmdBuffer.Begin();
+
 						cmd->writeTexture(surface->Handle, 0, 0, frame->native()->data[0], params.width * 4);
-						cmdBuffer.RequireTextureState(surface.get(), Render::ResourceState::CopyDest, Render::ResourceState::ShaderResource);
-						cmdBuffer.CommitBarriers();
+
+						copyCmdBuffer.End();
+
+						copyCmdBuffer.WaitForExecution(cmdBuffer.GetQueueExecutionInstance(), Render::CommandQueue::Graphics);
+						copyCmdBuffer.Submit();
+
+						cmdBuffer.WaitForExecution(copyCmdBuffer.GetQueueExecutionInstance(), Render::CommandQueue::Copy);
 
 						firstFrameReady = true;
 
@@ -608,15 +584,14 @@ void Application::RenderStartupMedia()
 				vp.width = m_Window->GetWidth();
 				vp.height = m_Window->GetHeight();
 
+				cmdBuffer.Begin();
+
 				cmdBuffer.RequireFramebufferState(m_Window->GetFramebuffer().get(), Render::ResourceState::Present, Render::ResourceState::RenderTarget);
 				cmdBuffer.SetViewport(&vp);
 				cmdBuffer.SetPipeline(&videoPipeline);
 				cmdBuffer.SetFramebuffer(m_Window->GetFramebuffer().get());
 				cmdBuffer.SetTextureResource(surface.get(), 0);
 				cmdBuffer.SetTextureSampler(&sampler, 0);
-
-				cmdBuffer.SetVertexBuffer(fullScreenQuad->GetVertexBuffer(), 0);
-				cmdBuffer.SetIndexBuffer(fullScreenQuad->GetIndexBuffer());
 
 				cmdBuffer.Draw(3, 0);
 
@@ -659,7 +634,6 @@ void Application::RenderStartupMedia()
 		Z_WARN("Failed to open file media/startupvids.txt");
 	}
 }
-
 void Application::InternalUpdate()
 {
 	// TO DO: Move this to main loop

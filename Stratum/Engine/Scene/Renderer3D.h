@@ -60,7 +60,7 @@ public:
 	void SetScene(Scene* scene);
 	void SetViewPose(const ViewPose& pose);
 
-	void PreRender(Scene* scene);
+	void PreRender(Scene* scene, Render::Framebuffer* pOutput);
 	void Render(Scene* scene, Render::Framebuffer* pOutput);
 
 	void BindGraphicsCommonResources(Render::GraphicsCommandBuffer* pCmdBuffer);

@@ -56,6 +56,10 @@ void AudioSourceBase::Seek(uint32_t samplePosition)
 {
 }
 
+void AudioSourceBase::Seek(float timeInSeconds)
+{
+}
+
 uint32_t AudioSourceBase::Position()
 {
 	return 0;
