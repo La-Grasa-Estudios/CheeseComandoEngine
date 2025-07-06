@@ -8,6 +8,9 @@ Goals:
 + Clustered Deferred rendering
 + Async Compute
 
+## Run
+
+Requires atleast a GPU with DirectX 12 drivers, feature level 11.0, shader model 6.5 and resource binding tier 2.
 
 ## Dependencies
 
