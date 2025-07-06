@@ -25,7 +25,7 @@ struct SpriteInstance
 
 cbuffer DrawData : register(b0)
 {
-    uint SpriteIndex;
+    uint BatchIndex;
 };
 
 static const int FLAG_NEAREST = 0x1;
@@ -51,13 +51,13 @@ static const int swlut[6] =
 
 v2f main(in i2v input, in uint vertexID : SV_VertexID)
 {
-    SpriteInstance instance = Instances[input.instanceID];
+    SpriteInstance instance = Instances[input.instanceID + BatchIndex];
     float4 uv = uvLut[vertexID] == 0 ? instance.uv1 : instance.uv2;
     
 	v2f output;
     output.ClipPos = mul(ProjView[instance.userData & 0x1], mul(instance.Transform, float4(float3(input.Position, 0.0), 1.0)));
     output.TexCoord = swlut[vertexID] == 0 ? uv.xy : uv.zw;
-    output.instanceID = input.instanceID;
+    output.instanceID = input.instanceID + BatchIndex;
     
 	return output;
 }

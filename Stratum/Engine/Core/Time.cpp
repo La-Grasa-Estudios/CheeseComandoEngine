@@ -53,6 +53,7 @@ void Time::EndCPU()
 
 void Time::ClearGPU()
 {
+	GPURenderTime = GPUTime;
 	GPUTime = 0.0F;
 }
 

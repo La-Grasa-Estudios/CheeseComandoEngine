@@ -1,26 +1,82 @@
 [ERROR] Failed to mount directory Pak
 [WARNING] No listeners found for event: init_window
 [WARNING] No listeners found for event: init_modules
-[INFO] Radeon RX 580 Series, VRAM: 8135 MB, SHARED: 8127 MB, USED: 0 MB
+[INFO] Radeon RX 580 Series, VRAM: 8135 MB, SHARED: 8125 MB, USED: 0 MB
 [WARNING] No listeners found for event: init_media
 [WARNING] No listeners found for event: late_init
 [WARNING] Failed to open Data/config/startup.cfg
 [WARNING] Failed to open Data/config/autoexec.cfg
 [WARNING] No listeners found for event: post_init
-[WARNING] Frame got 217.509ms over 33ms max!
+[WARNING] Frame got 196.873ms over 33ms max!
 [WARNING] Frame scope
-[INFO] Application::InternalUpdate: 0.008ms
+[INFO] Application::InternalUpdate: 0.000ms
 [INFO] Scene::UpdateTransforms: 0.000ms
 [INFO] Scene::UpdateAnimators: 0.000ms
-[INFO] Scene::Update: 54.199ms
-[INFO] Application::FrameUpdate: 0.301ms
-[INFO] Scene::UpdateVideoPlayers: 0.031ms
-[INFO] Scene::UpdateGuiAnchors: 0.002ms
-[INFO] Scene::UpdateTransforms: 0.010ms
-[INFO] Scene::PostUpdate: 0.046ms
-[INFO] Renderer2D::PreRender: 45.708ms
-[INFO] Renderer2D::Render: 6.266ms
-[INFO] Application::Frame: 110.936ms
+[INFO] Scene::Update: 41.844ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::UpdateVideoPlayers: 0.242ms
+[INFO] Scene::UpdateGuiAnchors: 0.000ms
+[INFO] Scene::UpdateTransforms: 0.007ms
+[INFO] Scene::PostUpdate: 0.251ms
+[INFO] Renderer2D::PreRender: 38.595ms
+[INFO] Renderer2D::Render: 3.949ms
+[INFO] Application::Frame: 111.985ms
+[WARNING] Frame got 162.261ms over 33ms max!
+[WARNING] Frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.016ms
+[INFO] Scene::UpdateAnimators: 0.008ms
+[INFO] Scene::Update: 65.393ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::UpdateVideoPlayers: 0.025ms
+[INFO] Scene::UpdateGuiAnchors: 0.000ms
+[INFO] Scene::UpdateTransforms: 0.084ms
+[INFO] Scene::PostUpdate: 0.116ms
+[INFO] Renderer2D::PreRender: 11.413ms
+[INFO] Renderer2D::Render: 0.234ms
+[INFO] Application::Frame: 84.972ms
+[WARNING] Frame got 45.563ms over 33ms max!
+[WARNING] Frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.036ms
+[INFO] Scene::UpdateAnimators: 0.014ms
+[INFO] Scene::Update: 0.148ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::UpdateVideoPlayers: 10.552ms
+[INFO] Scene::UpdateGuiAnchors: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.450ms
+[INFO] Scene::PostUpdate: 11.017ms
+[INFO] Renderer2D::PreRender: 0.713ms
+[INFO] Renderer2D::Render: 0.981ms
+[INFO] Application::Frame: 21.650ms
+[WARNING] Frame got 37.025ms over 33ms max!
+[WARNING] Frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.042ms
+[INFO] Scene::UpdateAnimators: 0.018ms
+[INFO] Scene::Update: 0.164ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::UpdateVideoPlayers: 8.939ms
+[INFO] Scene::UpdateGuiAnchors: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.300ms
+[INFO] Scene::PostUpdate: 9.259ms
+[INFO] Renderer2D::PreRender: 0.652ms
+[INFO] Renderer2D::Render: 0.505ms
+[INFO] Application::Frame: 17.145ms
+[WARNING] Frame got 34.936ms over 33ms max!
+[WARNING] Frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.045ms
+[INFO] Scene::UpdateAnimators: 0.018ms
+[INFO] Scene::Update: 0.149ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::UpdateVideoPlayers: 8.337ms
+[INFO] Scene::UpdateGuiAnchors: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.237ms
+[INFO] Scene::PostUpdate: 8.589ms
+[INFO] Renderer2D::PreRender: 0.453ms
+[INFO] Renderer2D::Render: 0.651ms
+[INFO] Application::Frame: 16.455ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Oh,, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Oh, yeah,, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Oh, yeah, come on, .
@@ -28,99 +84,192 @@
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Oh, yeah, come on TOOTHLESS! Toohless!, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring What happend there?, .
+[WARNING] Frame got 35.940ms over 33ms max!
+[WARNING] Frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.040ms
+[INFO] Scene::UpdateAnimators: 0.015ms
+[INFO] Scene::Update: 0.133ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::UpdateVideoPlayers: 8.506ms
+[INFO] Scene::UpdateGuiAnchors: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.369ms
+[INFO] Scene::PostUpdate: 8.889ms
+[INFO] Renderer2D::PreRender: 0.514ms
+[INFO] Renderer2D::Render: 0.752ms
+[INFO] Application::Frame: 16.719ms
+[WARNING] Frame got 37.023ms over 33ms max!
+[WARNING] Frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.035ms
+[INFO] Scene::UpdateAnimators: 0.014ms
+[INFO] Scene::Update: 0.146ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::UpdateVideoPlayers: 9.065ms
+[INFO] Scene::UpdateGuiAnchors: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.341ms
+[INFO] Scene::PostUpdate: 9.420ms
+[INFO] Renderer2D::PreRender: 0.533ms
+[INFO] Renderer2D::Render: 0.505ms
+[INFO] Application::Frame: 16.963ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Let's see,, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Let's see, come on., .
+[WARNING] Frame got 43.453ms over 33ms max!
+[WARNING] Frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.034ms
+[INFO] Scene::UpdateAnimators: 0.015ms
+[INFO] Scene::Update: 0.127ms
+[INFO] Application::FrameUpdate: 0.001ms
+[INFO] Scene::UpdateVideoPlayers: 10.027ms
+[INFO] Scene::UpdateGuiAnchors: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.340ms
+[INFO] Scene::PostUpdate: 10.382ms
+[INFO] Renderer2D::PreRender: 0.604ms
+[INFO] Renderer2D::Render: 0.803ms
+[INFO] Application::Frame: 21.118ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Let's see, come on. it's coming down., .
+[WARNING] Frame got 34.404ms over 33ms max!
+[WARNING] Frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.032ms
+[INFO] Scene::UpdateAnimators: 0.015ms
+[INFO] Scene::Update: 0.152ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::UpdateVideoPlayers: 8.469ms
+[INFO] Scene::UpdateGuiAnchors: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.233ms
+[INFO] Scene::PostUpdate: 8.716ms
+[INFO] Renderer2D::PreRender: 0.441ms
+[INFO] Renderer2D::Render: 0.500ms
+[INFO] Application::Frame: 15.845ms
+[WARNING] Frame got 38.146ms over 33ms max!
+[WARNING] Frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.051ms
+[INFO] Scene::UpdateAnimators: 0.019ms
+[INFO] Scene::Update: 0.179ms
+[INFO] Application::FrameUpdate: 0.001ms
+[INFO] Scene::UpdateVideoPlayers: 9.331ms
+[INFO] Scene::UpdateGuiAnchors: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.247ms
+[INFO] Scene::PostUpdate: 9.599ms
+[INFO] Renderer2D::PreRender: 0.535ms
+[INFO] Renderer2D::Render: 0.672ms
+[INFO] Application::Frame: 17.510ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Perfect., .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring Perfect. Perfect., .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
+[WARNING] Frame got 37.693ms over 33ms max!
+[WARNING] Frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.040ms
+[INFO] Scene::UpdateAnimators: 0.014ms
+[INFO] Scene::Update: 0.135ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::UpdateVideoPlayers: 9.035ms
+[INFO] Scene::UpdateGuiAnchors: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.245ms
+[INFO] Scene::PostUpdate: 9.296ms
+[INFO] Renderer2D::PreRender: 0.553ms
+[INFO] Renderer2D::Render: 0.803ms
+[INFO] Application::Frame: 17.569ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring See,, .
+[WARNING] Frame got 41.324ms over 33ms max!
+[WARNING] Frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.038ms
+[INFO] Scene::UpdateAnimators: 0.015ms
+[INFO] Scene::Update: 0.150ms
+[INFO] Application::FrameUpdate: 0.001ms
+[INFO] Scene::UpdateVideoPlayers: 10.467ms
+[INFO] Scene::UpdateGuiAnchors: 0.002ms
+[INFO] Scene::UpdateTransforms: 0.325ms
+[INFO] Scene::PostUpdate: 10.808ms
+[INFO] Renderer2D::PreRender: 0.427ms
+[INFO] Renderer2D::Render: 0.512ms
+[INFO] Application::Frame: 18.579ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring See, no,, .
+[WARNING] Frame got 40.475ms over 33ms max!
+[WARNING] Frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.035ms
+[INFO] Scene::UpdateAnimators: 0.015ms
+[INFO] Scene::Update: 0.140ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::UpdateVideoPlayers: 10.337ms
+[INFO] Scene::UpdateGuiAnchors: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.222ms
+[INFO] Scene::PostUpdate: 10.574ms
+[INFO] Renderer2D::PreRender: 0.468ms
+[INFO] Renderer2D::Render: 0.682ms
+[INFO] Application::Frame: 18.001ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring See, no, no., .
+[WARNING] Frame got 36.338ms over 33ms max!
+[WARNING] Frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.036ms
+[INFO] Scene::UpdateAnimators: 0.015ms
+[INFO] Scene::Update: 0.128ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::UpdateVideoPlayers: 9.506ms
+[INFO] Scene::UpdateGuiAnchors: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.180ms
+[INFO] Scene::PostUpdate: 9.699ms
+[INFO] Renderer2D::PreRender: 0.323ms
+[INFO] Renderer2D::Render: 0.353ms
+[INFO] Application::Frame: 16.098ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring See, no, no. Let's see., .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring If I catch the mushroom I become super strong and destroy everything,, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring If I catch the mushroom I become super strong and destroy everything, I imagine., .
+[WARNING] Frame got 36.848ms over 33ms max!
+[WARNING] Frame scope
+[INFO] Application::InternalUpdate: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.038ms
+[INFO] Scene::UpdateAnimators: 0.015ms
+[INFO] Scene::Update: 0.132ms
+[INFO] Application::FrameUpdate: 0.000ms
+[INFO] Scene::UpdateVideoPlayers: 9.095ms
+[INFO] Scene::UpdateGuiAnchors: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.211ms
+[INFO] Scene::PostUpdate: 9.321ms
+[INFO] Renderer2D::PreRender: 0.472ms
+[INFO] Renderer2D::Render: 0.621ms
+[INFO] Application::Frame: 16.940ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring See., .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring AAHHHHH!, .
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring [Music], .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring Perfect., .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring WHAAAT?, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring I , .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring I can't,, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring I can't, dammint, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby,, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby, repeat, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby, repeat after, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring Baby, repeat after me, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring we, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring we can, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring we can not, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring (we can not), .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring we, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring we can, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring we can not, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring (we can not), .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring , .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring Hello!, .
-[WARNING] Frame got 53.593ms over 33ms max!
+[WARNING] Frame got 113.709ms over 33ms max!
 [WARNING] Frame scope
-[INFO] Application::InternalUpdate: 0.001ms
-[INFO] Scene::UpdateTransforms: 0.010ms
-[INFO] Scene::UpdateAnimators: 0.005ms
-[INFO] Scene::Update: 0.032ms
-[INFO] Application::FrameUpdate: 0.000ms
-[INFO] Scene::UpdateVideoPlayers: 0.031ms
-[INFO] Scene::UpdateGuiAnchors: 0.000ms
-[INFO] Scene::UpdateTransforms: 0.042ms
-[INFO] Scene::PostUpdate: 0.077ms
-[INFO] Renderer2D::PreRender: 23.155ms
-[INFO] Renderer2D::Render: 3.027ms
-[INFO] Application::Frame: 27.213ms
-[WARNING] Frame got 37.488ms over 33ms max!
-[WARNING] Frame scope
-[INFO] Application::InternalUpdate: 0.002ms
-[INFO] Scene::UpdateTransforms: 0.010ms
-[INFO] Scene::UpdateAnimators: 0.005ms
-[INFO] Scene::Update: 0.031ms
+[INFO] Application::InternalUpdate: 0.000ms
+[INFO] Scene::UpdateTransforms: 0.014ms
+[INFO] Scene::UpdateAnimators: 0.006ms
+[INFO] Scene::Update: 0.048ms
 [INFO] Application::FrameUpdate: 0.000ms
 [INFO] Scene::UpdateVideoPlayers: 0.019ms
-[INFO] Scene::UpdateGuiAnchors: 0.000ms
-[INFO] Scene::UpdateTransforms: 0.041ms
-[INFO] Scene::PostUpdate: 0.064ms
-[INFO] Renderer2D::PreRender: 0.086ms
-[INFO] Renderer2D::Render: 0.146ms
-[INFO] Application::Frame: 37.084ms
-[WARNING] Frame got 82.426ms over 33ms max!
+[INFO] Scene::UpdateGuiAnchors: 0.001ms
+[INFO] Scene::UpdateTransforms: 0.061ms
+[INFO] Scene::PostUpdate: 0.190ms
+[INFO] Renderer2D::PreRender: 2.051ms
+[INFO] Renderer2D::Render: 0.305ms
+[INFO] Application::Frame: 111.016ms
+[WARNING] Frame got 111.027ms over 33ms max!
 [WARNING] Frame scope
 [INFO] Application::InternalUpdate: 0.001ms
-[INFO] Scene::UpdateTransforms: 0.004ms
-[INFO] Scene::UpdateAnimators: 0.004ms
-[INFO] Scene::Update: 0.019ms
+[INFO] Scene::UpdateTransforms: 0.021ms
+[INFO] Scene::UpdateAnimators: 0.010ms
+[INFO] Scene::Update: 0.086ms
 [INFO] Application::FrameUpdate: 0.000ms
-[INFO] Scene::UpdateVideoPlayers: 0.014ms
-[INFO] Scene::UpdateGuiAnchors: 0.001ms
-[INFO] Scene::UpdateTransforms: 0.034ms
-[INFO] Scene::PostUpdate: 0.050ms
-[INFO] Renderer2D::PreRender: 0.064ms
-[INFO] Renderer2D::Render: 0.097ms
-[INFO] Application::Frame: 82.137ms
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring Eh,, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring Eh, Eh,, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring Eh, Eh, don't, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring Eh, Eh, don't listen him, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring Eh, Eh, don't listen him, he, .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring Eh, Eh, don't listen him, he doesn't know he is saying., .
-[WARNING] Event: [Subtitles] has not handlers registered! ignoring Let's go!, .
+[INFO] Scene::UpdateVideoPlayers: 0.032ms
+[INFO] Scene::UpdateGuiAnchors: 0.000ms
+[INFO] Scene::UpdateTransforms: 0.066ms
+[INFO] Scene::PostUpdate: 0.105ms
+[INFO] Renderer2D::PreRender: 2.136ms
+[INFO] Renderer2D::Render: 0.253ms
+[INFO] Application::Frame: 108.316ms
 [WARNING] Event: [Subtitles] has not handlers registered! ignoring , .

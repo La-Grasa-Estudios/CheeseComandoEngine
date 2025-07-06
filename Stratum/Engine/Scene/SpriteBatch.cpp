@@ -14,37 +14,74 @@ SpriteBatch::SpriteBatch(SceneResources* pResources)
 
 	const glm::vec2 size = glm::vec2(1.0f);
 
-	float quadVertices[12] = {
+	{
+		float quadVertices[12] = {
+		0.0f, 0.0f, // (0,0) = 0
+		0.0f, -size.y, // (0,1) = 1
+		 size.x, -size.y, // (1,1) = 2
+		0.0f, 0.0f, // (0,0) = 3
+		 size.x, -size.y, // (1,1) = 4
+		 size.x, 0.0f, // (1,0) = 5
+		};
+
+		Render::BufferDescription quadDesc{};
+
+		quadDesc.Immutable = true;
+		quadDesc.Size = sizeof(quadVertices);
+		quadDesc.pSysMem = quadVertices;
+		quadDesc.Type = Render::BufferType::VERTEX_BUFFER;
+
+		mVbTextQuad = CreateRef<Render::Buffer>(quadDesc);
+		mTextVbView = CreateRef<Render::VertexBuffer>(mVbTextQuad.get());
+	}
+
+	{
+		float quadVertices[12] = {
 		-size.x, size.y, // (0,0) = 0
 		-size.x, -size.y, // (0,1) = 1
-		 size.x, - size.y, // (1,1) = 2
+		 size.x, -size.y, // (1,1) = 2
 		-size.x, size.y, // (0,0) = 3
 		 size.x, -size.y, // (1,1) = 4
-	     size.x, size.y, // (1,0) = 5
-	};
+		 size.x, size.y, // (1,0) = 5
+		};
 
-	// It took soo much time to get this right in HLSL land
-	// This sheet here helped me a lot to understand which corners are what uvs
-	// (0,0) = 0, 0
-	// (0,1) = 0, 1
-	// (1,0) = 1, 0
-	// (1,1) = 1, 1
+		// It took soo much time to get this right in HLSL land
+		// This sheet here helped me a lot to understand which corners are what uvs
+		// (0,0) = 0, 0
+		// (0,1) = 0, 1
+		// (1,0) = 1, 0
+		// (1,1) = 1, 1
 
-	Render::BufferDescription quadDesc{};
+		Render::BufferDescription quadDesc{};
 
-	quadDesc.Immutable = true;
-	quadDesc.Size = sizeof(quadVertices);
-	quadDesc.pSysMem = quadVertices;
-	quadDesc.Type = Render::BufferType::VERTEX_BUFFER;
+		quadDesc.Immutable = true;
+		quadDesc.Size = sizeof(quadVertices);
+		quadDesc.pSysMem = quadVertices;
+		quadDesc.Type = Render::BufferType::VERTEX_BUFFER;
 
-	mVbFlatQuad = CreateRef<Render::Buffer>(quadDesc);
-	mVbView = CreateRef<Render::VertexBuffer>(mVbFlatQuad.get());
+		mVbFlatQuad = CreateRef<Render::Buffer>(quadDesc);
+		mVbView = CreateRef<Render::VertexBuffer>(mVbFlatQuad.get());
+	}
 
 }
 
 void SpriteBatch::Begin()
 {
-	mRenderQueue.clear();
+	mBatches.clear();
+
+	SetBatch(nullptr, BatchType::UNDEFINED);
+}
+
+void SpriteBatch::SetBatch(Render::GraphicsPipeline* pConfig, BatchType batchType)
+{
+	if (mCurrentBatch.Type == batchType)
+		return;
+	if (mCurrentBatch.Type != BatchType::UNDEFINED)
+		EndBatch();
+	mCurrentBatch.Type = batchType;
+	if (pConfig)
+		mCurrentBatch.Pipeline = pConfig;
+	mCurrentBatch.RenderQueue.clear();
 }
 
 void SpriteBatch::DrawSprite(const SpriteInstance& instance)
@@ -110,32 +147,74 @@ void SpriteBatch::DrawSprite(const SpriteInstance& instance)
 		renderable.flags |= FLAG_SPRITE_NEAREST;
 	}
 
-	mRenderQueue.push_back(renderable);
+	mCurrentBatch.RenderQueue.push_back(renderable);
 
 }
 
 void SpriteBatch::Render(Render::GraphicsCommandBuffer* pCmdBuffer)
 {
-	if (mRenderQueue.empty()) // No need to render if there isn't anything in the queue
+	if (mBatches.empty()) // No need to render if there isn't anything in the queue
 		return;
 
-	pCmdBuffer->ClearVertexBuffers();
-	pCmdBuffer->SetVertexBuffer(mVbView.get(), 0);
+	uint32_t batchOffset = 0;
+
 	pCmdBuffer->SetBufferResource(mSpriteBuffer.GetPointer(), 10);
 
-	// Now all stuff is rendered in one single drawcall
-	// NonUniformResourceIndex is required to avoid artifacts on some gpus
-	pCmdBuffer->DrawInstanced(6, 0, mRenderQueue.size(), 0);
+	for (uint32_t i = 0; i < mBatches.size(); i++)
+	{
+		auto& batch = mBatches[i];
+
+		if (i > 0)
+		{
+			if (batch.Pipeline != mCurrentBatch.Pipeline)
+			{
+				pCmdBuffer->SetPipeline(batch.Pipeline);
+			}
+		}
+		else
+		{
+			pCmdBuffer->SetPipeline(batch.Pipeline);
+		}
+
+		pCmdBuffer->ClearVertexBuffers();
+
+		switch (batch.Type)
+		{
+		case BatchType::SPRITE:
+			pCmdBuffer->SetVertexBuffer(mVbView.get(), 0);
+			break;
+		default:
+			pCmdBuffer->SetVertexBuffer(mTextVbView.get(), 0);
+			break;
+		}
+
+		// Now a batch is rendered in one single drawcall
+		// NonUniformResourceIndex is required to avoid artifacts on some gpus
+		pCmdBuffer->PushConstants(&batchOffset, sizeof(uint32_t));
+		pCmdBuffer->DrawInstanced(6, 0, batch.RenderQueue.size(), 0);
+
+		batchOffset += batch.RenderQueue.size();
+	}
 }
 
 void SpriteBatch::End(Render::CopyCommandBuffer* pCmdBuffer)
 {
-	if (mRenderQueue.empty()) // No need to render if there isn't anything in the queue
+	EndBatch();
+	mCurrentBatch.Pipeline = NULL;
+
+	if (mBatches.empty()) // No need to render if there isn't anything in the queue
 		return;
 
-	if (mSpriteBufferSize < mRenderQueue.size())
+	size_t RenderSize = 0;
+
+	for (uint32_t i = 0; i < mBatches.size(); i++)
 	{
-		mSpriteBufferSize = mRenderQueue.size();
+		RenderSize += mBatches[i].RenderQueue.size();
+	}
+
+	if (mSpriteBufferSize < RenderSize)
+	{
+		mSpriteBufferSize = RenderSize;
 		Render::BufferDescription desc{};
 		desc.Size = mSpriteBufferSize * sizeof(SpriteRenderable);
 		desc.Type = Render::BufferType::STORAGE;
@@ -145,10 +224,39 @@ void SpriteBatch::End(Render::CopyCommandBuffer* pCmdBuffer)
 		mSpriteBuffer = CopySafeResource<Render::Buffer>(desc);
 	}
 
-	pCmdBuffer->GetNativeCommandList()->writeBuffer(mSpriteBuffer->Handle, mRenderQueue.data(), mRenderQueue.size() * sizeof(SpriteRenderable), 0);
+	uint32_t batchOffset = 0;
+
+	for (uint32_t i = 0; i < mBatches.size(); i++)
+	{
+		pCmdBuffer->GetNativeCommandList()->writeBuffer(mSpriteBuffer->Handle, mBatches[i].RenderQueue.data(), mBatches[i].RenderQueue.size() * sizeof(SpriteRenderable), batchOffset * sizeof(SpriteRenderable));
+		batchOffset += mBatches[i].RenderQueue.size();
+	}
+
 }
 
 void SpriteBatch::SetResources(SceneResources* pRsc)
 {
 	mResources = pRsc; // This used to crash when changing scenes, my bad since i didn't test scene changing until 3 years after i started developing this branch of the engine, now it works and is very fast (<0.5ms) :D
+}
+
+void SpriteBatch::EndBatch()
+{
+	if (mCurrentBatch.Pipeline && !mCurrentBatch.RenderQueue.empty())
+	{
+		mBatches.push_back(mCurrentBatch);
+	}
+}
+
+SpriteBatch::Batch::Batch(const Batch& other)
+{
+	RenderQueue = std::move(other.RenderQueue);
+	Type = other.Type;
+	Pipeline = other.Pipeline;
+}
+
+SpriteBatch::Batch::Batch(Batch&& other)
+{
+	RenderQueue = std::move(other.RenderQueue);
+	Type = other.Type;
+	Pipeline = other.Pipeline;
 }

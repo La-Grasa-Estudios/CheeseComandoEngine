@@ -14,7 +14,17 @@ namespace Render
 	class CopyCommandBuffer;
 	class Buffer;
 	class VertexBuffer;
+	class GraphicsPipeline;
 }
+
+enum class BatchType
+{
+	UNDEFINED,
+	SPRITE,
+	TEXT,
+	SHAPE,
+	IMAGE,
+};
 
 class SpriteBatch
 {
@@ -38,6 +48,7 @@ public:
 	SpriteBatch(SceneResources* pResources);
 
 	void Begin();
+	void SetBatch(Render::GraphicsPipeline* pConfig, BatchType batchType);
 	void DrawSprite(const SpriteInstance& instance);
 	void End(Render::CopyCommandBuffer* pCmdBuffer);
 	void Render(Render::GraphicsCommandBuffer* pCmdBuffer);
@@ -57,16 +68,36 @@ public:
 
 private:
 
+	struct Batch
+	{
+		BatchType Type;
+		Render::GraphicsPipeline* Pipeline;
+		std::vector<SpriteRenderable> RenderQueue;
+
+		Batch() = default;
+		Batch(const Batch& other);
+		Batch(Batch&& other);
+	};
+
+	void EndBatch();
+
 	static inline const uint32_t FLAG_SPRITE_NEAREST = 1 << 0;
 
-	std::vector<SpriteRenderable> mRenderQueue;
+	std::vector<Batch> mBatches;
 
 	size_t mSpriteBufferSize = 0;
 	CopySafeResource<Render::Buffer> mSpriteBuffer;
+
+	Ref<Render::Buffer> mVbTextQuad;
+	Ref<Render::VertexBuffer> mTextVbView;
+
 	Ref<Render::Buffer> mVbFlatQuad;
 	Ref<Render::VertexBuffer> mVbView;
 
 	SceneResources* mResources;
+
+	Batch mCurrentBatch;
+
 
 };
 

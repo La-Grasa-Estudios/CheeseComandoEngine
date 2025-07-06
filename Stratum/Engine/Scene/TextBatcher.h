@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TextRenderer.h"
+#include "SpriteBatch.h"
 
 BEGIN_ENGINE
 
@@ -26,20 +26,17 @@ class TextBatcher
 {
 public:
 
-	TextBatcher(Font* font, SceneResources* resources);
+	TextBatcher(Font* font, SpriteBatch* batch);
 	~TextBatcher();
 
 	void SetParameters(const TextBatcherParameters& parameters);
 
-	void Begin();
 	void DrawText(const std::wstring& text, const glm::vec2& position, const glm::mat4& model);
-	void End(Render::CopyCommandBuffer* pCmdBuffer);
-	void Render(Render::GraphicsCommandBuffer* pCmdBuffer);
 	glm::vec2 GetStringSize(const std::wstring& text) const;
 
 private:
 
-	TextRenderer* mBatch;
+	SpriteBatch* mBatch;
 	Font* mFont;
 	TextBatcherParameters mParameters;
 };

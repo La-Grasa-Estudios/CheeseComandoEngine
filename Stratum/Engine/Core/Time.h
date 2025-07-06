@@ -18,6 +18,7 @@ public:
 	inline static float FixedDeltaTime = 1.0F / 50.0F;
 
 	inline static float CPUTime = 0.0F;
+	inline static float GPURenderTime = 0.0F;
 	inline static std::atomic<float> GPUTime = 0.0F;
 	inline static float UpdateTime = 0.0F;
 

@@ -4,37 +4,20 @@
 
 using namespace ENGINE_NAMESPACE;
 
-TextBatcher::TextBatcher(Font* font, SceneResources* resources)
+TextBatcher::TextBatcher(Font* font, SpriteBatch* batch)
 {
 	mFont = font;
-	mBatch = new TextRenderer(resources);
+	mBatch = batch;
 }
 
 TextBatcher::~TextBatcher()
 {
-	delete mBatch;
+	
 }
 
 void TextBatcher::SetParameters(const TextBatcherParameters& parameters)
 {
 	mParameters = parameters;
-}
-
-void TextBatcher::Begin()
-{
-	mBatch->Begin();
-}
-
-void TextBatcher::End(Render::CopyCommandBuffer* pCmdBuffer)
-{
-	mBatch->End(pCmdBuffer);
-}
-
-void TextBatcher::Render(Render::GraphicsCommandBuffer* pCmdBuffer)
-{
-	if (!mBatch)
-		return;
-	mBatch->Render(pCmdBuffer);
 }
 
 void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, const glm::mat4& model)
@@ -107,7 +90,7 @@ void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, 
 
 			if (glyph)
 			{
-				TextRenderer::SpriteInstance instance{};
+				SpriteBatch::SpriteInstance instance{};
 
 				glm::mat4 model1 = glm::identity<glm::mat4>();
 
@@ -125,11 +108,12 @@ void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, 
 				instance.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 				instance.transform = glm::translate(glm::identity<glm::mat4>(), pos);
 				instance.UserData = (2 << 1);
+				instance.scaleWithRenderSize = false;
 
-				TextRenderer::SpriteInstance instance2 = instance;
+				SpriteBatch::SpriteInstance instance2 = instance;
 
 				instance2.color = glm::vec4(0.25f, 0.25f, 0.25f, 1.0f);
-				instance2.transform = glm::translate(instance.transform, glm::vec3(mParameters.fontSize / 12.0f, -mParameters.fontSize / 12.0f, 0.0f));
+				instance2.transform = glm::translate(instance.transform, glm::vec3(mParameters.fontSize / 16.0f, -mParameters.fontSize / 16.0f, 0.0f));
 
 				mBatch->DrawSprite(instance2);
 				mBatch->DrawSprite(instance);
@@ -145,7 +129,7 @@ void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, 
 
 		if (termination == ' ')
 		{
-			coords.x += 16 * scale;
+			coords.x += 12 * scale;
 		}
 
 		if ((coords.x > mParameters.maxWidth && mParameters.wrapText) || termination == L'\n')

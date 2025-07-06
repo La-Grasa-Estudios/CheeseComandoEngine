@@ -70,7 +70,7 @@ Font::Font(const std::string_view& path)
     std::vector<char*> glyphData;
     std::vector<int> charIndexes;
 
-    for (int i = 0; i < 0xFFFF; i++) {
+    for (int i = 0; i < 0x01FF; i++) {
         if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
             fprintf(stderr, "Loading character %c failed!\n", i);
             continue;

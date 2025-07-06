@@ -295,6 +295,7 @@
     <ClInclude Include="Engine\Util\ShaderReflection.h" />
     <ClInclude Include="Engine\Util\StackAllocator.h" />
     <ClInclude Include="Engine\Util\StaticAllocator.h" />
+    <ClInclude Include="Engine\Util\StrUtil.h" />
     <ClInclude Include="Engine\Util\ThreadSafeResource.h" />
     <ClInclude Include="Engine\Util\VoidPtr.h" />
     <ClInclude Include="Engine\VFS\AssetPack.h" />
@@ -444,6 +445,7 @@
     <ClCompile Include="Engine\Thirdparty\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Engine\Util\Globals.cpp" />
     <ClCompile Include="Engine\Util\PathUtils.cpp" />
+    <ClCompile Include="Engine\Util\StrUtil.cpp" />
     <ClCompile Include="Engine\VFS\AssetPack.cpp" />
     <ClCompile Include="Engine\VFS\bc7\Bc7Compress.cpp" />
     <ClCompile Include="Engine\VFS\bc7\Bc7Core.cpp" />

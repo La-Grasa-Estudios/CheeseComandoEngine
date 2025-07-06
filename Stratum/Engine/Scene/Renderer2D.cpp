@@ -7,6 +7,7 @@
 #include <Core/EngineStats.h>
 #include <Core/Time.h>
 #include <Font/Font.h>
+#include <Util/StrUtil.h>
 
 #include "SpriteBatch.h"
 #include "TextBatcher.h"
@@ -19,7 +20,6 @@ using namespace ENGINE_NAMESPACE;
 
 Render::PostProcessingStack* pStack;
 Font* font = NULL;
-TextBatcher* pTextRenderer;
 Scene* currentRenderScene;
 
 Renderer2D::Renderer2D()
@@ -227,6 +227,15 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 	JobManager::Wait();
 
 	mSpriteBatch->Begin();
+	mSpriteBatch->SetBatch(mMainPipeline.get(), BatchType::SPRITE);
+
+	TextBatcher textRenderer(font, mSpriteBatch.get());
+	TextBatcherParameters parameters;
+	parameters.maxWidth = 800.0f;
+	parameters.wrapText = false;
+	parameters.fontSize = 64.0f;
+	parameters.lineHeight = 1.2f;
+	textRenderer.SetParameters(parameters);
 
 	for (int j = 0; j < mRenderQueue.instances.size(); j++)
 	{
@@ -236,6 +245,8 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 
 		mSpriteBatch->DrawSprite(instance.batch);
 	}
+
+	mSpriteBatch->SetBatch(mMainPipeline.get(), BatchType::SPRITE);
 
 	for (int j = 0; j < mGuiRenderQueue.instances.size(); j++)
 	{
@@ -251,29 +262,20 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 		scene->Resources.CreateFontImage(font);
 	}
 
-	if (currentRenderScene != scene)
-	{
-		if (pTextRenderer)
-		{
-			delete pTextRenderer;
-		}
-		pTextRenderer = new TextBatcher(font, &scene->Resources);
-	}
-
 	currentRenderScene = scene;
-
-	TextBatcherParameters parameters;
-	parameters.maxWidth = 800.0f;
-	parameters.wrapText = false;
-	parameters.fontSize = 64.0f;
 
 	glm::vec2 scaling = scene->VirtualScreenSize / glm::vec2(pOutput->GetSize());
 
-	pTextRenderer->SetParameters(parameters);
+	auto gd = Render::RendererContext::s_Context->GetGraphicsDeviceProperties();
+	auto baseString = std::wstring(L"Stratum Engine {}, {}\nFPS: {} CPU: {:.2f}ms GPU: {:.2f}ms\n{} - {}/{}MB\n");
 
-	pTextRenderer->Begin();
-	//batcher.DrawText(L"Hello World! This is a test of the text rendering system in Stratum Engine. It should wrap correctly and display the text properly.",
-	pTextRenderer->DrawText(std::format(L"Stratum Engine\nFPS: {}", (int)(1.0f / Time::DeltaTime)),
+	mSpriteBatch->SetBatch(nullptr, BatchType::TEXT);
+
+	textRenderer.DrawText(Utils::FormatString(baseString, L"" __DATE__, L"" __TIME__,
+		(int)(1.0f / Time::DeltaTime), Time::DeltaTime * 1000.0f, Time::GPURenderTime * 1000.0f,
+		Utils::ToWideString(gd.Description).c_str(),
+		(int)(gd.UsedVideoMemory / 1024.0f / 1024.0f),
+		gd.DedicatedVideoMemory / 1024 / 1024),
 		glm::vec2(-VirtualScreenSize.x + 20, VirtualScreenSize.y - 64), glm::identity<glm::mat4>());
 
 	glm::mat4 matrices[2];
@@ -306,7 +308,6 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 
 	mCopyCmdBuffer->UpdateConstantBuffer(mPerFrameData.get(), matrices);
 	mSpriteBatch->End(mCopyCmdBuffer.get());
-	pTextRenderer->End(mCopyCmdBuffer.get());
 
 	mCopyCmdBuffer->End();
 
@@ -334,14 +335,12 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 	mCmdBuffer->SetFramebuffer(mMainRenderTarget.get());
 	mCmdBuffer->SetViewport(&viewport);
 
-	mCmdBuffer->SetPipeline(mMainPipeline.get());
 	mCmdBuffer->SetConstantBuffer(mPerFrameData.get(), 1);
 	mCmdBuffer->SetTextureSampler(mBilinearSampler.get(), 0);
 	mCmdBuffer->SetTextureSampler(mNearestSampler.get(), 1);
 	mCmdBuffer->SetBindlessDescriptorTable(scene->BindlessTable);
 
 	mSpriteBatch->Render(mCmdBuffer.get());
-	pTextRenderer->Render(mCmdBuffer.get());
 
 	Render::PostProcessingParameters params{};
 
