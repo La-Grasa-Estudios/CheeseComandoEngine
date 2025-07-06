@@ -18,7 +18,7 @@ bool g_IsMouseGrabbed = false;
 
 bool BaseInputLayer::SetKey(int key, bool press)
 {
-	Input::m_NextKeys[key] = press;
+	Input::m_Keys[key] = press;
 	return true;
 }
 
@@ -27,13 +27,17 @@ bool BaseInputLayer::SetMouse(int click, bool press)
 	int button = click;
 	if (button == 1) button = 0;
 	if (button == 3) button = 1;
-	Input::m_NextMouse[button] = press;
+	Input::m_Mouse[button] = press;
 	return true;
 }
 
 bool BaseInputLayer::SetGamepad(int button, bool press)
 {
 	Input::m_GamePadButtons[button] = press;
+	if (press)
+	{
+		Z_INFO("Gpad button {} last {}", Input::m_GamePadButtons[button], Input::m_LastGamePadButtons[button]);
+	}
 	return true;
 }
 
@@ -208,14 +212,15 @@ void Input::PopInputLayer()
 void Input::Update()
 {
 	memcpy(m_LastKeys, m_Keys, sizeof(m_Keys));
-	memcpy(m_Keys, m_NextKeys, sizeof(m_Keys));
+	//memcpy(m_Keys, m_NextKeys, sizeof(m_Keys));
 
 	memcpy(m_LastMouse, m_Mouse, sizeof(m_Mouse));
-	memcpy(m_Mouse, m_NextMouse, sizeof(m_Mouse));
+	//memcpy(m_Mouse, m_NextMouse, sizeof(m_Mouse));
 
 	memcpy(m_LastGamePadButtons, m_GamePadButtons, sizeof(m_GamePadButtons));
 
 	m_AnyKeyDown = false;
+	m_AnyGamepadDown = false;
 
 	for (int i = 0; i < 1000 && !m_AnyKeyDown; i++)
 	{
@@ -227,6 +232,7 @@ void Input::Update()
 	for (int i = 0; i < MAX_BUTTONS && !m_AnyKeyDown; i++)
 	{
 		m_AnyKeyDown |= m_GamePadButtons[i];
+		m_AnyGamepadDown |= m_GamePadButtons[i];
 	}
 
 	glm::vec2 mousePos = GetMousePosition();

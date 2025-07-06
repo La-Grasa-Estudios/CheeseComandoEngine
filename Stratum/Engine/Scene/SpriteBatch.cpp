@@ -53,6 +53,11 @@ void SpriteBatch::DrawSprite(const SpriteInstance& instance)
 
 	glm::vec2 scaleFactor = glm::vec2(instance.rect.size) / glm::vec2(instance.RenderSize);
 
+	if (!instance.scaleWithRenderSize)
+	{
+		scaleFactor = glm::vec2(1.0f, 1.0f);
+	}
+
 	glm::vec2 pivotOffset = glm::vec2(instance.offset) / glm::vec2(instance.RenderSize);
 
 	auto spriteTransform = glm::identity<glm::mat4>();

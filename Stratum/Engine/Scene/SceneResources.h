@@ -21,6 +21,8 @@ namespace Render
 	class ImageResource;
 }
 
+class Font;
+
 typedef int32_t DescriptorHandle;
 
 class SceneResources
@@ -54,6 +56,8 @@ public:
 
 	DescriptorHandle LoadTextureImage(const std::string& path);
 	Render::BindlessDescriptorIndex CreateTextureImage(const Render::ImageDescription& desc);
+	Render::BindlessDescriptorIndex CreateFontImage(Font* font);
+
 	Render::ImageResource* GetImageHandle(const DescriptorHandle handle);
 
 	void ReleaseImage(Render::BindlessDescriptorIndex handle);

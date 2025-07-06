@@ -133,7 +133,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -263,6 +263,8 @@
     <ClInclude Include="Engine\Scene\Scene.h" />
     <ClInclude Include="Engine\Scene\SceneResources.h" />
     <ClInclude Include="Engine\Scene\SpriteBatch.h" />
+    <ClInclude Include="Engine\Scene\TextBatcher.h" />
+    <ClInclude Include="Engine\Scene\TextRenderer.h" />
     <ClInclude Include="Engine\Sound\adpcm-lib\adpcm.h" />
     <ClInclude Include="Engine\Sound\adpcm-lib\wave.h" />
     <ClInclude Include="Engine\Sound\AudioEngine.h" />
@@ -377,6 +379,7 @@
     <ClCompile Include="Engine\Entity\Components.cpp" />
     <ClCompile Include="Engine\Entity\EntityManager.cpp" />
     <ClCompile Include="Engine\Event\EventHandler.cpp" />
+    <ClCompile Include="Engine\Font\Font.cpp" />
     <ClCompile Include="Engine\Input\Input.cpp" />
     <ClCompile Include="Engine\Media\VideoDecode.cpp" />
     <ClCompile Include="Engine\Renderer\BindlessDescriptorIndex.cpp" />
@@ -419,6 +422,8 @@
     <ClCompile Include="Engine\Scene\Scene.cpp" />
     <ClCompile Include="Engine\Scene\SceneResources.cpp" />
     <ClCompile Include="Engine\Scene\SpriteBatch.cpp" />
+    <ClCompile Include="Engine\Scene\TextBatcher.cpp" />
+    <ClCompile Include="Engine\Scene\TextRenderer.cpp" />
     <ClCompile Include="Engine\Sound\adpcm-lib\adpcm.cpp" />
     <ClCompile Include="Engine\Sound\adpcm-lib\wave.cpp" />
     <ClCompile Include="Engine\Sound\AudioEngine.cpp" />

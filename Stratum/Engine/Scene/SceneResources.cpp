@@ -1,13 +1,13 @@
 #include "SceneResources.h"
 
-#include "Renderer/Buffer.h"
-#include "Renderer/Mesh.h"
-#include "Renderer/Material.h"
-#include "Renderer/BindlessDescriptorTable.h"
-
 #include "Asset/TextureLoader.h"
 #include <Core/Timer.h>
 #include <Core/Logger.h>
+#include <Font/Font.h>
+#include <Renderer/Buffer.h>
+#include <Renderer/Mesh.h>
+#include <Renderer/Material.h>
+#include <Renderer/BindlessDescriptorTable.h>
 
 #include <thread>
 
@@ -271,6 +271,28 @@ Render::BindlessDescriptorIndex SceneResources::CreateTextureImage(const Render:
 	auto handle = mDescriptorTable->AllocateDescriptor(nvrhi::BindingSetItem::Texture_SRV(0, image->Handle));
 	mTextures[handle] = image;
 	return handle;
+}
+
+Render::BindlessDescriptorIndex SceneResources::CreateFontImage(Font* font)
+{
+	// Font loading is async so wait till font is ready
+	// No need to call JobManager::Wait() since multiple fonts might be loaded at the same time
+	// So other fonts can be loaded while this one is waited for
+	font->WaitForFontReady();
+
+	Render::ImageDescription desc{};
+
+	desc.Format = Render::ImageFormat::R8_UNORM;
+	desc.Width = font->GetFontAtlasSize().x;
+	desc.Height = font->GetFontAtlasSize().y;
+	desc.Immutable = true;
+	desc.DefaultData = { { font->GetBuffer(), (uint32_t)font->GetFontAtlasSize().x } };
+
+	auto idx = CreateTextureImage(desc);
+
+	font->SetDescriptorHandle(idx);
+
+	return idx;
 }
 
 Render::ImageResource* SceneResources::GetImageHandle(const DescriptorHandle handle)

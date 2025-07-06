@@ -234,4 +234,17 @@ private: // [25-05-2025] Ugly private on struct but i need it
 	bool mHasFinished = false;
 };
 
+struct TextComponent
+{
+	std::string Font;
+	std::wstring Text;
+	float FontSize = 16.0f;
+};
+
+struct TextRendererComponent
+{
+	uint32_t RenderLayer = 0;
+	glm::vec4 Color = glm::vec4(1.0f);
+};
+
 END_ENGINE

@@ -1,21 +1,38 @@
-#include "Renderer2D.h"
+﻿#include "Renderer2D.h"
 
 #include "Renderer/GraphicsPipeline.h"
 #include "Renderer/GraphicsCommandBuffer.h"
 #include "Renderer/ConstantBuffer.h"
 #include "Post/PostProcessingStack.h"
 #include <Core/EngineStats.h>
+#include <Core/Time.h>
+#include <Font/Font.h>
 
 #include "SpriteBatch.h"
+#include "TextBatcher.h"
 
 #include "Core/JobManager.h"
+
+#include <format>
 
 using namespace ENGINE_NAMESPACE;
 
 Render::PostProcessingStack* pStack;
+Font* font = NULL;
+TextBatcher* pTextRenderer;
+Scene* currentRenderScene;
 
 Renderer2D::Renderer2D()
 {
+	if (!font)
+	{
+		font = new Font("Data/fonts/times.ttf");
+	}
+	else
+	{
+		font->SetDescriptorHandle(0xFFFFFFFF);
+	}
+
 	pStack = new Render::PostProcessingStack();
 
 	mPerFrameData = CreateRef<Render::ConstantBuffer>(sizeof(PerFrameData) * 2);
@@ -29,7 +46,7 @@ Renderer2D::Renderer2D()
 	Render::PipelineDescription pipelineDesc{};
 
 	pipelineDesc.ShaderPath = "shaders/2d/2d_sprite.cso";
-	pipelineDesc.BindingItems.push_back(nvrhi::BindingLayoutItem::PushConstants(0, sizeof(SpriteBatch::SpriteRenderable)));
+	pipelineDesc.BindingItems.push_back(nvrhi::BindingLayoutItem::PushConstants(0, sizeof(uint32_t)));
 
 	pipelineDesc.VertexLayout.VertexAttributes.push_back({ Render::VertexType::FLOAT2_32, Render::VertexInputRate::PER_VERTEX, 0, 0, 0, false });
 	pipelineDesc.VertexLayout.Stride = sizeof(glm::vec2);
@@ -229,6 +246,36 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 		mSpriteBatch->DrawSprite(instance.batch);
 	}
 
+	if (font->GetDescriptorHandle() == 0xFFFFFFFF || currentRenderScene != scene)
+	{
+		scene->Resources.CreateFontImage(font);
+	}
+
+	if (currentRenderScene != scene)
+	{
+		if (pTextRenderer)
+		{
+			delete pTextRenderer;
+		}
+		pTextRenderer = new TextBatcher(font, &scene->Resources);
+	}
+
+	currentRenderScene = scene;
+
+	TextBatcherParameters parameters;
+	parameters.maxWidth = 800.0f;
+	parameters.wrapText = false;
+	parameters.fontSize = 64.0f;
+
+	glm::vec2 scaling = scene->VirtualScreenSize / glm::vec2(pOutput->GetSize());
+
+	pTextRenderer->SetParameters(parameters);
+
+	pTextRenderer->Begin();
+	//batcher.DrawText(L"Hello World! This is a test of the text rendering system in Stratum Engine. It should wrap correctly and display the text properly.",
+	pTextRenderer->DrawText(std::format(L"Stratum Engine\nFPS: {}", (int)(1.0f / Time::DeltaTime)),
+		glm::vec2(-VirtualScreenSize.x + 20, VirtualScreenSize.y - 64), glm::identity<glm::mat4>());
+
 	glm::mat4 matrices[2];
 
 	{
@@ -259,6 +306,7 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 
 	mCopyCmdBuffer->UpdateConstantBuffer(mPerFrameData.get(), matrices);
 	mSpriteBatch->End(mCopyCmdBuffer.get());
+	pTextRenderer->End(mCopyCmdBuffer.get());
 
 	mCopyCmdBuffer->End();
 
@@ -293,6 +341,7 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 	mCmdBuffer->SetBindlessDescriptorTable(scene->BindlessTable);
 
 	mSpriteBatch->Render(mCmdBuffer.get());
+	pTextRenderer->Render(mCmdBuffer.get());
 
 	Render::PostProcessingParameters params{};
 

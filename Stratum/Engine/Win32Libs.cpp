@@ -14,8 +14,10 @@
 #pragma comment(lib, "db/nvrhi.lib")
 #pragma comment(lib, "db/nvrhi_d3d12.lib")
 #pragma comment(lib, "db/SDL3.lib")
+#pragma comment(lib, "db/freetyped.lib")
 #else
 #pragma comment(lib, "rel/nvrhi.lib")
 #pragma comment(lib, "rel/nvrhi_d3d12.lib")
 #pragma comment(lib, "rel/SDL3.lib")
+#pragma comment(lib, "rel/freetype.lib")
 #endif

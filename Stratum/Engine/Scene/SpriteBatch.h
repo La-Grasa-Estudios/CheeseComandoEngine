@@ -31,6 +31,7 @@ public:
 		glm::vec4 color;
 		DescriptorHandle texture;
 		bool useNearestFilter = false;
+		bool scaleWithRenderSize = true;
 		uint32_t UserData;
 	};
 

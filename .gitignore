@@ -9,3 +9,6 @@ Stratum/x64
 LearningSDL/x64
 Stratum/EngineLog.log
 *.log
+/Data/x64
+*.log
+Stratum/EngineLog.log

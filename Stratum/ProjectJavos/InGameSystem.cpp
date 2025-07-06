@@ -609,7 +609,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	Stratum::Time::BeginProfile();
 
 	ma_engine_set_volume(mScene->AudioEngine->GetEngine(), 1.0f);
-	ma_engine_set_gain_db(mScene->AudioEngine->GetEngine(), 4.0f);
+	ma_engine_set_gain_db(mScene->AudioEngine->GetEngine(), 8.0f);
 	
 	mLoadingDone.store(true);
 }
@@ -672,9 +672,6 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 		instSource->Play();
 		if (voicesSource)
 			voicesSource->Play();
-
-		instSource->Seek(105.0f);
-		voicesSource->Seek(105.0f);
 	}
 
 	if (mConductor->BeatCountF < 3.0f)

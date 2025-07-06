@@ -323,17 +323,17 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 	auto& effects = effectManager->GetEntities();
 
 	std::array<bool, 4> inputs = { 
-		Stratum::Input::GetKeyDown(KeyCode::A) || Stratum::Input::GetKeyDown(KeyCode::LEFT),
-		Stratum::Input::GetKeyDown(KeyCode::S) || Stratum::Input::GetKeyDown(KeyCode::DOWN),
-		Stratum::Input::GetKeyDown(KeyCode::W) || Stratum::Input::GetKeyDown(KeyCode::UP) ,
-		Stratum::Input::GetKeyDown(KeyCode::D) || Stratum::Input::GetKeyDown(KeyCode::RIGHT)
+		Stratum::Input::GetKeyDown(KeyCode::A) || Stratum::Input::GetKeyDown(KeyCode::LEFT)  || Stratum::Input::GetGamepadButtonDown(2) || Stratum::Input::GetGamepadButtonDown(13),
+		Stratum::Input::GetKeyDown(KeyCode::S) || Stratum::Input::GetKeyDown(KeyCode::DOWN)  || Stratum::Input::GetGamepadButtonDown(0) || Stratum::Input::GetGamepadButtonDown(12),
+		Stratum::Input::GetKeyDown(KeyCode::W) || Stratum::Input::GetKeyDown(KeyCode::UP)    || Stratum::Input::GetGamepadButtonDown(3) || Stratum::Input::GetGamepadButtonDown(11),
+		Stratum::Input::GetKeyDown(KeyCode::D) || Stratum::Input::GetKeyDown(KeyCode::RIGHT) || Stratum::Input::GetGamepadButtonDown(1) || Stratum::Input::GetGamepadButtonDown(14)
 	};
 
 	std::array<bool, 4> inputsHold = {
-		Stratum::Input::GetKey(KeyCode::A) || Stratum::Input::GetKey(KeyCode::LEFT) || botEnabled,
-		Stratum::Input::GetKey(KeyCode::S) || Stratum::Input::GetKey(KeyCode::DOWN) || botEnabled,
-		Stratum::Input::GetKey(KeyCode::W) || Stratum::Input::GetKey(KeyCode::UP) || botEnabled,
-		Stratum::Input::GetKey(KeyCode::D) || Stratum::Input::GetKey(KeyCode::RIGHT) || botEnabled
+		Stratum::Input::GetKey(KeyCode::A) || Stratum::Input::GetKey(KeyCode::LEFT)  || Stratum::Input::GetGamepadButton(2) || Stratum::Input::GetGamepadButton(13) || botEnabled,
+		Stratum::Input::GetKey(KeyCode::S) || Stratum::Input::GetKey(KeyCode::DOWN)  || Stratum::Input::GetGamepadButton(0) || Stratum::Input::GetGamepadButton(12) || botEnabled,
+		Stratum::Input::GetKey(KeyCode::W) || Stratum::Input::GetKey(KeyCode::UP)    || Stratum::Input::GetGamepadButton(3) || Stratum::Input::GetGamepadButton(11) || botEnabled,
+		Stratum::Input::GetKey(KeyCode::D) || Stratum::Input::GetKey(KeyCode::RIGHT) || Stratum::Input::GetGamepadButton(1) || Stratum::Input::GetGamepadButton(14) || botEnabled
 	};
 
 	std::array<nvrhi::static_vector<Stratum::ECS::edict_t, 16>, 4> hitNotes;

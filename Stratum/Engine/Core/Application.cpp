@@ -29,6 +29,8 @@
 
 #include "Thirdparty/imgui/imgui.h"
 
+#include "Font/Font.h"
+
 #include <filesystem>
 
 using namespace ENGINE_NAMESPACE;
@@ -65,6 +67,10 @@ void Application::Run(std::vector<std::string> args)
 #endif
 
 	ZVFS::Init();
+	JobManager::Init(true);
+
+
+	//return;
 
 	// Idk why the engine crashes with a segfault without this hack
 	m_Console.Focused();
@@ -230,7 +236,6 @@ void Application::Run(std::vector<std::string> args)
 	m_Window->SetVSync(m_AppInfo.VSyncEnabled);
 
 	m_Window->Create(m_AppInfo.WindowedResolutionX, m_AppInfo.WindowedResolutionY);
-	JobManager::Init(true);
 
 	EventHandler::InvokeEvent(EventHandler::GetEventID("init_window"), this);
 
@@ -258,13 +263,10 @@ void Application::Run(std::vector<std::string> args)
 	// Remove this on retail builds?
 	ShaderCompiler::build_object("shaders/video_gbar_to_rgba.hlsl", "Data/shaders/video_gbar_to_rgba.cso", ShaderCompiler::shader_type::vertex, 1);
 	ShaderCompiler::build_object("shaders/deferred_gbuffer_opaque.hlsl", "Data/shaders/deferred_gbuffer_opaque.cso", ShaderCompiler::shader_type::vertex);
-
 	ShaderCompiler::build_object("shaders/2d/2d_sprite.hlsl", "Data/shaders/2d/2d_sprite.cso", ShaderCompiler::shader_type::vertex);
-
 	ShaderCompiler::build_object("shaders/tone_map.hlsl", "Data/shaders/tone_map.cso", ShaderCompiler::shader_type::vertex);
 	ShaderCompiler::build_object("shaders/post/bloom_downsample.hlsl", "Data/shaders/post/bloom_downsample.cso", ShaderCompiler::shader_type::vertex);
 	ShaderCompiler::build_object("shaders/post/bloom_upsample.hlsl", "Data/shaders/post/bloom_upsample.cso", ShaderCompiler::shader_type::vertex);
-
 	ShaderCompiler::build_object("shaders/compute/compute_bloom_filter.hlsl", "Data/shaders/compute/compute_bloom_filter.cso", ShaderCompiler::shader_type::compute);
 	ShaderCompiler::build_object("shaders/compute/compute_luminance.hlsl", "Data/shaders/compute/compute_luminance.cso", ShaderCompiler::shader_type::compute);
 	ShaderCompiler::build_object("shaders/compute/compute_avg_luminance.hlsl", "Data/shaders/compute/compute_avg_luminance.cso", ShaderCompiler::shader_type::compute);
@@ -388,6 +390,8 @@ void Application::MainLoop()
 			Z_PROFILE_SCOPE("Scene::PostUpdate");
 			mCurrentScene->PostUpdate();
 		}
+
+		Input::Update();
 
 		OnFramePrepare();
 
@@ -639,7 +643,6 @@ void Application::InternalUpdate()
 	// TO DO: Move this to main loop
 	Z_PROFILE_SCOPE("Application::InternalUpdate");
 	gpGlobals->gametic++;
-	Input::Update();
 }
 
 void Application::SetScene(Scene* scene)
