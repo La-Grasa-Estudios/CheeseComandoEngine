@@ -9,6 +9,7 @@
 #include <Scene/Scene.h>
 #include <Event/EventHandler.h>
 #include <Util/Globals.h>
+#include <Util/StrUtil.h>
 
 const float PRECISION = 64.0F;
 const float DISPLACEMENT = -256.0F;
@@ -260,6 +261,33 @@ void Funkin::Conductor::Init(Stratum::Scene* scene)
 
 		mNoteSplashesAnimations[i] = anim;
 	}
+
+	mScoreTextEntity = scene->EntityManager.CreateEntity();
+	mSubtitlesTextEntity = scene->EntityManager.CreateEntity();
+
+	scene->TextComponents.Create(mScoreTextEntity);
+	scene->TextComponents.Get(mScoreTextEntity).FontSize = 64.0f;
+	scene->TextRenderers.Create(mScoreTextEntity).Alignment = 0.5f;
+	scene->TextRenderers.Get(mScoreTextEntity).RenderLayer = 1000;
+	scene->TextRenderers.Get(mScoreTextEntity).IsGui = true;
+	scene->Transforms.Create(mScoreTextEntity);
+	scene->GuiAnchors.Create(mScoreTextEntity).AnchorPoint = Stratum::GuiAnchorPoint::BOTTOM;
+	scene->GuiAnchors.Get(mScoreTextEntity).Position.y += 60.0f;
+
+	scene->TextComponents.Create(mSubtitlesTextEntity);
+	scene->TextComponents.Get(mSubtitlesTextEntity).FontSize = 80.0f;
+	scene->TextRenderers.Create(mSubtitlesTextEntity).Alignment = 0.5f;
+	scene->TextRenderers.Get(mSubtitlesTextEntity).RenderLayer = 1001;
+	scene->TextRenderers.Get(mSubtitlesTextEntity).IsGui = true;
+	scene->Transforms.Create(mSubtitlesTextEntity);
+	scene->GuiAnchors.Create(mSubtitlesTextEntity).AnchorPoint = Stratum::GuiAnchorPoint::BOTTOM;
+	scene->GuiAnchors.Get(mSubtitlesTextEntity).Position.y += 200.0f;
+
+	this->RegisterEventHandler("Subtitles", [this, scene](ChartEvent& event)
+		{
+			auto& textComponent = scene->TextComponents.Get(mSubtitlesTextEntity);
+			textComponent.Text = Stratum::Utils::ToWideString(event.Arg1);
+		});
 }
 
 void Funkin::Conductor::PostUpdate(Stratum::Scene* scene)
@@ -686,6 +714,10 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 			continue;
 		}
 	}
+
+	auto& scoreText = scene->TextComponents.Get(mScoreTextEntity);
+
+	scoreText.Text = Stratum::Utils::FormatString(L"Score: {}", this->PlayerScore);
 }
 
 void Funkin::Conductor::RegisterEventHandler(const std::string& eventName, ChartEventHandler handler)

@@ -20,9 +20,9 @@ void TextBatcher::SetParameters(const TextBatcherParameters& parameters)
 	mParameters = parameters;
 }
 
-void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, const glm::mat4& model)
+void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, const glm::mat4& model, glm::vec4 color, bool gui)
 {
-	if (!mFont || !mBatch)
+	if (!mFont || !mBatch || text.empty())
 		return;
 
 	static int frameIndex = 0;
@@ -35,6 +35,7 @@ void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, 
 	float scale = baseScale * mParameters.fontSize;
 
 	glm::vec3 coords = { position.x, position.y, 0.0f };
+	float size_x = 0.0f;
 
 	bool doWrap = false;
 	bool wordComplete = false;
@@ -73,11 +74,12 @@ void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, 
 			wordLenght += (glyph->advance_x >> 6) * scale + mParameters.letterSpacing * scale;
 		}
 
-		if ((mParameters.wrapText && wordLenght + coords.x > mParameters.maxWidth) || doWrap)
+		if ((mParameters.wrapText && wordLenght + size_x > mParameters.maxWidth) || doWrap)
 		{
 			float mult = (baseScale * mParameters.fontSize * mParameters.lineHeight);
 			doWrap = false;
 			// Wrap text to the next line
+			size_x = 0.0f;
 			coords.x = position.x;
 			coords.y -= mFont->GetGlyph(L'l')->rect.h * mult + mult; // Move to the next line
 			wordComplete = false;
@@ -105,20 +107,22 @@ void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, 
 				instance.rect.size = { glyph->rect.w, glyph->rect.h };
 				instance.texture = mFont->GetDescriptorHandle();
 				instance.RenderSize = glm::vec2(instance.rect.size) * scale;
-				instance.color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+				instance.color = color;
 				instance.transform = glm::translate(glm::identity<glm::mat4>(), pos);
-				instance.UserData = (2 << 1);
+				instance.UserData = (2 << 1) | (int)(gui);
 				instance.scaleWithRenderSize = false;
 
 				SpriteBatch::SpriteInstance instance2 = instance;
 
-				instance2.color = glm::vec4(0.25f, 0.25f, 0.25f, 1.0f);
+				instance2.color = instance.color * glm::vec4(0.25f, 0.25f, 0.25f, 1.0f);
 				instance2.transform = glm::translate(instance.transform, glm::vec3(mParameters.fontSize / 16.0f, -mParameters.fontSize / 16.0f, 0.0f));
 
 				mBatch->DrawSprite(instance2);
 				mBatch->DrawSprite(instance);
 
-				coords.x += (glyph->advance_x >> 6) * scale + mParameters.letterSpacing * scale;
+				float advance = (glyph->advance_x >> 6) * scale + mParameters.letterSpacing * scale;
+				size_x += advance;
+				coords.x += advance;
 			}
 
 			wordSize--;
@@ -130,40 +134,119 @@ void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, 
 		if (termination == ' ')
 		{
 			coords.x += 12 * scale;
+			size_x += 12 * scale;
 		}
 
-		if ((coords.x > mParameters.maxWidth && mParameters.wrapText) || termination == L'\n')
+		if ((size_x > mParameters.maxWidth && mParameters.wrapText) || termination == L'\n')
 		{
 			doWrap = true;
 		}
 	}
 }
 
-glm::vec2 TextBatcher::GetStringSize(const std::wstring& text) const
+glm::vec3 TextBatcher::GetStringSize(const std::wstring& text) const
 {
-	float size_x = 0.0f;
-	float line_x = 0.0f;
-	float size_y = mParameters.fontSize + 1.0f;
+	if (!mFont || !mBatch || text.empty())
+		return glm::vec3(0.0f);
 
-	for (int i = 0; i < text.size(); i++)
+	static int frameIndex = 0;
+
+	frameIndex++;
+
+	frameIndex %= text.size();
+
+	float baseScale = (1.0f / 32.0f);
+	float scale = baseScale * mParameters.fontSize;
+
+	glm::vec3 coords = { 0.0f, 0.0f, 0.0f };
+	float line_size_x = 0.0f;
+	float size_x = 0.0f;
+	float size_y = 0.0f;
+	float lineWraps = 0.0f;
+
+	bool doWrap = false;
+	bool wordComplete = false;
+	uint32_t wordSize = 0;
+	uint32_t idx = 0;
+	uint32_t i = 0;
+
+	while (i < text.size())
 	{
-		CharGlyph* glyph = mFont->GetGlyph(text[i]);
-		if (glyph)
+		if (!wordComplete)
 		{
-			float charSize = glyph->advance_x + mParameters.letterSpacing;
-			size_x += charSize;
-			line_x += charSize;
-			if (line_x > mParameters.maxWidth && mParameters.wrapText)
-			{
-				line_x = 0.0f;
-				size_y += mParameters.fontSize * mParameters.lineHeight + 1.0f; // Move to the next line
-			}
+			wordSize = 0;
+			idx = i;
 		}
-		else
+
+		wchar_t termination = ' ';
+
+		while (!wordComplete)
 		{
-			size_x += mParameters.fontSize + mParameters.letterSpacing; // Fallback for unknown characters
+			wchar_t c = text[i++];
+			if (c == L' ' || c == L'\n' || c == L'\0')
+			{
+				wordComplete = true;
+				termination = c;
+				break;
+			}
+			wordSize++;
+		}
+
+		float wordLenght = 0.0f;
+
+		for (uint32_t k = 0; k < wordSize; k++)
+		{
+			wchar_t c = text[k + idx];
+			CharGlyph* glyph = mFont->GetGlyph(c);
+			wordLenght += (glyph->advance_x >> 6) * scale + mParameters.letterSpacing * scale;
+		}
+
+		if ((mParameters.wrapText && wordLenght + line_size_x > mParameters.maxWidth) || doWrap)
+		{
+			float mult = (baseScale * mParameters.fontSize * mParameters.lineHeight);
+			doWrap = false;
+			// Wrap text to the next line
+			line_size_x = 0.0f;
+			coords.x = 0.0f;
+			coords.y += mFont->GetGlyph(L'l')->rect.h * mult + mult; // Move to the next line
+			size_y += mFont->GetGlyph(L'l')->rect.h * mult + mult; // Move to the next line
+			wordComplete = false;
+			lineWraps++;
+		}
+
+		while (wordSize > 0)
+		{
+			wchar_t c = text[idx];
+			CharGlyph* glyph = mFont->GetGlyph(c);
+
+			if (glyph)
+			{
+				glm::vec2 size = glm::vec2{ glyph->rect.w, glyph->rect.h } * scale;
+				size_x = glm::max(size_x, size.x + line_size_x);
+				size_y = glm::max(size_y, size.y + coords.y);
+
+				float advance = (glyph->advance_x >> 6) * scale + mParameters.letterSpacing * scale;
+				line_size_x += advance;
+				coords.x += advance;
+			}
+
+			wordSize--;
+			idx++;
+		}
+
+		wordComplete = false;
+
+		if (termination == ' ')
+		{
+			coords.x += 12 * scale;
+			line_size_x += 12 * scale;
+		}
+
+		if ((line_size_x > mParameters.maxWidth && mParameters.wrapText) || termination == L'\n')
+		{
+			doWrap = true;
 		}
 	}
 
-	return glm::vec2(size_x, size_y);
+	return { size_x, size_y, lineWraps };
 }

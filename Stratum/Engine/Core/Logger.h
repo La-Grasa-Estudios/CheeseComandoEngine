@@ -6,6 +6,7 @@
 #include <format>
 #include <utility>
 #include <mutex>
+#include <vector>
 
 #ifndef _DEBUG
 
@@ -61,6 +62,10 @@ BEGIN_ENGINE
 
 		friend Logger;
 
+	public:
+
+		LogReceiver() = default;
+
 	protected:
 
 		virtual void Log(std::string_view msg, LogLevel level);
@@ -78,16 +83,29 @@ BEGIN_ENGINE
 	class Logger {
 
 		inline static LogReceiver* s_LogReceiver = new LogReceiver();
+	public:
+		inline static std::vector<void*> s_LogReceivers;
+	private:
 
 #ifndef _DEBUG
 		template<typename ... Args>
 		static void Log(std::string_view fmt, LogLevel level, Args&&... args) {
-			s_LogReceiver->Log(std::vformat(fmt, std::make_format_args(args...)), level);
+			auto format = std::vformat(fmt, std::make_format_args(args...));
+			s_LogReceiver->Log(format, level);
+			for (auto r : s_LogReceivers)
+			{
+				reinterpret_cast<LogReceiver*>(r)->Log(format, level);
+			}
 		}
 #else
 		template<typename ... Args>
 		static void Log(const char* filename, int line, const char* fnname, std::string_view fmt, LogLevel level, Args&&... args) {
-			s_LogReceiver->Log(std::format("<{}:{}> ({}) {}", filename, line, fnname, std::vformat(fmt, std::make_format_args(args...))), level);
+			auto format = std::format("<{}:{}> ({}) {}", filename, line, fnname, std::vformat(fmt, std::make_format_args(args...)));
+			s_LogReceiver->Log(format, level);
+			for (auto r : s_LogReceivers)
+			{
+				reinterpret_cast<LogReceiver*>(r)->Log(format, level);
+			}
 		}
 #endif
 	public:

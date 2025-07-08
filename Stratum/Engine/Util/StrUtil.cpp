@@ -4,6 +4,8 @@ using namespace ENGINE_NAMESPACE;
 
 std::wstring Utils::ToWideString(const std::string& str)
 {
+    if (str.empty())
+        return L"";
     std::wstring wide; wchar_t w; mbstate_t mb{};
     size_t n = 0, len = str.length() + 1;
     while (auto res = mbrtowc(&w, str.c_str() + n, len - n, &mb)) {

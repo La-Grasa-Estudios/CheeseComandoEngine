@@ -264,7 +264,6 @@
     <ClInclude Include="Engine\Scene\SceneResources.h" />
     <ClInclude Include="Engine\Scene\SpriteBatch.h" />
     <ClInclude Include="Engine\Scene\TextBatcher.h" />
-    <ClInclude Include="Engine\Scene\TextRenderer.h" />
     <ClInclude Include="Engine\Sound\adpcm-lib\adpcm.h" />
     <ClInclude Include="Engine\Sound\adpcm-lib\wave.h" />
     <ClInclude Include="Engine\Sound\AudioEngine.h" />
@@ -424,7 +423,6 @@
     <ClCompile Include="Engine\Scene\SceneResources.cpp" />
     <ClCompile Include="Engine\Scene\SpriteBatch.cpp" />
     <ClCompile Include="Engine\Scene\TextBatcher.cpp" />
-    <ClCompile Include="Engine\Scene\TextRenderer.cpp" />
     <ClCompile Include="Engine\Sound\adpcm-lib\adpcm.cpp" />
     <ClCompile Include="Engine\Sound\adpcm-lib\wave.cpp" />
     <ClCompile Include="Engine\Sound\AudioEngine.cpp" />

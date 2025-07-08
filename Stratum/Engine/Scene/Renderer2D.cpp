@@ -5,6 +5,7 @@
 #include "Renderer/ConstantBuffer.h"
 #include "Post/PostProcessingStack.h"
 #include <Core/EngineStats.h>
+#include <Core/Logger.h>
 #include <Core/Time.h>
 #include <Font/Font.h>
 #include <Util/StrUtil.h>
@@ -22,11 +23,44 @@ Render::PostProcessingStack* pStack;
 Font* font = NULL;
 Scene* currentRenderScene;
 
+struct DebugLog
+{
+	LogLevel level;
+	std::string message;
+	float time;
+};
+
+std::binary_semaphore g_DebugSync(1);
+std::vector<DebugLog> debugLogs;
+bool debugLogAdded = false;
+
+class DebugLogReceiver : LogReceiver
+{
+public:
+	DebugLogReceiver() = default;
+protected:
+	void Log(std::string_view fmt, LogLevel level) override
+	{
+		g_DebugSync.acquire();
+		DebugLog log;
+		log.message = fmt;
+		log.time = Time::GlobalTime;
+		log.level = level;
+		debugLogs.push_back(log);
+		g_DebugSync.release();
+	}
+};
+
 Renderer2D::Renderer2D()
 {
+	if (!debugLogAdded)
+	{
+		Logger::s_LogReceivers.push_back(new DebugLogReceiver());
+	}
+
 	if (!font)
 	{
-		font = new Font("Data/fonts/times.ttf");
+		font = new Font("Data/fonts/Roboto-Regular.ttf");
 	}
 	else
 	{
@@ -98,7 +132,8 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 	mRenderQueue.Clear();
 	mGuiRenderQueue.Clear();
 
-	auto& entities = scene->SpriteRenderers.GetEntities();
+	auto& spriteRenderers = scene->SpriteRenderers.GetEntities();
+	auto& textRenderers = scene->TextRenderers.GetEntities();
 
 	struct AABB
 	{
@@ -140,7 +175,7 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 		mMainPipeline->SetRenderTarget(mMainRenderTarget);
 	}
 
-	for (auto entity : entities)
+	for (auto entity : spriteRenderers)
 	{
 
 		if (!scene->Transforms.HasComponent(entity))
@@ -219,6 +254,24 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 			mGuiRenderQueue.Push(instance);
 		}
 	}
+	for (auto entity : textRenderers)
+	{
+		if (!scene->Transforms.HasComponent(entity) && scene->TextComponents.HasComponent(entity))
+			continue;
+
+		RenderQueue2D::RenderInstance instance{};
+
+		auto& renderer = scene->TextRenderers.Get(entity);
+
+		instance.kind = RenderQueue2D::RenderInstanceKind::TEXT;
+		instance.textEntity = entity;
+		instance.zIndex = renderer.RenderLayer;
+
+		if (renderer.IsGui)
+			mGuiRenderQueue.Push(instance);
+		else
+			mRenderQueue.Push(instance);
+	}
 
 	// Parallel sorting :D
 	JobManager::Execute([&] { mRenderQueue.Sort(); });
@@ -237,29 +290,56 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 	parameters.lineHeight = 1.2f;
 	textRenderer.SetParameters(parameters);
 
-	for (int j = 0; j < mRenderQueue.instances.size(); j++)
-	{
-		auto& instance = mRenderQueue.instances[j];
-
-		instance.batch.UserData = 0;
-
-		mSpriteBatch->DrawSprite(instance.batch);
-	}
-
-	mSpriteBatch->SetBatch(mMainPipeline.get(), BatchType::SPRITE);
-
-	for (int j = 0; j < mGuiRenderQueue.instances.size(); j++)
-	{
-		auto& instance = mGuiRenderQueue.instances[j];
-
-		instance.batch.UserData = 1;
-
-		mSpriteBatch->DrawSprite(instance.batch);
-	}
-
 	if (font->GetDescriptorHandle() == 0xFFFFFFFF || currentRenderScene != scene)
 	{
 		scene->Resources.CreateFontImage(font);
+	}
+
+	for (int k = 0; k < 2; k++)
+	{
+		auto& renderQueue = mRenderQueue;
+		if (k == 1) renderQueue = mGuiRenderQueue;
+
+		for (int j = 0; j < renderQueue.instances.size(); j++)
+		{
+			auto& instance = renderQueue.instances[j];
+
+			if (instance.kind == RenderQueue2D::RenderInstanceKind::TEXT)
+			{
+				auto textEntity = instance.textEntity;
+				if (!scene->TextComponents.HasComponent(textEntity))
+					continue;
+
+				auto& textComponent = scene->TextComponents.Get(textEntity);
+				auto& renderer = scene->TextRenderers.Get(textEntity);
+				auto& transform = scene->Transforms.Get(textEntity);
+
+				if (textComponent.Text.empty())
+					continue;
+
+				parameters.fontSize = textComponent.FontSize;
+				textRenderer.SetParameters(parameters);
+
+				mSpriteBatch->SetBatch(mMainPipeline.get(), BatchType::TEXT);
+
+				float offsetX = 0.0f;
+
+				if (renderer.Alignment > 0.0f)
+				{
+					offsetX = textRenderer.GetStringSize(textComponent.Text).x * renderer.Alignment;
+				}
+
+				textRenderer.DrawText(textComponent.Text, glm::vec2(transform.Position) - glm::vec2(offsetX, 0.0f), glm::mat4(1.0f), renderer.Color, renderer.IsGui);
+
+				continue;
+			}
+			else
+			{
+				mSpriteBatch->SetBatch(mMainPipeline.get(), BatchType::SPRITE);
+				instance.batch.UserData = 0;
+				mSpriteBatch->DrawSprite(instance.batch);
+			}
+		}
 	}
 
 	currentRenderScene = scene;
@@ -271,12 +351,50 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 
 	mSpriteBatch->SetBatch(nullptr, BatchType::TEXT);
 
+	parameters.fontSize = 64.0f;
+	textRenderer.SetParameters(parameters);
+
 	textRenderer.DrawText(Utils::FormatString(baseString, L"" __DATE__, L"" __TIME__,
 		(int)(1.0f / Time::DeltaTime), Time::DeltaTime * 1000.0f, Time::GPURenderTime * 1000.0f,
 		Utils::ToWideString(gd.Description).c_str(),
 		(int)(gd.UsedVideoMemory / 1024.0f / 1024.0f),
 		gd.DedicatedVideoMemory / 1024 / 1024),
 		glm::vec2(-VirtualScreenSize.x + 20, VirtualScreenSize.y - 64), glm::identity<glm::mat4>());
+
+	parameters.fontSize = 48;
+	parameters.maxWidth = VirtualScreenSize.x*2;
+	parameters.wrapText = false;
+
+	textRenderer.SetParameters(parameters);
+
+	float offset = 0;
+	g_DebugSync.acquire();
+	for (int i = debugLogs.size() - 1; i >= 0; i--)
+	{
+		auto& log = debugLogs[i];
+		if (log.time < Time::GlobalTime - 5.0f)
+			continue;
+		glm::vec4 color = glm::vec4(1.0f);
+
+		switch (log.level)
+		{
+		case LogLevel::WARNING:
+			color = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+			break;
+		case LogLevel::LERROR:
+			color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+			break;
+		default:
+			break;
+		}
+
+		auto str = textRenderer.GetStringSize(Utils::ToWideString(log.message));
+		float size_y = str.y * glm::min(str.z, 1.0f);
+
+		textRenderer.DrawText(Utils::ToWideString(log.message), glm::vec2(-VirtualScreenSize.x + 20, -VirtualScreenSize.y + 16 + offset - size_y), glm::identity<glm::mat4>(), color);
+		offset += str.y * 1.2f;
+	}
+	g_DebugSync.release();
 
 	glm::mat4 matrices[2];
 

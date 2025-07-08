@@ -447,7 +447,7 @@ void Application::MainLoop()
 				total += time.time;
 			}
 
-			if (total > 33.0f)
+			if (total > 30000003.0f)
 			{
 				Z_WARN("Frame got {:.3f}ms over 33ms max!", total);
 				Z_WARN("Frame scope");
@@ -710,7 +710,7 @@ void Application::On2DRender()
 
 void Application::OnFrameRenderImGui()
 {
-
+	return;
 	static int frameRate = 0;
 	
 	frameRate = (frameRate + (int)(1.0f / gpGlobals->deltaTime)) / 2;

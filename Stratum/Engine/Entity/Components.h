@@ -243,6 +243,8 @@ struct TextComponent
 
 struct TextRendererComponent
 {
+	bool IsGui = false;
+	float Alignment = 0.0f; // 0 means left aligned, 0.5 means center aligned, 1 means right aligned
 	uint32_t RenderLayer = 0;
 	glm::vec4 Color = glm::vec4(1.0f);
 };

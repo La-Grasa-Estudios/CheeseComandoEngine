@@ -24,9 +24,20 @@ namespace Render
 struct RenderQueue2D
 {
 
+	enum RenderInstanceKind
+	{
+		SPRITE,
+		TEXT,
+		SHAPE,
+	};
 	struct RenderInstance
 	{
-		SpriteBatch::SpriteInstance batch;
+		RenderInstanceKind kind = RenderInstanceKind::SPRITE;
+		union
+		{
+			SpriteBatch::SpriteInstance batch;
+			uint32_t textEntity;
+		};
 		uint32_t zIndex;
 		
 		constexpr bool operator >(const RenderInstance& other) const

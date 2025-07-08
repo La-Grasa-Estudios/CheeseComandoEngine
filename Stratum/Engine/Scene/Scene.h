@@ -73,6 +73,8 @@ public:
 	ECS::ComponentManager<SpriteAnimator> SpriteAnimators;
 	ECS::ComponentManager<GuiAnchorComponent> GuiAnchors;
 	ECS::ComponentManager<VideoSurfaceComponent> VideoSurfaces;
+	ECS::ComponentManager<TextComponent> TextComponents;
+	ECS::ComponentManager<TextRendererComponent> TextRenderers;
 
 	void LoadModel(const std::string& path, const ECS::edict_t edict);
 

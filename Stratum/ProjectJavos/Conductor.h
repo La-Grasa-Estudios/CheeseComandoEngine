@@ -121,6 +121,9 @@ namespace Funkin
 		uint64_t mMissNoteEvent;
 		uint64_t mOponentNoteEvent;
 
+		Stratum::ECS::edict_t mScoreTextEntity;
+		Stratum::ECS::edict_t mSubtitlesTextEntity;
+
 		std::array<Stratum::ECS::edict_t, 4> mSustainHeld;
 		std::array<Stratum::ECS::edict_t, 4> mNoteCovers;
 

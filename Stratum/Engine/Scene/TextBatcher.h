@@ -31,8 +31,8 @@ public:
 
 	void SetParameters(const TextBatcherParameters& parameters);
 
-	void DrawText(const std::wstring& text, const glm::vec2& position, const glm::mat4& model);
-	glm::vec2 GetStringSize(const std::wstring& text) const;
+	void DrawText(const std::wstring& text, const glm::vec2& position, const glm::mat4& model, glm::vec4 color = glm::vec4(1.0f), bool gui = false);
+	glm::vec3 GetStringSize(const std::wstring& text) const;
 
 private:
 
