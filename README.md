@@ -28,3 +28,6 @@ Requires atleast a GPU with DirectX 12 drivers, feature level 11.0, shader model
 
 [GNU AGPLV3](https://choosealicense.com/licenses/agpl-3.0/)
 
+### Authors of the original mod
+https://www.youtube.com/watch?v=-TZ2dkwWjTc
+
