@@ -609,7 +609,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	Stratum::Time::BeginProfile();
 
 	ma_engine_set_volume(mScene->AudioEngine->GetEngine(), 1.0f);
-	ma_engine_set_gain_db(mScene->AudioEngine->GetEngine(), 8.0f);
+	ma_engine_set_gain_db(mScene->AudioEngine->GetEngine(), 2.0f);
 	
 	mLoadingDone.store(true);
 }

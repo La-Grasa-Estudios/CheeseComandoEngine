@@ -70,7 +70,7 @@ Font::Font(const std::string_view& path)
     std::vector<char*> glyphData;
     std::vector<int> charIndexes;
 
-    for (int i = 0; i < 0x01FF; i++) {
+    for (int i = 0; i < 0x07FF; i++) {
         if (FT_Load_Char(face, i, FT_LOAD_RENDER)) {
             fprintf(stderr, "Loading character %c failed!\n", i);
             continue;
@@ -89,7 +89,10 @@ Font::Font(const std::string_view& path)
         char* data = new char[size];
         memcpy(data, slot->bitmap.buffer, size);
 
-        rectangles.push_back(rect_xywh(0, 0, slot->bitmap.width, slot->bitmap.rows));
+        auto rect = rect_xywh(0, 0, slot->bitmap.width + 2, slot->bitmap.rows + 2);
+
+        rect.u = glyphData.size(); // Store the character index in the rectangle
+        rectangles.push_back(rect);
         glyphData.push_back(data);
 
         CharGlyph glyph;
@@ -104,7 +107,7 @@ Font::Font(const std::string_view& path)
         mGlyphs[i].rect.h = slot->bitmap.rows;
     }
 
-    const auto result_size = find_best_packing_dont_sort<spaces_type>(
+    const auto result_size = find_best_packing<spaces_type>(
         rectangles,
         make_finder_input(
             max_side,
@@ -122,9 +125,13 @@ Font::Font(const std::string_view& path)
     for (int i = 0; i < glyphData.size(); i++)
     {
         auto rect = rectangles[i];
+        rect.w -= 2;
+        rect.h -= 2;
+        rect.x += 1;
+        rect.y += 1;
         size_t offset = rect.x + rect.y * result_size.w;
         size_t rowPitch = result_size.w;
-        char* buff = glyphData[i];
+        char* buff = glyphData[rect.u];
 
         for (int x = 0; x < rect.w; x++)
         {
@@ -138,8 +145,8 @@ Font::Font(const std::string_view& path)
 
         delete[] buff;
 
-        mGlyphs[charIndexes[i]].rect.x = rect.x;
-        mGlyphs[charIndexes[i]].rect.y = rect.y;
+        mGlyphs[charIndexes[rect.u]].rect.x = rect.x;
+        mGlyphs[charIndexes[rect.u]].rect.y = rect.y;
     }
 
     mResultSize = { result_size.w, result_size.h };

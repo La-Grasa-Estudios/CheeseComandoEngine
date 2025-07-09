@@ -39,9 +39,11 @@ namespace rectpack2D {
 		int	y;
 		int w;
 		int h;
+		int u;
 
-		rect_xywh() : x(0), y(0), w(0), h(0) {}
+		rect_xywh() : x(0), y(0), w(0), h(0), u(0) {}
 		rect_xywh(const int x, const int y, const int w, const int h) : x(x), y(y), w(w), h(h) {}
+		rect_xywh(const int x, const int y, const int w, const int h, const int u) : x(x), y(y), w(w), h(h), u(u) {}
 
 		int	area() const { return w * h; }
 		int perimeter() const { return 2 * w + 2 * h; }

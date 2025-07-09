@@ -265,9 +265,11 @@ namespace rectpack2D {
 
 			for (auto& rr : *best_order) {
 				auto& rect = dereference(rr);
+				int u = rect.u;
 
 				if (const auto ret = root.insert(rect.get_wh())) {
 					rect = *ret;
+					rect.u = u;
 
 					if (callback_result::ABORT_PACKING == input.handle_successful_insertion(rect)) {
 						break;
