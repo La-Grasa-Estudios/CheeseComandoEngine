@@ -17,12 +17,6 @@ using namespace ENGINE_NAMESPACE;
 Font::Font(const std::string_view& path)
 {
     mDescriptorHandle = 0xFFFFFFFF;
-    std::thread t {
-        [path, this]()
-        {
-            
-        }
-    };
 
     using namespace rectpack2D;
 
@@ -155,10 +149,6 @@ Font::Font(const std::string_view& path)
 
     FT_Done_Face(face);
     FT_Done_FreeType(ft);
-
-    // No need to keep this thread
-    // Doesn't use any global resources just local
-    t.detach();
 }
 
 Font::~Font()

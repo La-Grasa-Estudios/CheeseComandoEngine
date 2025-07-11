@@ -14,6 +14,10 @@ extern ENGINE_NAMESPACE::Application* AppMain(std::vector<std::string> args);
 char** g_argv;
 int g_argc;
 
+#ifdef _WIN32
+#include "Win32libs.h"
+#endif
+
 void AppThread() {
 	std::vector<std::string> args;
 

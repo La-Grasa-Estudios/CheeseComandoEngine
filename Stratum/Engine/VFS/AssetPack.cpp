@@ -117,9 +117,11 @@ struct AssetPackerEntry {
 };
 
 static bool IsSupportedCompressableImageFile(std::filesystem::path path) {
-    std::string ex = path.extension().string();
-    return (strncmp(ex.c_str(), ".png", 4) == 0 || strncmp(ex.c_str(), ".tga", 4) == 0 || strncmp(ex.c_str(), ".jpg", 4) == 0 ||
-        strncmp(ex.c_str(), ".bmp", 4) == 0 || strncmp(ex.c_str(), ".hdr", 4) == 0);
+    // Image compression is broken for some reason
+    // std::string ex = path.extension().string();
+    // return (strncmp(ex.c_str(), ".png", 4) == 0 || strncmp(ex.c_str(), ".tga", 4) == 0 || strncmp(ex.c_str(), ".jpg", 4) == 0 ||
+    //     strncmp(ex.c_str(), ".bmp", 4) == 0 || strncmp(ex.c_str(), ".hdr", 4) == 0);
+    return false;
 }
 
 static bool IsSupportedCompressableFile(std::filesystem::path path) {
@@ -161,6 +163,8 @@ static void ReadFileEntryFromPak(std::ifstream& in, const AssetFileHeader& heade
     if (header.Version >= ASSET_PACKER_VER_B64) name = base64::from_base64(name);
     if (header.Version >= ASSET_PACKER_VER_B64_XOR) name = DecryptString(name, 13);
     bool compressed = false;
+    std::transform(name.begin(), name.end(), name.begin(),
+        [](unsigned char c) { return std::tolower(c); });
     in.read((char*)&compressed, 1);
     uint32 size = readInt(in, 4);
     uint64 offset = readInt(in, sizeof(uint64));

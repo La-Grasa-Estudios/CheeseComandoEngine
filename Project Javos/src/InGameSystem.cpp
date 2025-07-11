@@ -61,8 +61,8 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	StageRegistry::Init(mScene);
 	CharaRegistry::Init(mScene);
 
-	scrollSource = Stratum::CreateRef<Stratum::MP3AudioSource>("Data/fnf/sounds/scrollMenu.mp3", mScene->AudioEngine->GetEngine());
-	pauseSource = Stratum::CreateRef<Stratum::MP3AudioSource>("Data/fnf/music/breakfast.mp3", mScene->AudioEngine->GetEngine());
+	scrollSource = Stratum::CreateRef<Stratum::MP3AudioSource>("fnf/sounds/scrollMenu.mp3", mScene->AudioEngine->GetEngine());
+	pauseSource = Stratum::CreateRef<Stratum::MP3AudioSource>("fnf/music/breakfast.mp3", mScene->AudioEngine->GetEngine());
 	scene->AudioEngine->AddSource(scrollSource);
 	scene->AudioEngine->AddSource(pauseSource);
 	
@@ -228,7 +228,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 
 	mLoadingStage.fetch_add(1);
 
-	mScene->FontRegistry.LoadFont("Funkin", "Data/fonts/Phantomuff Difficult Font.ttf");
+	mScene->FontRegistry.LoadFont("Funkin", "fonts/Phantomuff Difficult Font.ttf");
 
 	ChartEvent EventSyobon{};
 	ChartEvent EventCebolla{};

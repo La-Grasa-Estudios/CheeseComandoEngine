@@ -73,9 +73,10 @@ RefBinaryStream PutInCache(const char* file, RefBinaryStream stream)
 }
 
 bool IsSupportedBC7ImageFile(std::filesystem::path path) {
-    std::string ex = path.extension().string();
-    return (strncmp(ex.c_str(), ".png", 3) == 0 || strncmp(ex.c_str(), ".tga", 3) == 0 || strncmp(ex.c_str(), ".jpg", 3) == 0 ||
-        strncmp(ex.c_str(), ".bmp", 3) == 0 || strncmp(ex.c_str(), ".hdr", 3) == 0);
+    return false;
+    // std::string ex = path.extension().string();
+    // return (strncmp(ex.c_str(), ".png", 3) == 0 || strncmp(ex.c_str(), ".tga", 3) == 0 || strncmp(ex.c_str(), ".jpg", 3) == 0 ||
+    //     strncmp(ex.c_str(), ".bmp", 3) == 0 || strncmp(ex.c_str(), ".hdr", 3) == 0);
 }
 
 void ZVFS::Init()
@@ -184,6 +185,9 @@ RefBinaryStream ZVFS::GetFile(const char* file)
         }
     }
 
+    std::transform(sfile.begin(), sfile.end(), sfile.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+
     if (m_Instance->pfiles.contains(sfile))
     {
         ZVFSPackFile zfile = m_Instance->pfiles[sfile];
@@ -267,6 +271,9 @@ PakStream ZVFS::GetFileStream(const char* file)
         sfile = p.replace_extension(".bc7").string();
     }
 
+    std::transform(sfile.begin(), sfile.end(), sfile.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+
     if (m_Instance->pfiles.contains(sfile))
     {
         ZVFSPackFile file = m_Instance->pfiles[sfile];
@@ -346,6 +353,9 @@ bool ZVFS::Exists(const char* file)
             sfile[i] = '/';
         }
     }
+
+    std::transform(sfile.begin(), sfile.end(), sfile.begin(),
+        [](unsigned char c) { return std::tolower(c); });
 
     if (m_Instance->pfiles.contains(sfile))
     {

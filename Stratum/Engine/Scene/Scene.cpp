@@ -35,7 +35,7 @@ Scene::Scene()
 
 	mVideoCopyCommandBuffer = new Render::CopyCommandBuffer();
 
-	FontRegistry.LoadFont("Roboto", "Data/fonts/Roboto-Regular.ttf");
+	FontRegistry.LoadFont("Roboto", "fonts/Roboto-Regular.ttf");
 }
 
 Scene::~Scene()
