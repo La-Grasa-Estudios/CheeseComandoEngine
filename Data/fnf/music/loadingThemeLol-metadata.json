@@ -1,9 +1,0 @@
-{
-  "timeFormat": "ms",
-  "artist": "simnsnd",
-  "songName": "Hold on...",
-  "timeChanges": [{ "d": 4, "n": 4, "t": 0, "bt": [4, 4, 4, 4], "bpm": 111 }],
-  "generatedBy": "Manual",
-  "looped": true,
-  "version": "2.0.0"
-}

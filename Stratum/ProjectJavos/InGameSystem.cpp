@@ -61,6 +61,16 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	StageRegistry::Init(mScene);
 	CharaRegistry::Init(mScene);
 
+	scrollSource = Stratum::CreateRef<Stratum::MP3AudioSource>("Data/fnf/sounds/scrollMenu.mp3", mScene->AudioEngine->GetEngine());
+	pauseSource = Stratum::CreateRef<Stratum::MP3AudioSource>("Data/fnf/music/breakfast.mp3", mScene->AudioEngine->GetEngine());
+	scene->AudioEngine->AddSource(scrollSource);
+	scene->AudioEngine->AddSource(pauseSource);
+	
+	pauseSource->SetLooping(true);
+
+	scrollSource->SetVolume(0.25f);
+	pauseSource->SetVolume(0.35f);
+
 	mScene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<NoteComponent>(), C_NOTE_COMPONENT_NAME);
 	mScene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<NoteHoldComponent>(), C_NOTE_HOLD_COMPONENT_NAME);
 	mScene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<AnimatedEffectComponent>(), C_ANIMATED_EFFECT_COMPONENT_NAME);
@@ -110,6 +120,8 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	CharaRegistry::AddCharacter("FernanBebe");
 	CharaRegistry::AddCharacter("FernanJumpeado");
 	CharaRegistry::AddCharacter("rene");
+
+	CharaRegistry::GetCharacter("Syobon")->AddAnimation("die", "Syobon Die", "", 30, true);
 
 	CharaRegistry::GetCharacter("Fernan")->AddAnimation("leftAlt", "Fernan Left Alt", "idle", 30, false);
 	CharaRegistry::GetCharacter("Fernan")->AddAnimation("rightAlt", "Fernan Right Alt", "idle", 30, false);
@@ -216,6 +228,8 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 
 	mLoadingStage.fetch_add(1);
 
+	mScene->FontRegistry.LoadFont("Funkin", "Data/fonts/Phantomuff Difficult Font.ttf");
+
 	ChartEvent EventSyobon{};
 	ChartEvent EventCebolla{};
 	ChartEvent Event1dash4{};
@@ -318,6 +332,30 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 			transform.SetScale(glm::vec3(20.0f));
 
 			gGameState.DoBeatEveryNthBeat = 999999999;
+
+			auto metadataManager = mScene->GetComponentManager<StagePropComponent>(C_STAGE_PROP_COMPONENT_NAME);
+			auto& props = metadataManager->GetEntities();
+
+			for (auto entity : props)
+			{
+				auto& metadata = metadataManager->Get(entity);
+				auto& nameTag = mScene->Names.Get(entity);
+				auto& transform = mScene->Transforms.Get(entity);
+				auto& sprite = mScene->SpriteRenderers.Get(entity);
+
+				if (nameTag.Name.starts_with("Muelto"))
+				{
+					metadata.Position.y += 1520.0f;
+				}
+			}
+
+			CharaSprite* chara;
+			CharaSprite* lastChara = mOponentCharacter;
+			this->SetOpponentCharacter(chara = CharaRegistry::GetCharacter("Syobon"));
+			chara->CharaPosition = { -156.0f, 76.0f };
+			chara->CharaScale = { 0.825f, 0.825f };
+			this->SetOpponentCharacter(CharaRegistry::GetCharacter("Fernan"));
+			chara->SetEnabled(true);
 		});
 	mConductor->AddScriptedEvent(257, [this]() {
 
@@ -346,13 +384,15 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mConductor->AddScriptedEvent(272, [this]() {
 		mScene->EntityManager.DestroyEntity(x64blackentity);
 		mScene->EntityManager.DestroyEntity(x64entity);
-		gGameState.DoBeatEveryNthBeat = 4;
+		gGameState.DoBeatEveryNthBeat = 2;
 		});
 	mConductor->AddScriptedEvent(773, [this]() {
 		CharaSprite* chara;
+		CharaSprite* lastChara = mOponentCharacter;
 		this->SetOpponentCharacter(chara = CharaRegistry::GetCharacter("Syobon"));
 		chara->CharaPosition = { -156.0f, 76.0f };
 		chara->CharaScale = { 0.825f, 0.825f };
+		lastChara->SetEnabled(true);
 		});
 	mConductor->AddScriptedEvent(1536, [this]() {
 		CharaSprite* sprite;
@@ -374,9 +414,30 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mConductor->AddScriptedEvent(1556, [this]() {
 		mConductor->EnableBot = false;
 		});
-	mConductor->AddScriptedEvent(1183, [this]() {
+	mConductor->AddScriptedEvent(1174, [this]() {
+		auto metadataManager = mScene->GetComponentManager<StagePropComponent>(C_STAGE_PROP_COMPONENT_NAME);
+		auto& props = metadataManager->GetEntities();
+
+		for (auto entity : props)
+		{
+			auto& metadata = metadataManager->Get(entity);
+			auto& nameTag = mScene->Names.Get(entity);
+			auto& transform = mScene->Transforms.Get(entity);
+			auto& sprite = mScene->SpriteRenderers.Get(entity);
+
+			if (nameTag.Name.starts_with("Muelto"))
+			{
+				mConductor->PushAction(&metadata.Position.y, metadata.Position.y - 1520.0f, mConductor->StepsToSeconds(3), Easing::Linear);
+			}
+		}
+		});
+	mConductor->AddScriptedEvent(1177, [this]() {
+		CharaSprite* lastChara = mOponentCharacter;
 		this->SetOpponentCharacter(CharaRegistry::GetCharacter("Fernan"));
-		}); 
+		lastChara->SetEnabled(true);
+		lastChara->PlayAnimation("die");
+		mConductor->PushAction(&lastChara->CharaPosition.y, lastChara->CharaPosition.y - 2500.0f * 1.5f, 1.2f * 1.25f, Easing::BackIn);
+		});
 	mConductor->AddScriptedEvent(1200, [this]() {
 		mOponentCharacter->CharaPosition.y += 200;
 		auto& sprite = mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity);
@@ -447,6 +508,23 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity).IsGui = true;
 		auto& sprite = mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity);
 		sprite.Center = { 0.0f, 1.0f };
+
+		auto metadataManager = mScene->GetComponentManager<StagePropComponent>(C_STAGE_PROP_COMPONENT_NAME);
+		auto& props = metadataManager->GetEntities();
+
+		for (auto entity : props)
+		{
+			auto& metadata = metadataManager->Get(entity);
+			auto& nameTag = mScene->Names.Get(entity);
+			auto& transform = mScene->Transforms.Get(entity);
+			auto& sprite = mScene->SpriteRenderers.Get(entity);
+
+			if (nameTag.Name.starts_with("Muelto"))
+			{
+				metadata.Position.y += 15200.0f;
+			}
+		}
+
 		});
 	mConductor->AddScriptedEvent(1547, [this]() {
 		CharaRegistry::GetCharacter("Fernan")->PlayAnimation("WTF");
@@ -612,6 +690,71 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	ma_engine_set_gain_db(mScene->AudioEngine->GetEngine(), 2.0f);
 	
 	mLoadingDone.store(true);
+
+	mResumeText = mScene->EntityManager.CreateEntity();
+	mVolumeText = mScene->EntityManager.CreateEntity();
+	mExitText = mScene->EntityManager.CreateEntity();
+	mSelectText = mScene->EntityManager.CreateEntity();
+
+	// Create pause UI buttons
+	{
+		auto entity = mResumeText;
+		scene->TextComponents.Create(entity);
+		scene->TextComponents.Get(entity).FontSize = 90.0f;
+		scene->TextComponents.Get(entity).Text = L"resume";
+		scene->TextComponents.Get(entity).Font = "Funkin";
+		scene->TextRenderers.Create(entity).Alignment = 0.0f;
+		scene->TextRenderers.Get(entity).RenderLayer = 10000;
+		scene->TextRenderers.Get(entity).IsGui = true;
+		scene->Transforms.Create(entity);
+		scene->GuiAnchors.Create(entity).AnchorPoint = Stratum::GuiAnchorPoint::LEFT;
+		scene->GuiAnchors.Get(entity).Position.y += 70.0f;
+		scene->GuiAnchors.Get(entity).Position.x += 200.0f;
+	}
+
+	{
+		auto entity = mVolumeText;
+		scene->TextComponents.Create(entity);
+		scene->TextComponents.Get(entity).FontSize = 90.0f;
+		scene->TextComponents.Get(entity).Text = L"Volume";
+		scene->TextComponents.Get(entity).Font = "Funkin";
+		scene->TextRenderers.Create(entity).Alignment = 0.0f;
+		scene->TextRenderers.Get(entity).RenderLayer = 10000;
+		scene->TextRenderers.Get(entity).IsGui = true;
+		scene->Transforms.Create(entity);
+		scene->GuiAnchors.Create(entity).AnchorPoint = Stratum::GuiAnchorPoint::LEFT;
+		scene->GuiAnchors.Get(entity).Position.y += 0.0f;
+		scene->GuiAnchors.Get(entity).Position.x += 200.0f;
+	}
+
+	{
+		auto entity = mExitText;
+		scene->TextComponents.Create(entity);
+		scene->TextComponents.Get(entity).FontSize = 90.0f;
+		scene->TextComponents.Get(entity).Text = L"exit to desktop";
+		scene->TextComponents.Get(entity).Font = "Funkin";
+		scene->TextRenderers.Create(entity).Alignment = 0.0f;
+		scene->TextRenderers.Get(entity).RenderLayer = 10000;
+		scene->TextRenderers.Get(entity).IsGui = true;
+		scene->Transforms.Create(entity);
+		scene->GuiAnchors.Create(entity).AnchorPoint = Stratum::GuiAnchorPoint::LEFT;
+		scene->GuiAnchors.Get(entity).Position.y += -70.0f;
+		scene->GuiAnchors.Get(entity).Position.x += 200.0f;
+	}
+
+	{
+		auto entity = mSelectText;
+		scene->TextComponents.Create(entity);
+		scene->TextComponents.Get(entity).FontSize = 64.0f;
+		scene->TextComponents.Get(entity).Text = L">";
+		scene->TextRenderers.Create(entity).Alignment = 0.0f;
+		scene->TextRenderers.Get(entity).RenderLayer = 10000;
+		scene->TextRenderers.Get(entity).IsGui = true;
+		scene->Transforms.Create(entity);
+		scene->GuiAnchors.Create(entity).AnchorPoint = Stratum::GuiAnchorPoint::LEFT;
+		scene->GuiAnchors.Get(entity).Position.y += -70.0f;
+		scene->GuiAnchors.Get(entity).Position.x += 150.0f;
+	}
 }
 
 void Funkin::InGameSystem::OnActivate(Stratum::Scene* scene)
@@ -672,6 +815,8 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 		instSource->Play();
 		if (voicesSource)
 			voicesSource->Play();
+		// instSource->Seek(53.0f);
+		// voicesSource->Seek(53.0f);
 	}
 
 	if (mConductor->BeatCountF < 3.0f)
@@ -764,11 +909,6 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 		{
 			float mult = 1.0f;
 
-			if (gGameState.DoBeatEveryNthBeat == 2 && (mConductor->BeatCount + gGameState.BeatOffset) % 4 == 0)
-			{
-				mult = 1.8f;
-			}
-
 			if (!DoBeat)
 			{
 				GuiZoomLevel += 0.035f * mult;
@@ -809,6 +949,143 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 {
 	CharaRegistry::Update();
+	bool before = mIsPaused;
+
+	if (Stratum::Input::GetKeyDown(KeyCode::ESCAPE))
+	{
+		mIsPaused = !mIsPaused;
+	}
+
+	std::array<Stratum::ECS::edict_t, 4> entities{
+		mResumeText,
+		mVolumeText,
+		mExitText,
+		mSelectText
+	};
+
+	auto entity = Stratum::ECS::C_INVALID_ENTITY;
+
+	if (mIsPaused)
+	{
+		if (Stratum::Input::GetKeyDown(KeyCode::DOWN))
+		{
+			mPauseUiButtonIndex += 1;
+			scrollSource->Play();
+		}
+		if (Stratum::Input::GetKeyDown(KeyCode::UP))
+		{
+			mPauseUiButtonIndex -= 1;
+			scrollSource->Play();
+		}
+
+		mPauseUiButtonIndex = glm::clamp(mPauseUiButtonIndex, 0, 2);
+
+		switch (mPauseUiButtonIndex)
+		{
+		case 0:
+			entity = mResumeText;
+			break;
+		case 1:
+			entity = mVolumeText;
+			break;
+		case 2:
+			entity = mExitText;
+			break;
+		default:
+			break;
+		}
+
+		mScene->GuiAnchors.Get(mSelectText).Position.y = mScene->GuiAnchors.Get(entity).Position.y;
+
+		if (Stratum::Input::GetKeyDown(KeyCode::RETURN))
+		{
+			if (mPauseUiButtonIndex == 0)
+			{
+				mIsPaused = false;
+			}
+			if (mPauseUiButtonIndex == 2)
+			{
+				Stratum::EventHandler::InvokeEvent(Stratum::EventHandler::GetEventID("app_close"), this);
+			}
+		}
+
+		if (mPauseUiButtonIndex == 1)
+		{
+			if (Stratum::Input::GetKeyDown(KeyCode::LEFT))
+			{
+				mVolume -= 0.05f;
+				scrollSource->Play();
+			}
+			if (Stratum::Input::GetKeyDown(KeyCode::RIGHT))
+			{
+				mVolume += 0.05f;
+				scrollSource->Play();
+			}
+			mVolume = glm::clamp(mVolume, 0.0f, 1.0f);
+		}
+
+		mScene->TextComponents.Get(mVolumeText).Text = std::format(L"volume: {:.0f}%", mVolume * 100.0f);
+
+		uint32_t index = 0;
+
+		for (auto ent : entities)
+		{
+			if (ent != mSelectText)
+			{
+				float diff = 1.0f / (1.0f + (float)glm::abs((int)index - mPauseUiButtonIndex) / 10.0f * 3.0f);
+				mScene->GuiAnchors.Get(ent).Position.y = glm::mix(mScene->GuiAnchors.Get(ent).Position.y, index * -100.0f + mPauseUiButtonIndex * 100.0f, Stratum::Time::UnscaledDeltaTime * 5.0f * diff);
+				index++;
+			}
+		}
+	}
+
+	for (auto ent : entities)
+	{
+		mScene->TextRenderers.Get(ent).Enabled = mIsPaused;
+
+		if (ent == entity)
+		{
+			mScene->TextComponents.Get(ent).FontSize = 100.0f;
+		}
+		else
+		{
+			mScene->TextComponents.Get(ent).FontSize = 90.0f;
+		}
+	}
+
+	if (before != mIsPaused)
+	{
+		if (!before && mIsPaused) // Pausing
+		{
+			if (voicesSource)
+				voicesSource->Pause();
+			if (instSource)
+				instSource->Pause();
+
+			pauseSource->Play();
+
+			mPauseUiButtonIndex = 0;
+
+			for (auto ent : entities)
+			{
+				mScene->GuiAnchors.Get(ent).Position.y = -2000.0f;
+			}
+		}
+		else if (before && !mIsPaused) // Unpausing
+		{
+			pauseSource->Stop();
+			if (voicesSource)
+				voicesSource->Resume();
+			if (instSource)
+				instSource->Resume();
+		}
+	}
+
+	ma_engine_set_volume(mScene->AudioEngine->GetEngine(), mVolume);
+
+	mConductor->IsPaused = this->IsPaused();
+
+	Stratum::Time::TimeScale = mIsPaused ? 0.0f : 1.0f;
 }
 
 void Funkin::InGameSystem::RenderImGui(Stratum::Scene* scene)

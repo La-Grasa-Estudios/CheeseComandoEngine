@@ -50,6 +50,7 @@ namespace Funkin
 		float SongTime;
 		float BeatCountF;
 		uint32_t BeatCount;
+		bool IsPaused = false;
 
 		Chart chart;
 
@@ -64,6 +65,7 @@ namespace Funkin
 		void RegisterEventHandler(const std::string& eventName, ChartEventHandler handler);
 		void AddScriptedEvent(int step, ScriptedEvent event);
 
+		float StepsToSeconds(uint32_t stepCount);
 		float GetConductorBeatMultiplier();
 		ChartNote& GetNoteByIndex(uint32_t sectionIndex, uint32_t noteIndex);
 		std::string GetPlayer1Name() const;
@@ -111,7 +113,7 @@ namespace Funkin
 		void SpawnNoteSplash(Stratum::Scene* scene, uint32_t noteType);
 		void SpawnSustainCover(Stratum::Scene* scene, uint32_t noteType);
 
-		void AddScoreNoteHit(uint32_t time);
+		void AddScoreNoteHit(int32_t time);
 
 		uint32_t mStepCount = 0;
 		float mStepAccumulator = 0.0f;

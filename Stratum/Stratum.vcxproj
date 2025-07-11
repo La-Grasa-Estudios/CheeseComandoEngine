@@ -176,6 +176,7 @@
     <ClInclude Include="Engine\EntryPoint.h" />
     <ClInclude Include="Engine\Event\EventHandler.h" />
     <ClInclude Include="Engine\Font\Font.h" />
+    <ClInclude Include="Engine\Font\FontRegistry.h" />
     <ClInclude Include="Engine\Input\Input.h" />
     <ClInclude Include="Engine\Input\InputLayer.h" />
     <ClInclude Include="Engine\Input\KeyCode.h" />
@@ -380,6 +381,7 @@
     <ClCompile Include="Engine\Entity\EntityManager.cpp" />
     <ClCompile Include="Engine\Event\EventHandler.cpp" />
     <ClCompile Include="Engine\Font\Font.cpp" />
+    <ClCompile Include="Engine\Font\FontRegistry.cpp" />
     <ClCompile Include="Engine\Input\Input.cpp" />
     <ClCompile Include="Engine\Media\VideoDecode.cpp" />
     <ClCompile Include="Engine\Renderer\BindlessDescriptorIndex.cpp" />

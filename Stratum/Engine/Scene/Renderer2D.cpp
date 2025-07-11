@@ -20,7 +20,6 @@
 using namespace ENGINE_NAMESPACE;
 
 Render::PostProcessingStack* pStack;
-Font* font = NULL;
 Scene* currentRenderScene;
 
 struct DebugLog
@@ -56,15 +55,6 @@ Renderer2D::Renderer2D()
 	if (!debugLogAdded)
 	{
 		Logger::s_LogReceivers.push_back(new DebugLogReceiver());
-	}
-
-	if (!font)
-	{
-		font = new Font("Data/fonts/Roboto-Regular.ttf");
-	}
-	else
-	{
-		font->SetDescriptorHandle(0xFFFFFFFF);
 	}
 
 	pStack = new Render::PostProcessingStack();
@@ -259,9 +249,12 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 		if (!scene->Transforms.HasComponent(entity) && scene->TextComponents.HasComponent(entity))
 			continue;
 
-		RenderQueue2D::RenderInstance instance{};
-
 		auto& renderer = scene->TextRenderers.Get(entity);
+
+		if (!renderer.Enabled)
+			continue;
+
+		RenderQueue2D::RenderInstance instance{};
 
 		instance.kind = RenderQueue2D::RenderInstanceKind::TEXT;
 		instance.textEntity = entity;
@@ -282,18 +275,13 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 	mSpriteBatch->Begin();
 	mSpriteBatch->SetBatch(mMainPipeline.get(), BatchType::SPRITE);
 
-	TextBatcher textRenderer(font, mSpriteBatch.get());
+	TextBatcher textRenderer(mSpriteBatch.get());
 	TextBatcherParameters parameters;
 	parameters.maxWidth = 800.0f;
 	parameters.wrapText = false;
 	parameters.fontSize = 64.0f;
 	parameters.lineHeight = 1.2f;
 	textRenderer.SetParameters(parameters);
-
-	if (font->GetDescriptorHandle() == 0xFFFFFFFF || currentRenderScene != scene)
-	{
-		scene->Resources.CreateFontImage(font);
-	}
 
 	for (int k = 0; k < 2; k++)
 	{
@@ -314,9 +302,17 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 				auto& renderer = scene->TextRenderers.Get(textEntity);
 				auto& transform = scene->Transforms.Get(textEntity);
 
-				if (textComponent.Text.empty())
+				if (textComponent.Text.empty() || textComponent.Font.empty())
 					continue;
 
+				auto font = scene->FontRegistry.GetFont(textComponent.Font);
+
+				if (font && scene->FontRegistry.NeedsUpload(textComponent.Font))
+				{
+					scene->Resources.CreateFontImage(font);
+				}
+
+				parameters.font = font;
 				parameters.fontSize = textComponent.FontSize;
 				textRenderer.SetParameters(parameters);
 
@@ -329,7 +325,7 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 					offsetX = textRenderer.GetStringSize(textComponent.Text).x * renderer.Alignment;
 				}
 
-				textRenderer.DrawText(textComponent.Text, glm::vec2(transform.Position) - glm::vec2(offsetX, 0.0f), glm::mat4(1.0f), renderer.Color, renderer.IsGui);
+				textRenderer.DrawText(textComponent.Text, glm::vec2(transform.Position) - glm::vec2(offsetX, 0.0f), transform.ModelMatrix, renderer.Color, renderer.IsGui);
 
 				continue;
 			}
@@ -351,11 +347,17 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 
 	mSpriteBatch->SetBatch(nullptr, BatchType::TEXT);
 
+	if (scene->FontRegistry.NeedsUpload("Roboto"))
+	{
+		scene->Resources.CreateFontImage(scene->FontRegistry.GetFont("Roboto"));
+	}
+
+	parameters.font = scene->FontRegistry.GetFont("Roboto");
 	parameters.fontSize = 64.0f;
 	textRenderer.SetParameters(parameters);
 
 	textRenderer.DrawText(Utils::FormatString(baseString, L"" __DATE__, L"" __TIME__,
-		(int)(1.0f / Time::DeltaTime), Time::DeltaTime * 1000.0f, Time::GPURenderTime * 1000.0f,
+		(int)(1.0f / Time::UnscaledDeltaTime), Time::UnscaledDeltaTime * 1000.0f, Time::GPURenderTime * 1000.0f,
 		Utils::ToWideString(gd.Description).c_str(),
 		(int)(gd.UsedVideoMemory / 1024.0f / 1024.0f),
 		gd.DedicatedVideoMemory / 1024 / 1024),

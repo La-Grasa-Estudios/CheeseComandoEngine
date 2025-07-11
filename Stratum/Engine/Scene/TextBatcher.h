@@ -20,13 +20,14 @@ struct TextBatcherParameters
 	float maxWidth = 0.0f; // Maximum width of a line before wrapping
 	float fontSize = 16.0f; // Size of the font in pixels
 	bool wrapText = true; // Whether to wrap text to the next line if it exceeds maxWidth
+	Font* font = NULL;
 };
 
 class TextBatcher
 {
 public:
 
-	TextBatcher(Font* font, SpriteBatch* batch);
+	TextBatcher(SpriteBatch* batch);
 	~TextBatcher();
 
 	void SetParameters(const TextBatcherParameters& parameters);
@@ -37,7 +38,6 @@ public:
 private:
 
 	SpriteBatch* mBatch;
-	Font* mFont;
 	TextBatcherParameters mParameters;
 };
 

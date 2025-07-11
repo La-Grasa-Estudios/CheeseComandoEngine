@@ -15,6 +15,7 @@ struct AudioSourceParams
 	bool IsReady = false;
 	bool ShouldPlay = false;
 	bool IsLooping = false;
+	bool IsPaused = false;
 	float Volume = 1.0f;
 	float Pitch = 1.0f;
 	float Pan = 0.5f;
@@ -29,6 +30,8 @@ public:
 
 	virtual void Play();
 	virtual void Stop(bool fully = false, bool fadeOut = false, uint32_t fadeOutMillis = 100);
+	virtual void Pause();
+	virtual void Resume();
 	virtual void Rewind() {}
 
 	virtual void SetVolume(float volume);

@@ -14,7 +14,7 @@
 const float PRECISION = 64.0F;
 const float DISPLACEMENT = -256.0F;
 float STRUM_LINE_Y = 200;
-const float SAFE_ZONE = 1.0f / 5.0f;
+const float SAFE_ZONE = 1.0f / 3.0f;
 
 static const int SICK_TIME_WINDOW = 45;
 static const int GOOD_TIME_WINDOW = 90;
@@ -313,6 +313,11 @@ void Funkin::Conductor::LoadChart(Stratum::Scene* scene, const std::string& path
 
 void Funkin::Conductor::Update(Stratum::Scene* scene)
 {
+	if (IsPaused)
+	{
+		return;
+	}
+
 	const int NOTE_MISS_SCORE = 100;
 
 	BeatCountF = (chart.info.bpm / 60.0f) * SongTime;
@@ -326,7 +331,7 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 	uint32_t simulatedSteps = expectedStepCount - lastStepCount;
 
 	// Big lag spike! (TO DO: Fix the engine/get a good pc)
-	// Simulate last 16 steps (Also helps during developments when skipping parts of the song)
+	// Simulate last 64 steps (Also helps during developments when skipping parts of the song)
 	if (simulatedSteps > 64)
 	{
 		mStepCount += simulatedSteps - 64;
@@ -477,10 +482,10 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 			scene->EntityManager.DestroyEntity(entity);
 
-			float diff = SongTime - noteEntity.Time;
+			float diff = noteEntity.Time - SongTime;
 			int32_t diffMillis = diff * 1000.0f;
 
-			if (diffMillis >= 0 && diffMillis <= SICK_TIME_WINDOW / 2)
+			if (glm::abs(diffMillis) <= SICK_TIME_WINDOW / 2)
 			{
 				SpawnNoteSplash(scene, noteEntity.NoteType);
 			}
@@ -561,6 +566,7 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 				scene->EntityManager.DestroyEntity(ent);
 				mSustainHeld[i] = Stratum::ECS::C_INVALID_ENTITY;
 				SpawnSustainCover(scene, i);
+				// PlayerScore += (sustainNote.HoldTime * 250.0f) * GetConductorBeatMultiplier();
 			}
 
 			auto& animator = scene->SpriteAnimators.Get(noteButtons[sustainNote.NoteType]);
@@ -730,6 +736,11 @@ void Funkin::Conductor::AddScriptedEvent(int step, ScriptedEvent event)
 	mScriptedEvents.push_back(ScriptedEventContainer{ event, false, step });
 }
 
+float Funkin::Conductor::StepsToSeconds(uint32_t stepCount)
+{
+	return static_cast<float>(stepCount) / 4.0f / GetConductorBeatMultiplier();
+}
+
 float Funkin::Conductor::GetConductorBeatMultiplier()
 {
 	return chart.info.bpm / 60.0f;
@@ -865,6 +876,16 @@ uint32_t Funkin::Conductor::GetStepCount()
 
 void Funkin::Conductor::OnStep()
 {
+	for (int i = 0; i < mSustainHeld.size(); i++)
+	{
+		auto ent = mSustainHeld[i];
+
+		if (ent != Stratum::ECS::C_INVALID_ENTITY)
+		{
+			PlayerScore += 20;
+		}
+	}
+
 	for (auto& event : mScriptedEvents)
 	{
 		if (event.stepCount == mStepCount)
@@ -1057,7 +1078,7 @@ void Funkin::Conductor::SpawnSustainCover(Stratum::Scene* scene, uint32_t noteTy
 	transform.SetPosition(strumTransform.Position);
 }
 
-void Funkin::Conductor::AddScoreNoteHit(uint32_t time)
+void Funkin::Conductor::AddScoreNoteHit(int32_t time)
 {
 
 	const float SICK_TIME_FRAME = 45;
@@ -1079,26 +1100,26 @@ void Funkin::Conductor::AddScoreNoteHit(uint32_t time)
 
 	float score = -10.0f;
 
-	if (time >= 0 && time <= SICK_TIME_FRAME)
+	if (glm::abs(time) <= SICK_TIME_FRAME)
 	{
 		float acc = time / SICK_TIME_FRAME;
-		if (time < SICK_TIME_FRAME / 2.0f)
+		if (glm::abs(time) < SICK_TIME_FRAME / 2.0f)
 		{
 			acc = 1.0f;
 		}
 		score = glm::mix(SICK_MIN_SCORE, SICK_MAX_SCORE, acc);
 	} 
-	else if (time >= -GOOD_TIME_FRAME && time <= GOOD_TIME_FRAME)
+	else if (glm::abs(time) <= GOOD_TIME_FRAME)
 	{
 		float acc = glm::abs(time) / GOOD_TIME_FRAME;
 		score = glm::mix(GOOD_MIN_SCORE, GOOD_MAX_SCORE, acc);
 	}
-	else if (time >= -BAD_TIME_FRAME && time <= BAD_TIME_FRAME)
+	else if (glm::abs(time) <= BAD_TIME_FRAME)
 	{
 		float acc = glm::abs(time) / BAD_TIME_FRAME;
 		score = glm::mix(BAD_MIN_SCORE, BAD_MAX_SCORE, acc);
 	}
-	else if (time >= -SHIT_TIME_FRAME && time <= SHIT_TIME_FRAME)
+	else if (glm::abs(time) <= SHIT_TIME_FRAME)
 	{
 		float acc = glm::abs(time) / SHIT_TIME_FRAME;
 		score = glm::mix(SHIT_MIN_SCORE, SHIT_MAX_SCORE, acc);

@@ -20,6 +20,8 @@ void Time::BeginProfile()
 void Time::EndProfile()
 {
 	DeltaTime = (float)(nanoTime() - now) / 1000.0F / 1000.0F / 1000.0F;
+	UnscaledDeltaTime = DeltaTime;
+	DeltaTime *= TimeScale;
 	if (DeltaTime * 1000.0f > 100.0f)
 	{
 		//Z_WARN("Frametime got over 100ms! ({}ms), clamping to 100ms", DeltaTime * 1000.0f);

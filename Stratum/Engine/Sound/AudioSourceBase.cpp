@@ -22,6 +22,18 @@ void AudioSourceBase::Stop(bool fully, bool fadeOut, uint32_t fadeOutMillis)
 	p_Params.DoStop = true;
 }
 
+void AudioSourceBase::Pause()
+{
+	p_Params.IsPaused = true;
+	p_Params.IsPlaying = false;
+}
+
+void AudioSourceBase::Resume()
+{
+	p_Params.IsPaused = false;
+	p_Params.IsPlaying = true;
+}
+
 void AudioSourceBase::SetVolume(float volume)
 {
 	p_Params.Volume = volume;

@@ -236,13 +236,14 @@ private: // [25-05-2025] Ugly private on struct but i need it
 
 struct TextComponent
 {
-	std::string Font;
+	std::string Font = "Roboto";
 	std::wstring Text;
 	float FontSize = 16.0f;
 };
 
 struct TextRendererComponent
 {
+	bool Enabled = true;
 	bool IsGui = false;
 	float Alignment = 0.0f; // 0 means left aligned, 0.5 means center aligned, 1 means right aligned
 	uint32_t RenderLayer = 0;

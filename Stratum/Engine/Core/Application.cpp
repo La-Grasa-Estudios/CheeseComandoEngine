@@ -330,11 +330,18 @@ void Application::MainLoop()
 	bool LogStutters = false;
 	float LastFrameDelta = 0.0f;
 
+	bool ShouldClose = false;
+
+	EventHandler::RegisterListener([&](void* sender, void** args, uint32_t argc)
+		{
+			ShouldClose = true;
+		}, EventHandler::GetEventID("app_close"), false, true);
+
 	while (1) {
 
 		Z_PROFILE_SCOPE("Application::Frame");
 
-		if (m_Window->CloseRequested()) {
+		if (m_Window->CloseRequested() || ShouldClose) {
 			break;
 		}
 

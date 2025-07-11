@@ -5,6 +5,8 @@
 #include "SceneResources.h"
 #include "Renderer/BindlessDescriptorTable.h"
 
+#include <Font/FontRegistry.h>
+
 BEGIN_ENGINE
 
 class Scene;
@@ -78,6 +80,7 @@ public:
 
 	void LoadModel(const std::string& path, const ECS::edict_t edict);
 
+	FontRegistry FontRegistry;
 	SceneResources Resources;
 	Ref<Render::BindlessDescriptorTable> BindlessTable;
 

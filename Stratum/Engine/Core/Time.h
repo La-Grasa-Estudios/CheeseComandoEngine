@@ -16,6 +16,8 @@ public:
 	inline static float DeltaTime = 0.0F;
 	inline static float GlobalTime = 0.0F; // Aproximate Time Since Startup
 	inline static float FixedDeltaTime = 1.0F / 50.0F;
+	inline static float TimeScale = 1.0f;
+	inline static float UnscaledDeltaTime = 1.0f; // Unscaled delta time
 
 	inline static float CPUTime = 0.0F;
 	inline static float GPURenderTime = 0.0F;

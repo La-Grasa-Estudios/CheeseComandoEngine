@@ -68,6 +68,14 @@ void MP3AudioSource::Rewind()
 
 void MP3AudioSource::UpdateSource()
 {
+    if (p_Params.IsPaused)
+    {
+        if (ma_sound_is_playing(&p_Sound))
+        {
+            ma_sound_stop(&p_Sound);
+		}
+        return;
+    }
 
     if (p_Params.DoStop && p_Params.IsReady)
     {

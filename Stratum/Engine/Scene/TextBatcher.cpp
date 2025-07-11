@@ -4,9 +4,8 @@
 
 using namespace ENGINE_NAMESPACE;
 
-TextBatcher::TextBatcher(Font* font, SpriteBatch* batch)
+TextBatcher::TextBatcher(SpriteBatch* batch)
 {
-	mFont = font;
 	mBatch = batch;
 }
 
@@ -22,7 +21,7 @@ void TextBatcher::SetParameters(const TextBatcherParameters& parameters)
 
 void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, const glm::mat4& model, glm::vec4 color, bool gui)
 {
-	if (!mFont || !mBatch || text.empty())
+	if (!mParameters.font || !mBatch || text.empty())
 		return;
 
 	static int frameIndex = 0;
@@ -70,7 +69,7 @@ void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, 
 		for (uint32_t k = 0; k < wordSize; k++)
 		{
 			wchar_t c = text[k + idx];
-			CharGlyph* glyph = mFont->GetGlyph(c);
+			CharGlyph* glyph = mParameters.font->GetGlyph(c);
 			wordLenght += (glyph->advance_x >> 6) * scale + mParameters.letterSpacing * scale;
 		}
 
@@ -81,14 +80,14 @@ void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, 
 			// Wrap text to the next line
 			size_x = 0.0f;
 			coords.x = position.x;
-			coords.y -= mFont->GetGlyph(L'l')->rect.h * mult + mult; // Move to the next line
+			coords.y -= mParameters.font->GetGlyph(L'l')->rect.h * mult + mult; // Move to the next line
 			wordComplete = false;
 		}
 
 		while (wordSize > 0)
 		{
 			wchar_t c = text[idx];
-			CharGlyph* glyph = mFont->GetGlyph(c);
+			CharGlyph* glyph = mParameters.font->GetGlyph(c);
 
 			if (glyph)
 			{
@@ -105,7 +104,7 @@ void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, 
 
 				instance.rect.position = { glyph->rect.x, glyph->rect.y };
 				instance.rect.size = { glyph->rect.w, glyph->rect.h };
-				instance.texture = mFont->GetDescriptorHandle();
+				instance.texture = mParameters.font->GetDescriptorHandle();
 				instance.RenderSize = glm::vec2(instance.rect.size) * scale;
 				instance.color = color;
 				instance.transform = glm::translate(glm::identity<glm::mat4>(), pos);
@@ -146,7 +145,7 @@ void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, 
 
 glm::vec3 TextBatcher::GetStringSize(const std::wstring& text) const
 {
-	if (!mFont || !mBatch || text.empty())
+	if (!mParameters.font || !mBatch || text.empty())
 		return glm::vec3(0.0f);
 
 	static int frameIndex = 0;
@@ -197,7 +196,7 @@ glm::vec3 TextBatcher::GetStringSize(const std::wstring& text) const
 		for (uint32_t k = 0; k < wordSize; k++)
 		{
 			wchar_t c = text[k + idx];
-			CharGlyph* glyph = mFont->GetGlyph(c);
+			CharGlyph* glyph = mParameters.font->GetGlyph(c);
 			wordLenght += (glyph->advance_x >> 6) * scale + mParameters.letterSpacing * scale;
 		}
 
@@ -208,8 +207,8 @@ glm::vec3 TextBatcher::GetStringSize(const std::wstring& text) const
 			// Wrap text to the next line
 			line_size_x = 0.0f;
 			coords.x = 0.0f;
-			coords.y += mFont->GetGlyph(L'l')->rect.h * mult + mult; // Move to the next line
-			size_y += mFont->GetGlyph(L'l')->rect.h * mult + mult; // Move to the next line
+			coords.y += mParameters.font->GetGlyph(L'l')->rect.h * mult + mult; // Move to the next line
+			size_y += mParameters.font->GetGlyph(L'l')->rect.h * mult + mult; // Move to the next line
 			wordComplete = false;
 			lineWraps++;
 		}
@@ -217,7 +216,7 @@ glm::vec3 TextBatcher::GetStringSize(const std::wstring& text) const
 		while (wordSize > 0)
 		{
 			wchar_t c = text[idx];
-			CharGlyph* glyph = mFont->GetGlyph(c);
+			CharGlyph* glyph = mParameters.font->GetGlyph(c);
 
 			if (glyph)
 			{

@@ -34,6 +34,8 @@ Scene::Scene()
 	VideoSurfaces.Init(&EntityManager);
 
 	mVideoCopyCommandBuffer = new Render::CopyCommandBuffer();
+
+	FontRegistry.LoadFont("Roboto", "Data/fonts/Roboto-Regular.ttf");
 }
 
 Scene::~Scene()
@@ -416,11 +418,11 @@ void Scene::UpdateGuiAnchors()
 
 		if (anchor.AnchorPoint == GuiAnchorPoint::LEFT)
 		{
-			Position = glm::vec3(VirtualScreenSize.x + anchor.Position.x, VirtualScreenSize.y, 1.0f);
+			Position = glm::vec3(-VirtualScreenSize.x + anchor.Position.x, anchor.Position.y, 1.0f);
 		}
 		if (anchor.AnchorPoint == GuiAnchorPoint::RIGHT)
 		{
-			Position = glm::vec3(VirtualScreenSize.x - anchor.Position.x, VirtualScreenSize.y, 1.0f);
+			Position = glm::vec3(VirtualScreenSize.x - anchor.Position.x, anchor.Position.y, 1.0f);
 		}
 
 		if (anchor.AnchorPoint == GuiAnchorPoint::TOP_LEFT)

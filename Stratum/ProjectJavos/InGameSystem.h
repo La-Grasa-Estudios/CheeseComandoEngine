@@ -32,6 +32,7 @@ namespace Funkin
 
 		float GetLoadingProgress();
 		bool IsLoadingDone();
+		bool IsPaused() const { return mIsPaused; }
 
 	private:
 
@@ -45,6 +46,8 @@ namespace Funkin
 		float mFadeToWhiteBaseTime = 0.0f;
 		float mFadeToWhiteIntensity = 0.0f;
 
+		Stratum::Ref<Stratum::MP3AudioSource> pauseSource;
+		Stratum::Ref<Stratum::MP3AudioSource> scrollSource;
 		Stratum::Ref<Stratum::MP3AudioSource> instSource;
 		Stratum::Ref<Stratum::MP3AudioSource> voicesSource;
 		Stratum::Ref<Stratum::MP3AudioSource> missSources[3];
@@ -57,8 +60,18 @@ namespace Funkin
 		CharaSprite* mOponentCharacter = NULL;
 
 		bool mHasSongStarted = false;
+		bool mIsPaused = false;
 
 		std::atomic_uint mLoadingStage;
 		std::atomic_bool mLoadingDone;
+
+		Stratum::ECS::edict_t mResumeText;
+		Stratum::ECS::edict_t mVolumeText;
+		Stratum::ECS::edict_t mExitText;
+		Stratum::ECS::edict_t mSelectText;
+
+		int32_t mPauseUiButtonIndex = 0;
+
+		float mVolume = 1.0f;
 	};
 }
