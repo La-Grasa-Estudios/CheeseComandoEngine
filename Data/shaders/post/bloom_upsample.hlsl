@@ -1,3 +1,5 @@
+#include "shaders/common_shaders.hlsli"
+
 struct v2f
 {
 	float4 ClipPos : SV_Position;

@@ -1,7 +1,9 @@
 #include "math.hlsl"
+#include "shaders/common_shaders.hlsli"
+
 #define LOCAL_SIZE 16
 
-cbuffer Params : register(b0)
+VK_PUSH_CONSTANT cbuffer Params : register(b0)
 {
     uint2 SourceSize;
 	uint2 TargetSize;

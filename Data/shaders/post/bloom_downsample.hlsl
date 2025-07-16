@@ -1,9 +1,10 @@
+#include "shaders/common_shaders.hlsli"
+
 struct v2f
 {
 	float4 ClipPos : SV_Position;
 	float2 TexCoord : TEXCOORD0;
 };
-
 
 #ifdef STAGE_VERTEX
 
@@ -30,7 +31,7 @@ v2f main(in uint vertexID : SV_VertexID)
 Texture2D srcTexture : register(t0);
 SamplerState bloomSampler : register(s0);
 
-cbuffer BloomParams : register(b0)
+VK_PUSH_CONSTANT cbuffer BloomParams : register(b0)
 {
 	int2 ScreenSize;
 };

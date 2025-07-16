@@ -93,21 +93,16 @@ void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, 
 			{
 				SpriteBatch::SpriteInstance instance{};
 
-				glm::mat4 model1 = glm::identity<glm::mat4>();
-
 				glm::vec3 pos = coords;
 				pos.x += glyph->bearing_x * scale;
 				pos.y += glyph->bearing_y * scale;
-
-				model1 = glm::translate(model1, pos);
-				model1 = model * model1;
 
 				instance.rect.position = { glyph->rect.x, glyph->rect.y };
 				instance.rect.size = { glyph->rect.w, glyph->rect.h };
 				instance.texture = mParameters.font->GetDescriptorHandle();
 				instance.RenderSize = glm::vec2(instance.rect.size) * scale;
 				instance.color = color;
-				instance.transform = glm::translate(glm::identity<glm::mat4>(), pos);
+				instance.transform = glm::translate(model, pos);
 				instance.UserData = (2 << 1) | (int)(gui);
 				instance.scaleWithRenderSize = false;
 

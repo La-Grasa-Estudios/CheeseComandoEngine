@@ -9,6 +9,7 @@
 #include <Core/Time.h>
 #include <Font/Font.h>
 #include <Util/StrUtil.h>
+#include <Input/Input.h>
 
 #include "SpriteBatch.h"
 #include "TextBatcher.h"
@@ -59,7 +60,7 @@ Renderer2D::Renderer2D()
 
 	pStack = new Render::PostProcessingStack();
 
-	mPerFrameData = CreateRef<Render::ConstantBuffer>(sizeof(PerFrameData) * 2);
+	mPerFrameData = CreateRef<Render::ConstantBuffer>(sizeof(PerFrameData));
 	mCmdBuffer = CreateRef<Render::GraphicsCommandBuffer>();
 	mComputeCmdBuffer = CreateRef<Render::ComputeCommandBuffer>(mCmdBuffer.get());
 	mCopyCmdBuffer = CreateRef<Render::CopyCommandBuffer>();
@@ -137,6 +138,11 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 		}
 	};
 
+	glm::vec2 mouseScaleFactor = scene->VirtualScreenSize / glm::vec2(pOutput->GetSize());
+	scene->VirtualMousePosition = Input::GetMousePosition() * mouseScaleFactor;
+	scene->VirtualMousePosition -= VirtualScreenSize / 2.0f;
+	scene->VirtualMousePosition *= glm::vec2{ 2.0f, -2.0f };
+
 	// Maybe implement proper frustum culling (Or fix this one can be faster since we are checking against an AABB and not 6 planes)
 	VirtualScreenSize *= 2.0f;
 	AABB screenAABB = { -VirtualScreenSize.x, -VirtualScreenSize.y, VirtualScreenSize.x, VirtualScreenSize.y };
@@ -200,6 +206,7 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 		instance.batch.texture = renderer.TextureHandle;
 		instance.batch.transform = transform.ModelMatrix;
 		instance.zIndex = renderer.RenderLayer;
+		instance.batch.pCustomShader = renderer.pCustomShader;
 
 		// WE NEED TO ANIMATE IT LOL
 		if (scene->SpriteAnimators.HasComponent(entity))
@@ -325,14 +332,22 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 					offsetX = textRenderer.GetStringSize(textComponent.Text).x * renderer.Alignment;
 				}
 
-				textRenderer.DrawText(textComponent.Text, glm::vec2(transform.Position) - glm::vec2(offsetX, 0.0f), transform.ModelMatrix, renderer.Color, renderer.IsGui);
+				textRenderer.DrawText(textComponent.Text, glm::vec2(-offsetX, 0.0f), transform.ModelMatrix, renderer.Color, renderer.IsGui);
 
 				continue;
 			}
 			else
 			{
-				mSpriteBatch->SetBatch(mMainPipeline.get(), BatchType::SPRITE);
-				instance.batch.UserData = 0;
+				if (instance.batch.center == glm::vec2(-1.0f, 1.0f))
+				{
+					mSpriteBatch->SetBatch(mMainPipeline.get(), BatchType::TEXT);
+					instance.batch.center = glm::vec2(0.0f, 0.0f);
+				}
+				else
+				{
+					mSpriteBatch->SetBatch(mMainPipeline.get(), BatchType::SPRITE);
+				}
+				instance.batch.UserData = k == 0 ? 0 : 1;
 				mSpriteBatch->DrawSprite(instance.batch);
 			}
 		}
@@ -352,6 +367,7 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 		scene->Resources.CreateFontImage(scene->FontRegistry.GetFont("Roboto"));
 	}
 
+#ifdef DEBUG_RENDERER
 	parameters.font = scene->FontRegistry.GetFont("Roboto");
 	parameters.fontSize = 64.0f;
 	textRenderer.SetParameters(parameters);
@@ -397,7 +413,7 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 		offset += str.y * 1.2f;
 	}
 	g_DebugSync.release();
-
+#endif
 	glm::mat4 matrices[2];
 
 	{
@@ -426,7 +442,12 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 
 	mCopyCmdBuffer->Begin();
 
-	mCopyCmdBuffer->UpdateConstantBuffer(mPerFrameData.get(), matrices);
+	PerFrameData data{};
+	data.ProjView[0] = matrices[0];
+	data.ProjView[1] = matrices[1];
+	data.ScreenSize = pOutput->GetSize();
+
+	mCopyCmdBuffer->UpdateConstantBuffer(mPerFrameData.get(), &data);
 	mSpriteBatch->End(mCopyCmdBuffer.get());
 
 	mCopyCmdBuffer->End();
@@ -460,6 +481,11 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 	mCmdBuffer->SetTextureSampler(mNearestSampler.get(), 1);
 	mCmdBuffer->SetBindlessDescriptorTable(scene->BindlessTable);
 
+	for (auto& cbuffer : mCbuffers)
+	{
+		mCmdBuffer->SetConstantBuffer(cbuffer.pBuffer, cbuffer.Slot);
+	}
+
 	mSpriteBatch->Render(mCmdBuffer.get());
 
 	Render::PostProcessingParameters params{};
@@ -481,6 +507,8 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 	pStack->Render(params);
 
 	mCmdBuffer->End();
+
+	mCbuffers.clear();
 }
 
 void Renderer2D::Submit()
@@ -544,8 +572,29 @@ void Renderer2D::SetGuiCameraRotation(float rotation)
 	mGuiCamera.Rotation = rotation;
 }
 
+Render::Framebuffer* Renderer2D::GetRenderTarget()
+{
+	return mMainRenderTarget.get();
+}
+
 void Renderer2D::RenderCamera(Camera2D* camera, RenderQueue2D* renderQueue, Scene* scene, Render::Framebuffer* pOutput)
 {
 	// Bindless rendering ftw :D
 	
+}
+
+void Renderer2D::SetConstantBuffer(Render::ConstantBuffer* pBuffer, uint32_t slot)
+{
+	if (slot < 2)
+		return;
+
+	for (auto& constantBuffer : mCbuffers)
+	{
+		if (constantBuffer.Slot == slot)
+		{
+			constantBuffer.pBuffer = pBuffer;
+			return;
+		}
+	}
+	mCbuffers.push_back({ pBuffer, slot });
 }

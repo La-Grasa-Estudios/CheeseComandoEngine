@@ -75,7 +75,8 @@ class Renderer2D
 {
 	struct PerFrameData
 	{
-		glm::mat4 ProjView;
+		glm::mat4 ProjView[2];
+		glm::vec2 ScreenSize;
 	};
 
 	struct Camera2D
@@ -106,7 +107,17 @@ public:
 	void SetCameraRotation(float rotation);
 	void SetGuiCameraRotation(float rotation);
 
+	void SetConstantBuffer(Render::ConstantBuffer* pBuffer, uint32_t slot);
+
+	Render::Framebuffer* GetRenderTarget();
+
 private:
+
+	struct ConstantBufferSlot
+	{
+		Render::ConstantBuffer* pBuffer;
+		uint32_t Slot;
+	};
 
 	void RenderCamera(Camera2D* camera, RenderQueue2D* renderQueue, Scene* scene, Render::Framebuffer* pOutput);
 
@@ -132,6 +143,8 @@ private:
 
 	Camera2D mMainCamera;
 	Camera2D mGuiCamera;
+
+	std::vector<ConstantBufferSlot> mCbuffers;
 
 };
 

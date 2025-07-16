@@ -212,6 +212,7 @@ std::vector<uint8_t> ShaderCompiler::GetShaderBinary(RefBinaryStream& ss, Shader
 	pIncludeHandler.Attach(IncludeHandler);
 
 	IncludeHandler->AddSearchPath("Engine/Include/");
+	IncludeHandler->AddSearchPath("shaders/");
 
 	std::vector<LPCWSTR> pszArgs =
 	{

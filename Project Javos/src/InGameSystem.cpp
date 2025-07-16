@@ -11,13 +11,15 @@
 #include "StageRegistry.h"
 #include "CharaRegistry.h"
 
-#include <Core/EngineStats.h>
+#include "Cursed/BalatroSystem.h"
+
 #include <Core/Time.h>
 #include <Core/Window.h>
 #include <Core/JobManager.h>
 #include <Core/VarRegistry.h>
 
 #include <Util/Globals.h>
+#include <Util/StrUtil.h>
 #include <Event/EventHandler.h>
 #include <Input/Input.h>
 #include <Scene/Renderer3D.h>
@@ -27,7 +29,6 @@
 
 #include <Thirdparty/imgui/imgui.h>
 #include <json/json.hpp>
-
 
 Funkin::GameState gGameState;
 
@@ -51,6 +52,14 @@ Funkin::InGameSystem::~InGameSystem()
 }
 
 static Stratum::ECS::edict_t startupVideo = Stratum::ECS::C_INVALID_ENTITY;
+static Stratum::ECS::edict_t youtubeBar = Stratum::ECS::C_INVALID_ENTITY;
+static Stratum::ECS::edict_t youtubeBarBg = Stratum::ECS::C_INVALID_ENTITY;
+static Stratum::ECS::edict_t youtubeBarLoadedBg = Stratum::ECS::C_INVALID_ENTITY;
+static Stratum::ECS::edict_t youtubeDuration = Stratum::ECS::C_INVALID_ENTITY;
+static Stratum::ECS::edict_t youtubeHud = Stratum::ECS::C_INVALID_ENTITY;
+static Stratum::ECS::edict_t youtubeFade = Stratum::ECS::C_INVALID_ENTITY;
+static Stratum::ECS::edict_t loadingYoutubeEntity = Stratum::ECS::C_INVALID_ENTITY;
+
 
 void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 {
@@ -111,6 +120,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 
 	StageRegistry::AddStage("syobon1-4");
 	StageRegistry::AddStage("syobon1-1");
+	StageRegistry::AddStage("syobon-end");
 
 	CharaRegistry::AddCharacter("Syobon");
 	CharaRegistry::AddCharacter("syobon");
@@ -229,6 +239,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mLoadingStage.fetch_add(1);
 
 	mScene->FontRegistry.LoadFont("Funkin", "fonts/Phantomuff Difficult Font.ttf");
+	mScene->FontRegistry.LoadFont("Youtube", "fonts/YoutubeSans-Titles.ttf");
 
 	ChartEvent EventSyobon{};
 	ChartEvent EventCebolla{};
@@ -305,9 +316,56 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mScene->Resources.LoadTextureImage("fnf/SyobonNoAction/screen1.png");
 	mScene->Resources.LoadTextureImage("fnf/SyobonNoAction/screen2.png");
 	mScene->Resources.LoadTextureImage("fnf/SyobonNoAction/holasaul.png");
+	mScene->Resources.LoadTextureImage("fnf/SyobonNoAction/loadingYoutube.png");
 
 	static Stratum::ECS::edict_t x64entity;
 	static Stratum::ECS::edict_t x64blackentity;
+
+	youtubeDuration = CreateTextEntity(L"0:00", { 0.0f, 0.0f }, 50.0f, true, 901, 0.0f);
+	auto& youtubeAnchor = mScene->GuiAnchors.Create(youtubeDuration);
+	youtubeAnchor.AnchorPoint = Stratum::GuiAnchorPoint::BOTTOM_LEFT;
+	youtubeAnchor.Position = { 500, 67.0f };
+
+	youtubeHud = CreateSpriteEntity("fnf/SyobonNoAction/videohud.png", { 0.0f, 0.0f }, { 1.0f, 1.0f }, true, 900);
+	youtubeFade = CreateSpriteEntity("fnf/SyobonNoAction/black.png", { 0.0f, 0.0f }, { 1.0f, 1.0f }, true, 899);
+	youtubeBar = CreateRectEntity({ 0.0f, 0.0f }, { 100.0f, 10.0f }, { -1.0f, 1.0f }, true, 902);
+	youtubeBarBg = CreateRectEntity({ 0.0f, 0.0f }, { 100.0f, 10.0f }, { -1.0f, 1.0f }, true, 901);
+
+	auto youtubeTitle = CreateTextEntity(L"Gato Bros (Syobon Action) en español por fernanfloo", { 0.0f, 0.0f }, 70.0f, true, 900, 0.0f);
+	auto& youtubeTitleAnchor = mScene->GuiAnchors.Create(youtubeTitle);
+	youtubeTitleAnchor.AnchorPoint = Stratum::GuiAnchorPoint::TOP_LEFT;
+	youtubeTitleAnchor.Position = { 35.0f, 100.0f };
+	mScene->TextComponents.Get(youtubeTitle).Font = "Youtube";
+
+	auto& transform = scene->Transforms.Get(youtubeBar);
+	transform.Scale.x = 0.0f;
+
+	auto& youtubeBarAnchor = mScene->GuiAnchors.Create(youtubeBar);
+	youtubeBarAnchor.AnchorPoint = Stratum::GuiAnchorPoint::BOTTOM_LEFT;
+	youtubeBarAnchor.Position = { 25.0f, 165.0f };
+
+	auto& youtubeBarBgAnchor = mScene->GuiAnchors.Create(youtubeBarBg);
+	youtubeBarBgAnchor.AnchorPoint = Stratum::GuiAnchorPoint::BOTTOM_LEFT;
+	youtubeBarBgAnchor.Position = { 25.0f, 165.0f };
+
+	mScene->SpriteRenderers.Get(youtubeBar).SpriteColor = { 1.0f, 0.0f, 0.0f, 1.0f };
+	mScene->SpriteRenderers.Get(youtubeBarBg).SpriteColor = { 0.3f, 0.3f, 0.3f, 0.7f };
+
+	{
+		mScene->SpriteRenderers.Get(youtubeBar).SpriteColor.a = 0.0f;
+		mScene->SpriteRenderers.Get(youtubeBarBg).SpriteColor.a = 0.0f;
+		mScene->SpriteRenderers.Get(youtubeHud).SpriteColor.a = 0.0f;
+		mScene->SpriteRenderers.Get(youtubeFade).SpriteColor.a = 0.0f;
+		mScene->TextRenderers.Get(youtubeTitle).Color.a = 0.0f;
+		mScene->TextRenderers.Get(youtubeDuration).Color.a = 0.0f;
+
+		mConductor->PushAction(&mScene->SpriteRenderers.Get(youtubeBar).SpriteColor.a, 1.0f, 2.0f, Easing::Linear);
+		mConductor->PushAction(&mScene->SpriteRenderers.Get(youtubeBarBg).SpriteColor.a, 0.7f, 2.0f, Easing::Linear);
+		mConductor->PushAction(&mScene->SpriteRenderers.Get(youtubeHud).SpriteColor.a, 1.0f, 2.0f, Easing::Linear);
+		mConductor->PushAction(&mScene->SpriteRenderers.Get(youtubeFade).SpriteColor.a, 1.0f, 2.0f, Easing::Linear);
+		mConductor->PushAction(&mScene->TextRenderers.Get(youtubeTitle).Color.a, 1.0f, 2.0f, Easing::Linear);
+		mConductor->PushAction(&mScene->TextRenderers.Get(youtubeDuration).Color.a, 1.0f, 2.0f, Easing::Linear);
+	}
 
 	mConductor->AddScriptedEvent(0, [this]()
 		{
@@ -357,6 +415,32 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 			this->SetOpponentCharacter(CharaRegistry::GetCharacter("Fernan"));
 			chara->SetEnabled(true);
 		});
+	/*
+	mConductor->AddScriptedEvent(2, [this]()
+		{
+			loadingYoutubeEntity = mScene->EntityManager.CreateEntity();
+			auto& animator = mScene->SpriteAnimators.Create(loadingYoutubeEntity);
+			auto& sprite = mScene->SpriteRenderers.Create(loadingYoutubeEntity);
+			auto& transform = mScene->Transforms.Create(loadingYoutubeEntity);
+
+			auto frames = SparrowReader::readXML("fnf/SyobonNoAction/loadingYoutube.xml", "loading", false, false);
+
+			Stratum::SpriteAnimator::Animation animation = Stratum::SpriteAnimator::Animation()
+				.SetFrameRate(60)
+				.SetLoop(true)
+				.SetAnimateOnIdle(true)
+				.SetFrames(frames);
+
+			animator.AnimationMap["loading"] = animation;
+			animator.SetState("loading");
+
+			sprite.TextureHandle = mScene->Resources.LoadTextureImage("fnf/SyobonNoAction/loadingYoutube.png");
+			sprite.RenderLayer = 105;
+			sprite.IsGui = true;
+			sprite.Center = { 0.0f, 0.0f };
+
+		});
+	*/
 	mConductor->AddScriptedEvent(257, [this]() {
 
 		x64entity = mScene->EntityManager.CreateEntity();
@@ -663,8 +747,8 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mConductor->AddScriptedEvent(3835, [this]() {
 		auto& sprite = mScene->SpriteRenderers.Get(mOponentCharacter->CharaEntity);
 		mConductor->PushAction(&sprite.Rotation.x, -20.0f, 1.7f * 4.0, Easing::SineInOut);
-		mConductor->PushAction(&mOponentCharacter->CharaScale, mOponentCharacter->CharaScale + glm::vec2(0.6f, 0.0f), 1.7f * 4.0, Easing::SineInOut);
-		mConductor->PushAction(&mOponentCharacter->CharaPosition, mOponentCharacter->CharaPosition - glm::vec2(0, 1200 * 2.0f), 1.7f * 4.0f, Easing::SineInOut);
+		mConductor->PushAction(&mOponentCharacter->CharaScale, mOponentCharacter->CharaScale + glm::vec2(0.6f, 0.0f), 1.7f * 3.0f, Easing::SineInOut);
+		mConductor->PushAction(&mOponentCharacter->CharaPosition, mOponentCharacter->CharaPosition - glm::vec2(0, 1200 * 2.0f), 1.7f * 3.0, Easing::SineInOut);
 		});
 	mConductor->AddScriptedEvent(3856, [this]() {
 		mOponentCharacter->PlayAnimation("llorapues");
@@ -678,6 +762,44 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	mConductor->AddScriptedEvent(3859, [this]() {
 		mOponentCharacter->PlayAnimation("llorapues");
 		});
+	mConductor->AddScriptedEvent(4056, [this]() {
+		mConductor->ClearActions();
+		StageRegistry::SetStage("syobon-end");
+		SetPlayerCharacter(CharaRegistry::GetCharacter("Syobon"));
+		SetOpponentCharacter(CharaRegistry::GetCharacter("Fernan"));
+
+		mOponentCharacter->SetCenter({ 0.0f, 1.0f });
+		mOponentCharacter->SetEnabled(false);
+
+		mScene->SpriteRenderers.Get(this->GetPlayerCharacter()->CharaEntity).FlipX = false;
+		});
+	mConductor->AddScriptedEvent(4074, [this]() {
+		auto metadataManager = mScene->GetComponentManager<StagePropComponent>(C_STAGE_PROP_COMPONENT_NAME);
+		auto& props = metadataManager->GetEntities();
+
+		for (auto entity : props)
+		{
+			auto& metadata = metadataManager->Get(entity);
+			auto& nameTag = mScene->Names.Get(entity);
+			auto& transform = mScene->Transforms.Get(entity);
+			auto& sprite = mScene->SpriteRenderers.Get(entity);
+
+			if (nameTag.Name.starts_with("Tb"))
+			{
+				mConductor->PushAction(&metadata.Position.y, metadata.Position.y - 1000.0f, mConductor->StepsToSeconds(6), Easing::SineIn);
+			}
+		}
+
+		CharaSprite* chara = this->GetPlayerCharacter();
+
+		mConductor->PushAction(&chara->CharaPosition.y, chara->CharaPosition.y - 1000.0f, mConductor->StepsToSeconds(6), Easing::SineIn);
+
+		});
+	mConductor->AddScriptedEvent(4082, [this]() {
+		mOponentCharacter->SetEnabled(true);
+		mOponentCharacter->PlayAnimation("llorapues");
+		});
+
 
 	pEarlyUpdate = true;
 
@@ -693,6 +815,8 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 
 	mResumeText = mScene->EntityManager.CreateEntity();
 	mVolumeText = mScene->EntityManager.CreateEntity();
+	mBotplayText = mScene->EntityManager.CreateEntity();
+	mBalatroText = mScene->EntityManager.CreateEntity();
 	mExitText = mScene->EntityManager.CreateEntity();
 	mSelectText = mScene->EntityManager.CreateEntity();
 
@@ -724,6 +848,36 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		scene->Transforms.Create(entity);
 		scene->GuiAnchors.Create(entity).AnchorPoint = Stratum::GuiAnchorPoint::LEFT;
 		scene->GuiAnchors.Get(entity).Position.y += 0.0f;
+		scene->GuiAnchors.Get(entity).Position.x += 200.0f;
+	}
+
+	{
+		auto entity = mBotplayText;
+		scene->TextComponents.Create(entity);
+		scene->TextComponents.Get(entity).FontSize = 90.0f;
+		scene->TextComponents.Get(entity).Text = L"Botplay: ";
+		scene->TextComponents.Get(entity).Font = "Funkin";
+		scene->TextRenderers.Create(entity).Alignment = 0.0f;
+		scene->TextRenderers.Get(entity).RenderLayer = 10000;
+		scene->TextRenderers.Get(entity).IsGui = true;
+		scene->Transforms.Create(entity);
+		scene->GuiAnchors.Create(entity).AnchorPoint = Stratum::GuiAnchorPoint::LEFT;
+		scene->GuiAnchors.Get(entity).Position.y += -70.0f;
+		scene->GuiAnchors.Get(entity).Position.x += 200.0f;
+	}
+
+	{
+		auto entity = mBalatroText;
+		scene->TextComponents.Create(entity);
+		scene->TextComponents.Get(entity).FontSize = 90.0f;
+		scene->TextComponents.Get(entity).Text = L"Balatro?";
+		scene->TextComponents.Get(entity).Font = "Funkin";
+		scene->TextRenderers.Create(entity).Alignment = 0.0f;
+		scene->TextRenderers.Get(entity).RenderLayer = 10000;
+		scene->TextRenderers.Get(entity).IsGui = true;
+		scene->Transforms.Create(entity);
+		scene->GuiAnchors.Create(entity).AnchorPoint = Stratum::GuiAnchorPoint::LEFT;
+		scene->GuiAnchors.Get(entity).Position.y += -70.0f;
 		scene->GuiAnchors.Get(entity).Position.x += 200.0f;
 	}
 
@@ -809,14 +963,24 @@ void Funkin::InGameSystem::OnActivate(Stratum::Scene* scene)
 void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 {
 
+	if (Stratum::ECS::C_INVALID_ENTITY != loadingYoutubeEntity)
+	{
+		auto& transform = mScene->Transforms.Get(loadingYoutubeEntity);
+		auto& sprite = mScene->SpriteRenderers.Get(loadingYoutubeEntity);
+		auto& animator = mScene->SpriteAnimators.Get(loadingYoutubeEntity);
+		
+		transform.Position.x = -121;
+		transform.IsDirty = true;
+		//transform.Position.y = -animator.GetCurrentRect().FrameSize.y / 2;
+
+	}
+
 	if (!mHasSongStarted)
 	{
 		mHasSongStarted = true;
 		instSource->Play();
 		if (voicesSource)
 			voicesSource->Play();
-		// instSource->Seek(53.0f);
-		// voicesSource->Seek(53.0f);
 	}
 
 	if (mConductor->BeatCountF < 3.0f)
@@ -824,6 +988,7 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 		if (voicesSource)
 			voicesSource->SetVolume(1.0f);
 		instSource->SetVolume(1.0f);
+
 	}
 
 	if (Stratum::Input::GetKeyDown(KeyCode::F11))
@@ -912,7 +1077,7 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 			if (!DoBeat)
 			{
 				GuiZoomLevel += 0.035f * mult;
-				ZoomLevel += 0.025f * mult;
+				ZoomLevel += 0.015f;
 				DoBeat = true;
 			}
 		}
@@ -925,7 +1090,7 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 		{
 			lastBeat = mConductor->BeatCount;
 			GuiZoomLevel += 0.035f;
-			ZoomLevel += 0.025f;
+			ZoomLevel += 0.015f;
 			DoBeat = true;
 		}
 
@@ -935,7 +1100,7 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 		DoBeat = false;
 
 	ZoomLevel = glm::mix(ZoomLevel, 1.0f, 5.0f * Stratum::gpGlobals->deltaTime);
-	GuiZoomLevel = glm::mix(ZoomLevel, 1.0f, 5.0f * Stratum::gpGlobals->deltaTime);
+	GuiZoomLevel = glm::mix(GuiZoomLevel, 1.0f, 5.0f * Stratum::gpGlobals->deltaTime);
 
 	scene->RenderPath3D->RenderPath2D->SetGuiCameraZoom({ GuiZoomLevel, GuiZoomLevel });
 	scene->RenderPath3D->RenderPath2D->SetCameraZoom({ ZoomLevel, ZoomLevel });
@@ -944,6 +1109,29 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 
 	UpdateStage();
 
+	uint32_t seconds = voicesSource->PositionF();
+
+	{
+		auto& sprite = scene->SpriteRenderers.Get(youtubeHud);
+		glm::vec2 scaleFactor = glm::vec2(scene->VirtualScreenSize) / glm::vec2(sprite.Rect.size + glm::ivec2(67, 30));
+		mScene->Transforms.Get(youtubeHud).SetScale(glm::vec3(scaleFactor, 0.0f));
+	}
+	{
+		auto& sprite = scene->SpriteRenderers.Get(youtubeFade);
+		glm::vec2 scaleFactor = glm::vec2(scene->VirtualScreenSize) / glm::vec2(sprite.Rect.size);
+		mScene->Transforms.Get(youtubeFade).SetScale(glm::vec3(scaleFactor, 0.0f));
+	}
+	{
+		auto& sprite = scene->SpriteRenderers.Get(youtubeBar);
+		auto& sprite1 = scene->SpriteRenderers.Get(youtubeBarBg);
+		auto& transform = scene->Transforms.Get(youtubeBar);
+		transform.Scale.x = glm::mix(transform.Scale.x, (float)seconds / 291.0f, Stratum::Time::DeltaTime);
+		transform.IsDirty = true;
+		sprite.Rect.size.x = (scene->VirtualScreenSize.x * 2.0f - 50.0f);
+		sprite1.Rect.size.x = (scene->VirtualScreenSize.x * 2.0f - 50.0f);
+	}
+
+	mScene->TextComponents.Get(youtubeDuration).Text = Stratum::Utils::FormatString(L"{}:{:02d} / 4:51", seconds / 60, seconds % 60);
 }
 
 void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
@@ -956,9 +1144,11 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 		mIsPaused = !mIsPaused;
 	}
 
-	std::array<Stratum::ECS::edict_t, 4> entities{
+	std::array<Stratum::ECS::edict_t, 6> entities{
 		mResumeText,
 		mVolumeText,
+		mBotplayText,
+		mBalatroText,
 		mExitText,
 		mSelectText
 	};
@@ -978,7 +1168,7 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 			scrollSource->Play();
 		}
 
-		mPauseUiButtonIndex = glm::clamp(mPauseUiButtonIndex, 0, 2);
+		mPauseUiButtonIndex = glm::clamp(mPauseUiButtonIndex, 0, 4);
 
 		switch (mPauseUiButtonIndex)
 		{
@@ -989,6 +1179,12 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 			entity = mVolumeText;
 			break;
 		case 2:
+			entity = mBotplayText;
+			break;
+		case 3:
+			entity = mBalatroText;
+			break;
+		case 4:
 			entity = mExitText;
 			break;
 		default:
@@ -1003,9 +1199,20 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 			{
 				mIsPaused = false;
 			}
-			if (mPauseUiButtonIndex == 2)
+			if (mPauseUiButtonIndex == 4)
 			{
 				Stratum::EventHandler::InvokeEvent(Stratum::EventHandler::GetEventID("app_close"), this);
+			}
+			if (mPauseUiButtonIndex == 2)
+			{
+				mConductor->BotPlay = !mConductor->BotPlay;
+			}
+			if (mPauseUiButtonIndex == 3)
+			{
+				auto scene = new Stratum::Scene();
+				scene->RegisterCustomSystem(new BalatroSystem());
+				mScene->SwapScene(scene);
+				pauseSource->Stop();
 			}
 		}
 
@@ -1025,6 +1232,7 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 		}
 
 		mScene->TextComponents.Get(mVolumeText).Text = std::format(L"volume: {:.0f}%", mVolume * 100.0f);
+		mScene->TextComponents.Get(mBotplayText).Text = std::format(L"Botplay: {}", mConductor->BotPlay);
 
 		uint32_t index = 0;
 
@@ -1075,7 +1283,10 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 		{
 			pauseSource->Stop();
 			if (voicesSource)
+			{
 				voicesSource->Resume();
+				voicesSource->Seek(voicesSource->PositionF());
+			}
 			if (instSource)
 				instSource->Resume();
 		}
@@ -1086,37 +1297,22 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 	mConductor->IsPaused = this->IsPaused();
 
 	Stratum::Time::TimeScale = mIsPaused ? 0.0f : 1.0f;
+
+	if (!instSource->IsPlaying() && !mIsPaused)
+	{
+		mWaitTimer += Stratum::Time::DeltaTime;
+		if (mWaitTimer > 1.0f)
+		{
+			auto scene = new Stratum::Scene();
+			scene->RegisterCustomSystem(new BalatroSystem());
+			mScene->SwapScene(scene);
+		}
+	}
 }
 
 void Funkin::InGameSystem::RenderImGui(Stratum::Scene* scene)
 {
-	return;
-	using namespace Stratum;
-
-	static int frameRate = 0;
-
-	frameRate = (frameRate + (int)(1.0f / gpGlobals->deltaTime)) / 2;
-
-	ImGui::Begin("EngineStats");
-	ImGui::Text("Beats: %i, Score: %i", mConductor->BeatCount, mConductor->PlayerScore);
-
-	float dtms = gpGlobals->deltaTime * 1000.0f;
-	float gpms = Time::GPUTime.load() * 1000.0f;
-
-	int gpuUsage = glm::min((int)((gpms / dtms) * 100.0f), 100);
-
-	ImGui::Text("Frametime: %.2fms, GPU: %.2fms Usage: %i%%, FPS: %i", dtms, gpms, gpuUsage, frameRate);
-	ImGui::Text("Vram: %.2fmb", (float)Render::RendererContext::s_Context->GetGraphicsDeviceProperties().UsedVideoMemory / 1024.0f / 1024.0f);
-	ImGui::Text("ECS Stats [Live/Max] %i/%i", mScene->EntityManager.LiveEntities, mScene->EntityManager.MaxEntities);
-
-	auto times = EngineStats::GetTimes();
-
-	for (auto& t : times)
-	{
-		ImGui::Text("%s: %.2fms", t.name, t.time);
-	}
-
-	ImGui::End();
+	
 }
 
 void Funkin::InGameSystem::SetPlayerCharacter(CharaSprite* chara)
@@ -1188,6 +1384,57 @@ float Funkin::InGameSystem::GetLoadingProgress()
 bool Funkin::InGameSystem::IsLoadingDone()
 {
 	return mLoadingDone.load();
+}
+
+Stratum::ECS::edict_t Funkin::InGameSystem::CreateTextEntity(const std::wstring& defaultText, const glm::vec2& pos, float fontSize, bool isGui, uint32_t renderLayer, float align)
+{
+	auto entity = mScene->EntityManager.CreateEntity();
+	mScene->TextComponents.Create(entity);
+	mScene->TextComponents.Get(entity).FontSize = fontSize;
+	mScene->TextComponents.Get(entity).Text = defaultText;
+	mScene->TextRenderers.Create(entity).Alignment = align;
+	mScene->TextRenderers.Get(entity).RenderLayer = renderLayer;
+	mScene->TextRenderers.Get(entity).IsGui = isGui;
+	mScene->Transforms.Create(entity);
+	mScene->Transforms.Get(entity).SetPosition(glm::vec3(pos, 0.0f));
+	return entity;
+}
+
+Stratum::ECS::edict_t Funkin::InGameSystem::CreateSpriteEntity(const::std::string& spritePath, const glm::vec2& pos, const glm::vec2& scale, bool isGui, uint32_t renderLayer, bool flipX)
+{
+	auto entity = mScene->EntityManager.CreateEntity();
+	auto& sprite = mScene->SpriteRenderers.Create(entity);
+	auto& transform = mScene->Transforms.Create(entity);
+
+	sprite.TextureHandle = mScene->Resources.LoadTextureImage(spritePath);
+	sprite.Rect.size = mScene->Resources.GetImageHandle(sprite.TextureHandle)->GetSize();
+	sprite.UseNearestTextureFilter = false;
+	sprite.RenderLayer = renderLayer;
+	sprite.IsGui = isGui;
+	sprite.FlipX = flipX;
+	sprite.Center = { 0.0f, 0.0f };
+	
+	transform.SetPosition(glm::vec3(pos, 1.0f));
+	transform.SetScale(glm::vec3(scale, 1.0f));
+
+	return entity;
+}
+
+Stratum::ECS::edict_t Funkin::InGameSystem::CreateRectEntity(const glm::vec2& pos, const glm::ivec2& rectSize, const glm::vec2& center, bool isGui, uint32_t renderLayer)
+{
+	auto entity = mScene->EntityManager.CreateEntity();
+	auto& sprite = mScene->SpriteRenderers.Create(entity);
+	auto& transform = mScene->Transforms.Create(entity);
+
+	sprite.Rect.size = rectSize;
+	sprite.UseNearestTextureFilter = false;
+	sprite.RenderLayer = renderLayer;
+	sprite.IsGui = isGui;
+	sprite.Center = center;
+
+	transform.SetPosition(glm::vec3(pos, 1.0f));
+
+	return entity;
 }
 
 void Funkin::InGameSystem::UpdateStage()

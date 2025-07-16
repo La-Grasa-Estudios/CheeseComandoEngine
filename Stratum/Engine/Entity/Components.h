@@ -9,6 +9,11 @@
 
 BEGIN_ENGINE
 
+namespace Render
+{
+	class GraphicsPipeline;
+}
+
 class Scene;
 
 struct NameComponent
@@ -81,6 +86,8 @@ struct SpriteRendererComponent
 	bool FlipX = false;
 	bool FlipY = false;
 	bool UseNearestTextureFilter = false;
+
+	Render::GraphicsPipeline* pCustomShader = nullptr; // Leave null to use the default sprite shader
 
 };
 

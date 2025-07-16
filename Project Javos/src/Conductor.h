@@ -81,9 +81,12 @@ namespace Funkin
 		void PushAction(glm::vec3* dst, glm::vec3 targetVal, ActionParameters params, Easing easing, std::function<void()> cb);
 		void PushAction(glm::vec4* dst, glm::vec4 targetVal, ActionParameters params, Easing easing, std::function<void()> cb);
 
+		void ClearActions();
+
 		uint32_t GetStepCount();
 
 		bool EnableBot = false;
+		bool BotPlay = false;
 		int32_t PlayerScore = 0;
 
 	private:

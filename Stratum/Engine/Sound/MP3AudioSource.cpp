@@ -160,6 +160,7 @@ void MP3AudioSource::UpdateSource()
                 }
                 else
                 {
+                    p_Params.IsPlaying = false;
                     break;
                 }
             }

@@ -427,7 +427,7 @@ void Scene::UpdateGuiAnchors()
 
 		if (anchor.AnchorPoint == GuiAnchorPoint::TOP_LEFT)
 		{
-			Position = glm::vec3(VirtualScreenSize.x + anchor.Position.x, VirtualScreenSize.y - anchor.Position.y, 1.0f);
+			Position = glm::vec3(-VirtualScreenSize.x + anchor.Position.x, VirtualScreenSize.y - anchor.Position.y, 1.0f);
 		}
 		if (anchor.AnchorPoint == GuiAnchorPoint::TOP_RIGHT)
 		{
@@ -436,7 +436,7 @@ void Scene::UpdateGuiAnchors()
 
 		if (anchor.AnchorPoint == GuiAnchorPoint::BOTTOM_LEFT)
 		{
-			Position = glm::vec3(VirtualScreenSize.x + anchor.Position.x, -VirtualScreenSize.y + anchor.Position.y, 1.0f);
+			Position = glm::vec3(-VirtualScreenSize.x + anchor.Position.x, -VirtualScreenSize.y + anchor.Position.y, 1.0f);
 		}
 		if (anchor.AnchorPoint == GuiAnchorPoint::BOTTOM_RIGHT)
 		{

@@ -43,6 +43,7 @@ public:
 		bool useNearestFilter = false;
 		bool scaleWithRenderSize = true;
 		uint32_t UserData;
+		Render::GraphicsPipeline* pCustomShader;
 	};
 
 	SpriteBatch(SceneResources* pResources);
@@ -97,6 +98,7 @@ private:
 	SceneResources* mResources;
 
 	Batch mCurrentBatch;
+	Render::GraphicsPipeline* mShaderBefore;
 
 
 };

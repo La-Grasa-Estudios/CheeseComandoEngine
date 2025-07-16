@@ -144,6 +144,7 @@
     <ClCompile Include="src\ChartLoader.cpp" />
     <ClCompile Include="src\Common.cpp" />
     <ClCompile Include="src\Conductor.cpp" />
+    <ClCompile Include="src\Cursed\BalatroSystem.cpp" />
     <ClCompile Include="src\GameScene.cpp" />
     <ClCompile Include="src\InGameSystem.cpp" />
     <ClCompile Include="src\JavosApp.cpp" />
@@ -163,6 +164,7 @@
     <ClInclude Include="src\Common.h" />
     <ClInclude Include="src\Components.h" />
     <ClInclude Include="src\Conductor.h" />
+    <ClInclude Include="src\Cursed\BalatroSystem.h" />
     <ClInclude Include="src\GameScene.h" />
     <ClInclude Include="src\GameState.h" />
     <ClInclude Include="src\InGameSystem.h" />

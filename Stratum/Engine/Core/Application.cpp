@@ -670,6 +670,8 @@ void Application::SetScene(Scene* scene)
 
 	if (scene)
 		m_RenderPath3D->RenderPath2D->UpdateScreenSize(m_Window->GetFramebuffer()->GetSize());
+
+	Time::TimeScale = 1.0f;
 }
 
 void Application::InitSceneResources(Scene* scene)

@@ -1,6 +1,9 @@
 #include "JavosApp.h"
 
 #include "LoadingScreenSystem.h"
+#include "Cursed/BalatroSystem.h"
+
+#include <DevTools/ShaderCompiler.h>
 
 #undef min
 #undef max
@@ -11,6 +14,12 @@ Funkin::JavosApp::JavosApp(Stratum::ApplicationInfo appInfo) : Stratum::Applicat
 
 void Funkin::JavosApp::OnInit()
 {
+	srand(static_cast<unsigned int>(time(nullptr)));
+
+	using namespace Stratum;
+	ShaderCompiler::build_object("shaders/2d/balatro_bg.hlsl", "Data/shaders/2d/balatro_bg.cso", ShaderCompiler::shader_type::vertex);
+	ShaderCompiler::build_object("shaders/2d/balatro_dissolve.hlsl", "Data/shaders/2d/balatro_dissolve.cso", ShaderCompiler::shader_type::vertex);
+
 	LoadChartParams params;
 	params.ChartPath = "fnf/data/bite/bite-fernan.json";
 

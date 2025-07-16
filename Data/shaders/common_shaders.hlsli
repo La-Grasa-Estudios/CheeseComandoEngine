@@ -20,6 +20,14 @@ struct Light
     uint Type;
 };
 
+#ifdef SPIRV
+#define VK_PUSH_CONSTANT [[vk::push_constant]]
+#define VK_BINDING(reg,dset) [[vk::binding(reg,dset)]]
+#else
+#define VK_PUSH_CONSTANT
+#define VK_BINDING(reg,dset) 
+#endif
+
 float4 Unpack4x8UNorm(uint packedValue)
 {
     float4 unpacked;

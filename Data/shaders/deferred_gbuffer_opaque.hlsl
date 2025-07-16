@@ -1,5 +1,4 @@
-
-#include "common_shaders.hlsli"
+#include "shaders/common_shaders.hlsli"
 
 struct v2f
 {
@@ -11,7 +10,7 @@ struct v2f
 
 #ifdef STAGE_VERTEX
 
-cbuffer ConstantData : register(b0)
+VK_PUSH_CONSTANT cbuffer ConstantData : register(b0)
 {
     uint VertexBufferIndex;
     uint IndexBufferIndex;

@@ -68,13 +68,14 @@ SpriteBatch::SpriteBatch(SceneResources* pResources)
 void SpriteBatch::Begin()
 {
 	mBatches.clear();
+	mShaderBefore = NULL;
 
 	SetBatch(nullptr, BatchType::UNDEFINED);
 }
 
 void SpriteBatch::SetBatch(Render::GraphicsPipeline* pConfig, BatchType batchType)
 {
-	if (mCurrentBatch.Type == batchType)
+	if (mCurrentBatch.Type == batchType && (pConfig && mCurrentBatch.Pipeline == pConfig))
 		return;
 	if (mCurrentBatch.Type != BatchType::UNDEFINED)
 		EndBatch();
@@ -86,6 +87,22 @@ void SpriteBatch::SetBatch(Render::GraphicsPipeline* pConfig, BatchType batchTyp
 
 void SpriteBatch::DrawSprite(const SpriteInstance& instance)
 {
+	if (instance.pCustomShader && instance.pCustomShader != mCurrentBatch.Pipeline && instance.pCustomShader->ShaderDesc.RenderTarget)
+	{
+		if (!mShaderBefore)
+		{
+			mShaderBefore = mCurrentBatch.Pipeline;
+		}
+
+		this->SetBatch(instance.pCustomShader, mCurrentBatch.Type);
+	}
+
+	if (!instance.pCustomShader && mShaderBefore)
+	{
+		this->SetBatch(mShaderBefore, mCurrentBatch.Type);
+		mShaderBefore = NULL;
+	}
+
 	auto offset = instance.offset;
 
 	glm::vec2 scaleFactor = glm::vec2(instance.rect.size) / glm::vec2(instance.RenderSize);

@@ -100,6 +100,7 @@ public:
 	}
 
 	glm::vec2 VirtualScreenSize = {};
+	glm::vec2 VirtualMousePosition = {};
 
 	AudioEngine* AudioEngine;
 	Renderer3D* RenderPath3D;

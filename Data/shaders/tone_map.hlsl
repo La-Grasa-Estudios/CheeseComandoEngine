@@ -1,3 +1,5 @@
+#include "common_shaders.hlsli"
+
 #permutationbase LUMINANCE
 
 #permutationcond @ALL
@@ -9,7 +11,7 @@ struct v2f
     float2 TexCoord : TEXCOORD0;
 };
 
-cbuffer ToneMapParams : register(b0)
+VK_PUSH_CONSTANT cbuffer ToneMapParams : register(b0)
 {
     uint ChromaticAberrationEnabled;
     float ChromaticAberrationIntensity;

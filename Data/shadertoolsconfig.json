@@ -5,6 +5,7 @@
     "STAGE_PIXEL": ""
   },
   "hlsl.additionalIncludeDirectories": [
-    ".\\Include"
+    ".\\Include",
+    ".\\shaders""
   ]
 }

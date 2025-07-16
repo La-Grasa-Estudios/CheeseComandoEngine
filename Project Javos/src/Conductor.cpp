@@ -346,7 +346,7 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 		mStepCount += 1;
 	}
 
-	bool botEnabled = EnableBot || false;
+	bool botEnabled = EnableBot || false || BotPlay;
 
 	auto notesManager = scene->GetComponentManager<NoteComponent>(C_NOTE_COMPONENT_NAME);
 	auto noteHoldManager = scene->GetComponentManager<NoteHoldComponent>(C_NOTE_HOLD_COMPONENT_NAME);
@@ -860,6 +860,11 @@ void Funkin::Conductor::PushAction(glm::vec4* dst, glm::vec4 targetVal, ActionPa
 	action.targetFloat[3] = targetVal.w;
 	action.cb = cb;
 	mActions.push_back(action);
+}
+
+void Funkin::Conductor::ClearActions()
+{
+	mActions.clear();
 }
 
 // End of hot shit
