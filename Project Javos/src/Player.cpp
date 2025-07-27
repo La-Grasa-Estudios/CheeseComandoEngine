@@ -2,9 +2,10 @@
 
 #include "Conductor.h"
 #include "SparrowReader.h"
+#include "Events.h"
 
 #include <Util/Globals.h>
-#include <Event/EventHandler.h>
+#include <Event/EventBus.h>
 
 Funkin::PlayerSystem::PlayerSystem(Conductor* conductor, GameState* gameState)
 {
@@ -21,9 +22,10 @@ void Funkin::PlayerSystem::Init(Stratum::Scene* scene)
 
 void Funkin::PlayerSystem::OnActivate(Stratum::Scene* scene)
 {
-	auto animationListener = [this](void* sender, void** args, uint32_t argc)
+	auto animationListener = [this](const NoteEvent& e)
 		{
-			uint32_t noteType = (uint32_t)args[0];
+			if (e.IsMiss || e.IsOponent)
+				return;
 
 			const char* animations[4] =
 			{
@@ -33,12 +35,12 @@ void Funkin::PlayerSystem::OnActivate(Stratum::Scene* scene)
 				"right"
 			};
 
-			mCharaSprite->PlayAnimation(animations[noteType]);
+			mCharaSprite->PlayAnimation(animations[e.NoteType]);
 
 		};
 
-	Stratum::EventHandler::RegisterListener(animationListener, Stratum::EventHandler::GetEventID("hit_note"), true, true);
-	Stratum::EventHandler::RegisterListener(animationListener, Stratum::EventHandler::GetEventID("sustain_note"), true, true);
+	Stratum::EventBus::RegisterListener<NoteEvent>(animationListener, Stratum::EF_REMOVE_ON_SCENE_LOAD);
+	Stratum::EventBus::RegisterListener<NoteEvent>(animationListener, Stratum::EF_REMOVE_ON_SCENE_LOAD);
 }
 
 void Funkin::PlayerSystem::Update(Stratum::Scene* scene)

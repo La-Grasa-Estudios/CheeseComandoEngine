@@ -380,7 +380,7 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 		glm::vec2(-VirtualScreenSize.x + 20, VirtualScreenSize.y - 64), glm::identity<glm::mat4>());
 
 	parameters.fontSize = 48;
-	parameters.maxWidth = VirtualScreenSize.x*2;
+	parameters.maxWidth = VirtualScreenSize.x * 2;
 	parameters.wrapText = false;
 
 	textRenderer.SetParameters(parameters);
@@ -580,7 +580,7 @@ Render::Framebuffer* Renderer2D::GetRenderTarget()
 void Renderer2D::RenderCamera(Camera2D* camera, RenderQueue2D* renderQueue, Scene* scene, Render::Framebuffer* pOutput)
 {
 	// Bindless rendering ftw :D
-	
+
 }
 
 void Renderer2D::SetConstantBuffer(Render::ConstantBuffer* pBuffer, uint32_t slot)

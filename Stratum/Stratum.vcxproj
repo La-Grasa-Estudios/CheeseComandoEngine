@@ -186,7 +186,8 @@
     <ClInclude Include="Engine\Entity\ECS.h" />
     <ClInclude Include="Engine\Entity\EntityManager.h" />
     <ClInclude Include="Engine\EntryPoint.h" />
-    <ClInclude Include="Engine\Event\EventHandler.h" />
+    <ClInclude Include="Engine\Event\EventBus.h" />
+    <ClInclude Include="Engine\Event\Events.h" />
     <ClInclude Include="Engine\Font\Font.h" />
     <ClInclude Include="Engine\Font\FontRegistry.h" />
     <ClInclude Include="Engine\Input\Input.h" />
@@ -374,7 +375,7 @@
     <ClCompile Include="Engine\DevTools\ShaderCompiler\ShaderPreprocessor.cpp" />
     <ClCompile Include="Engine\Entity\Components.cpp" />
     <ClCompile Include="Engine\Entity\EntityManager.cpp" />
-    <ClCompile Include="Engine\Event\EventHandler.cpp" />
+    <ClCompile Include="Engine\Event\EventBus.cpp" />
     <ClCompile Include="Engine\Font\Font.cpp" />
     <ClCompile Include="Engine\Font\FontRegistry.cpp" />
     <ClCompile Include="Engine\Input\Input.cpp" />

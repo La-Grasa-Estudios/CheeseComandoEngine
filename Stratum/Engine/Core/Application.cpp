@@ -21,7 +21,7 @@
 #include "Logger.h"
 #include "VarRegistry.h"
 #include "EngineStats.h"
-#include "Event/EventHandler.h"
+#include "Event/EventBus.h"
 #include "DevTools/ShaderCompiler.h"
 
 #include "Util/PathUtils.h"
@@ -237,7 +237,7 @@ void Application::Run(std::vector<std::string> args)
 
 	m_Window->Create(m_AppInfo.WindowedResolutionX, m_AppInfo.WindowedResolutionY);
 
-	EventHandler::InvokeEvent(EventHandler::GetEventID("init_window"), this);
+	EventBus::InvokeEvent(EngineModuleInitEvent(EngineModuleInitEvent::ENGINE_MODULE_WINDOW));
 
 	if (m_AppInfo.IsImGuiEnabled) {
 
@@ -256,9 +256,10 @@ void Application::Run(std::vector<std::string> args)
 	}
 
 	m_AudioEngine->Init();
-	Input::Init(m_Window->GetHandle());
+	EventBus::InvokeEvent(EngineModuleInitEvent(EngineModuleInitEvent::ENGINE_MODULE_AUDIO));
 
-	EventHandler::InvokeEvent(EventHandler::GetEventID("init_modules"), this);
+	Input::Init(m_Window->GetHandle());
+	EventBus::InvokeEvent(EngineModuleInitEvent(EngineModuleInitEvent::ENGINE_MODULE_INPUT));
 
 	// Remove this on retail builds?
 	ShaderCompiler::build_object("shaders/video_gbar_to_rgba.hlsl", "Data/shaders/video_gbar_to_rgba.cso", ShaderCompiler::shader_type::vertex, 1);
@@ -284,7 +285,7 @@ void Application::Run(std::vector<std::string> args)
 	// Inspired by source engine :)
 	RenderStartupMedia();
 
-	EventHandler::InvokeEvent(EventHandler::GetEventID("late_init"), this);
+	EventBus::InvokeEvent(EngineModuleInitEvent(EngineModuleInitEvent::ENGINE_MODULE_LATE_INIT));
 
 	m_RenderPath3D = CreateRef<Renderer3D>();
 
@@ -300,7 +301,7 @@ void Application::Run(std::vector<std::string> args)
 		}
 	}
 
-	EventHandler::InvokeEvent(EventHandler::GetEventID("post_init"), this);
+	EventBus::InvokeEvent(EngineModuleInitEvent(EngineModuleInitEvent::ENGINE_MODULE_POST_INIT));
 
 	MainLoop();
 
@@ -332,10 +333,11 @@ void Application::MainLoop()
 
 	bool ShouldClose = false;
 
-	EventHandler::RegisterListener([&](void* sender, void** args, uint32_t argc)
+	EventBus::RegisterListener<ApplicationEvent>([&](const ApplicationEvent& e)
 		{
-			ShouldClose = true;
-		}, EventHandler::GetEventID("app_close"), false, true);
+			if (e.Type == e.APP_EVENT_SHUTDOWN)
+				ShouldClose = true;
+		}, EF_NONE);
 
 	while (1) {
 
@@ -368,7 +370,6 @@ void Application::MainLoop()
 		m_RenderContext->BeginFrame();
 
 		JobManager::ExecuteMainJobs();
-		EventHandler::Process();
 
 		gpGlobals->deltaTime = Time::DeltaTime;
 		InternalUpdate();
@@ -379,7 +380,7 @@ void Application::MainLoop()
 
 			if (mCurrentScene->NextScenePtr)
 			{
-				Stratum::EventHandler::RemoveSceneEventListeners();
+				Stratum::EventBus::RemoveSceneEventListeners();
 				SetScene(mCurrentScene->NextScenePtr);
 			}
 
@@ -486,7 +487,7 @@ void Application::MainLoop()
 
 void Application::RenderStartupMedia()
 {
-	EventHandler::InvokeEvent(EventHandler::GetEventID("init_media"), this);
+	EventBus::InvokeEvent(EngineModuleInitEvent(EngineModuleInitEvent::ENGINE_MODULE_MEDIA));
 
 	if (ZVFS::Exists("media/startupvids.txt"))
 	{

@@ -69,7 +69,7 @@ v2f main(in i2v input, in uint vertexID : SV_VertexID)
 cbuffer Custom : register(b2)
 {
     float time;
-	float dissolve;
+    float dissolve;
 };
 
 #ifdef STAGE_PIXEL
@@ -153,9 +153,12 @@ float4 main(v2f input) : SV_Target
     float4 color = 1.0.xxxx;
     SpriteInstance instance = Instances[input.instanceID];
 	
-	float noise = snoise01(input.TexCoord * 10.0f) + 1.0f - dissolve * 2.0f;
-		
-    
+    const float pixelSize = 32.0f;
+    float2 uv = input.TexCoord * 10.0f;
+    float2 pixeluv = floor(uv * pixelSize) / pixelSize;
+    float d = 1.0f - dissolve * 2.0f;
+	float noise = snoise01(pixeluv) + d;
+
     if (instance.texture != -1)
     {
         float2 TexCoord = input.TexCoord;
@@ -179,6 +182,14 @@ float4 main(v2f input) : SV_Target
     }
     
     color = color * instance.instanceColor;
+
+    float m = saturate(noise + 0.0f);
+    float m1 = saturate(1.0f - saturate(noise - 0.5f) * 2.0f);
+    
+    if (noise - 0.5f < 0.12f) m = 0.0f;
+
+    color.rgb = lerp(color, float3(1.0f, 0.4f, 0.0f), m1);
+    color.rgb = lerp(float3(1.0f, 0.7f, 0.0f), color, m);
 	
 	clip(noise - 0.5);
 	if (noise - 0.5 < 0.08)

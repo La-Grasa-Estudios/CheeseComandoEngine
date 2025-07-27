@@ -90,9 +90,10 @@ static const float spin_amount = 0.25f;
 
 float4 main(v2f input) : SV_Target
 {
+	float2 screenCoords = input.ClipPos.xy;
     //Convert to UV coords (0-1) and floor for pixel effect
     float pixel_size = length(ScreenResolution)/PIXEL_SIZE_FAC;
-    float2 uv = (floor(input.ClipPos.xy*(1./pixel_size))*pixel_size - 0.5*ScreenResolution)/length(ScreenResolution) - float2(0.12, 0.);
+    float2 uv = (floor(screenCoords*(1./pixel_size))*pixel_size - 0.5*ScreenResolution)/length(ScreenResolution) - float2(0.12, 0.);
     float uv_len = length(uv);
 	
 	//Adding in a center swirl, changes with time. Only applies meaningfully if the 'spin amount' is a non-zero float

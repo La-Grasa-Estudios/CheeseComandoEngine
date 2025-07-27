@@ -39,7 +39,7 @@ struct RenderQueue2D
 			uint32_t textEntity;
 		};
 		uint32_t zIndex;
-		
+
 		constexpr bool operator >(const RenderInstance& other) const
 		{
 			return zIndex > other.zIndex;
@@ -137,7 +137,7 @@ private:
 
 	Ref<Render::ImageResource> mColorBufferRT;
 	Ref<Render::Framebuffer> mMainRenderTarget;
-	
+
 	RenderQueue2D mRenderQueue;
 	RenderQueue2D mGuiRenderQueue;
 

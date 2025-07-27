@@ -447,9 +447,6 @@
     <ClInclude Include="Engine\Input\KeyCode.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\Event\EventHandler.h">
-      <Filter>Archivos de encabezado</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\Sound\adpcm-lib\adpcm.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
@@ -601,6 +598,12 @@
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Win32libs.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Event\EventBus.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Event\Events.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>
@@ -821,9 +824,6 @@
     <ClCompile Include="Engine\Input\Input.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Event\EventHandler.cpp">
-      <Filter>Archivos de origen</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\Sound\adpcm-lib\adpcm.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
@@ -942,6 +942,9 @@
       <Filter>Archivos de origen</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Font\FontRegistry.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Event\EventBus.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>

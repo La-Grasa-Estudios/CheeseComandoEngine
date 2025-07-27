@@ -405,9 +405,6 @@ void Render::BackendInitializerD3D12::Present(Internal::Window* pWindow, Rendere
     uint32_t flags = pContext->m_VsyncState ? 0 : DXGI_PRESENT_ALLOW_TEARING;
 
     dxSharedData->SwapChain->Present(pContext->m_VsyncState, flags);
-
-	//gFrameFence->SetEventOnCompletion(gFrameCount, gFrameFenceEvents[frameIndex]);
-	//dxSharedData->CommandQueue->Signal(gFrameFence, gFrameCount);
     gFrameCount++;
 
     dxSharedData->FrameIndex = dxSharedData->SwapChain->GetCurrentBackBufferIndex();
@@ -417,6 +414,10 @@ void Render::BackendInitializerD3D12::Present(Internal::Window* pWindow, Rendere
 
     if (RequiresResize(pWindow))
     {
+
+        gFrameFence->SetEventOnCompletion(gFrameCount, gFrameFenceEvents[frameIndex]);
+        dxSharedData->CommandQueue->Signal(gFrameFence, gFrameCount);
+		::WaitForSingleObject(gFrameFenceEvents[frameIndex], INFINITE);
 
         dxSharedData->WindowSize = size;
 
@@ -430,6 +431,9 @@ void Render::BackendInitializerD3D12::Present(Internal::Window* pWindow, Rendere
             pContext->NvFramebufferRtvs[i] = nullptr;
             pContext->NvBackBuffers[i] = nullptr;
         }
+
+        pContext->pDevice->waitForIdle();
+        pContext->pDevice->runGarbageCollection();
 
         DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
         dxSharedData->SwapChain->GetDesc(&swapChainDesc);

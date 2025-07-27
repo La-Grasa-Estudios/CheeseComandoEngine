@@ -4,7 +4,7 @@
 #include "Input/Input.h"
 #include "VarRegistry.h"
 #include "Logger.h"
-#include "Event/EventHandler.h"
+#include "Event/EventBus.h"
 
 #include <vector>
 #include "Thirdparty/imgui/imgui_impl_sdl3.h"
@@ -14,8 +14,6 @@
 using namespace ENGINE_NAMESPACE;
 
 using namespace Internal;
-
-std::unordered_map<SDL_JoystickID, SDL_Gamepad*> g_Gamepads;
 
 Window::Window(Render::RendererContext* pContext, const char* name)
 {
@@ -132,44 +130,14 @@ void Window::Update()
 	m_Context->present(this);
 	SDL_Event e;
 	while (SDL_PollEvent(&e)) {
+		if (m_IsImGuiEnabled) {
+			ImGui_ImplSDL3_ProcessEvent(&e);
+		}
 		switch (e.type)
 		{
-		case SDL_EVENT_QUIT:
-				m_ShouldClose = true;
-				break;
 		case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-			    m_ShouldClose = true;
-			break;
-		case SDL_EVENT_KEY_DOWN:
-		case SDL_EVENT_KEY_UP:
-			Input::SetKey(e.key.keysym.scancode, e.key.state);
-			break;
-		case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
-		case SDL_EVENT_GAMEPAD_BUTTON_UP:
-			Input::SetGamepad(e.gbutton.button, e.gbutton.state);
-			break;
-		case SDL_EVENT_GAMEPAD_AXIS_MOTION:
-			Input::SetGamepadAxis(e.gaxis.axis, e.gaxis.value);
-			break;
-		case SDL_EVENT_GAMEPAD_ADDED:
-			g_Gamepads[e.gdevice.which] = SDL_OpenGamepad(e.gdevice.which);
-			Z_INFO("Gamepad found! id: {}-{}", e.gdevice.which, SDL_GetGamepadName(g_Gamepads[e.gdevice.which]))
-			EventHandler::InvokeEvent(EventHandler::GetEventID("gamepad_connect"), this, { g_Gamepads[e.gdevice.which] }, 1);
-			break;
-		case SDL_EVENT_GAMEPAD_REMOVED:
-			EventHandler::InvokeEvent(EventHandler::GetEventID("gamepad_remove"), this, { g_Gamepads[e.gdevice.which] }, 1);
-			SDL_CloseGamepad(g_Gamepads[e.gdevice.which]);
-			g_Gamepads.erase(e.gdevice.which);
-			Z_INFO("Gamepad removed! id: {}", e.gdevice.which)
-				break;
-		case SDL_EVENT_MOUSE_BUTTON_DOWN:
-		case SDL_EVENT_MOUSE_BUTTON_UP:
-
-			Input::SetMouse(e.button.button, e.button.state);
-			//Input::SetMousePos(glm::vec2((float)xpos, (float)ypos));
-			break;
-		case SDL_EVENT_MOUSE_MOTION:
-			Input::s_ThreadedMousePos = glm::vec2(e.motion.x, e.motion.y);
+		case SDL_EVENT_QUIT:
+			EventBus::InvokeEvent(ApplicationEvent{ ApplicationEvent ::APP_EVENT_SHUTDOWN});
 			break;
 		case SDL_EVENT_WINDOW_RESIZED:
 		{
@@ -184,10 +152,8 @@ void Window::Update()
 		}
 			break;
 		default:
+			EventBus::InvokeEvent(ApplicationSDLEvent{ this, &e });
 			break;
-		}
-		if (m_IsImGuiEnabled) {
-			ImGui_ImplSDL3_ProcessEvent(&e);
 		}
 	}
 	

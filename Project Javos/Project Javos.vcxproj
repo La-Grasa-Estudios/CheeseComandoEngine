@@ -113,7 +113,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\Lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
@@ -131,7 +131,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\Lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
@@ -145,6 +145,7 @@
     <ClCompile Include="src\Common.cpp" />
     <ClCompile Include="src\Conductor.cpp" />
     <ClCompile Include="src\Cursed\BalatroSystem.cpp" />
+    <ClCompile Include="src\Cursed\CardSystem.cpp" />
     <ClCompile Include="src\GameScene.cpp" />
     <ClCompile Include="src\InGameSystem.cpp" />
     <ClCompile Include="src\JavosApp.cpp" />
@@ -154,6 +155,7 @@
     <ClCompile Include="src\SparrowReader.cpp" />
     <ClCompile Include="src\StageEditorSystem.cpp" />
     <ClCompile Include="src\StageRegistry.cpp" />
+    <ClCompile Include="src\TimedActionSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\CharaEditorSystem.h" />
@@ -165,6 +167,9 @@
     <ClInclude Include="src\Components.h" />
     <ClInclude Include="src\Conductor.h" />
     <ClInclude Include="src\Cursed\BalatroSystem.h" />
+    <ClInclude Include="src\Cursed\CardSystem.h" />
+    <ClInclude Include="src\Cursed\Components.h" />
+    <ClInclude Include="src\Events.h" />
     <ClInclude Include="src\GameScene.h" />
     <ClInclude Include="src\GameState.h" />
     <ClInclude Include="src\InGameSystem.h" />
@@ -175,6 +180,7 @@
     <ClInclude Include="src\StageEditorSystem.h" />
     <ClInclude Include="src\StageInfo.h" />
     <ClInclude Include="src\StageRegistry.h" />
+    <ClInclude Include="src\TimedActionSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Stratum\Stratum.vcxproj">

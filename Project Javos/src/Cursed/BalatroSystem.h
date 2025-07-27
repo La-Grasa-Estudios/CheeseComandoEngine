@@ -7,61 +7,14 @@
 #include <Sound/SngAudioSource.h>
 #include <Sound/MP3AudioSource.h>
 
+#include "../TimedActionSystem.h"
+#include "Components.h"
+
 namespace Funkin
 {
-	static inline const char* C_CARD_COMPONENT = "CardComponent";
-	static inline const char* C_TILT_COMPONENT = "TextTiltComponent";
-
-	struct CardComponent
-	{
-		float tiltX = 0.0f;
-		float tiltY = 0.0f;
-		float tiltFactor = 10.0f;
-		float rotation = 0.0f;
-		float moveSpeed = 4.0f;
-		bool grabbable = true;
-		bool grabbed = false;
-		int seed = 0;
-		glm::vec3 position = {};
-		Stratum::ECS::edict_t bgEntity;
-		Stratum::ECS::edict_t bgShadowEntity;
-	};
-
-	struct TextTiltComponent
-	{
-		int seed = 0;
-		bool credits = true;
-	};
-
 	class BalatroSystem : public Stratum::ISceneSystem
 	{
 	public:
-
-		struct ActionParameters
-		{
-			float duration;
-			float amplitude = 1.0f;
-			ActionParameters() = default;
-			ActionParameters(const float dur);
-			ActionParameters(const float dur, const float amp);
-		};
-
-		enum class Easing
-		{
-			Linear,
-			Random,
-			SineIn,
-			SineOut,
-			SineInOut,
-			ElasticIn,
-			ElasticOut,
-			ElasticInOut,
-			BackIn,
-			BackOut,
-			BackInOut,
-			Sine,
-			Cosine,
-		};
 
 		BalatroSystem();
 		~BalatroSystem();
@@ -71,35 +24,39 @@ namespace Funkin
 		void PostUpdate(Stratum::Scene* scene) final;
 		void RenderImGui(Stratum::Scene* scene) final;
 		void UpdateCards();
-
-		void PushAction(float* dst, float targetVal, ActionParameters params, Easing easing);
-		void PushAction(glm::vec2* dst, glm::vec2 targetVal, ActionParameters params, Easing easing);
-		void PushAction(glm::vec3* dst, glm::vec3 targetVal, ActionParameters params, Easing easing);
-		void PushAction(glm::vec4* dst, glm::vec4 targetVal, ActionParameters params, Easing easing);
-
-		void PushAction(float* dst, float targetVal, ActionParameters params, Easing easing, std::function<void()> cb);
-		void PushAction(glm::vec2* dst, glm::vec2 targetVal, ActionParameters params, Easing easing, std::function<void()> cb);
-		void PushAction(glm::vec3* dst, glm::vec3 targetVal, ActionParameters params, Easing easing, std::function<void()> cb);
-		void PushAction(glm::vec4* dst, glm::vec4 targetVal, ActionParameters params, Easing easing, std::function<void()> cb);
+		void SortCards();
+		void SolvePokerHandType(bool playCards = false);
 
 		void DissolveCard(Stratum::ECS::edict_t cardEntity);
 		void DestroyCard(Stratum::ECS::edict_t cardEntity);
-		Stratum::ECS::edict_t CreateCard(uint32_t cardX, uint32_t cardY);
+		Stratum::ECS::edict_t CreateCard(CardType type, CardSuit suit);
+		Stratum::ECS::edict_t CreatePlayingCard(CardType type, CardSuit suit);
 		Stratum::ECS::edict_t CreateTextEntity(const std::wstring& defaultText, const glm::vec2& pos, float fontSize = 64.0f, bool isGui = false, uint32_t renderLayer = 0, float align = 0.0f);
 		Stratum::ECS::edict_t CreateRectEntity(const glm::vec2& pos, const glm::ivec2& rectSize = { 1.0f, 1.0f }, const glm::vec2& center = { 0.0f, 0.0f }, bool isGui = false, uint32_t renderLayer = 0);
 
+		TimedActionSystem* pTimedActionSystem;
+
 	private:
 
-		struct Action
+		enum EventType
 		{
-			Easing easing;
-			uint8_t count;
-			ActionParameters params;
-			float time;
-			float* floatPtr;
-			float targetFloat[4];
-			float srcFloat[4];
-			std::function<void()> cb;
+			EVENT_SCORE_CARD,
+			EVENT_DRAW_CARD,
+			EVENT_DISSOLVE_CARD,
+			EVENT_END_SCORING,
+			EVENT_WAIT,
+		};
+
+		struct GameEvent
+		{
+			EventType Type;
+			Stratum::ECS::edict_t Entity;
+			float Duration;
+			union
+			{
+				uint32_t drawCardIndex;
+				float SoundPitch;
+			};
 		};
 
 		Stratum::ECS::edict_t mBgEntity;
@@ -107,6 +64,10 @@ namespace Funkin
 		Stratum::ECS::edict_t mCardEntity;
 		Stratum::ECS::edict_t mExitText;
 		Stratum::ECS::edict_t mExitButton;
+
+		Stratum::ECS::edict_t mChipsText;
+		Stratum::ECS::edict_t mMultText;
+		Stratum::ECS::edict_t mPokerHandText;
 
 		Stratum::ECS::edict_t mCurrentGrab = 0;
 
@@ -120,10 +81,9 @@ namespace Funkin
 		Stratum::Ref<Stratum::MP3AudioSource> mBalatroCrumple;
 		Stratum::Ref<Stratum::MP3AudioSource> mBalatroMagic;
 		Stratum::Ref<Stratum::MP3AudioSource> mBalatroPick;
+		Stratum::Ref<Stratum::MP3AudioSource> mBalatroChips;
 
 		Stratum::Scene* mScene;
-
-		std::vector<Action> mActions;
 
 		float mDissolveTime = 0.0f;
 		float mNextCardTimer = 0.0f;
@@ -133,6 +93,12 @@ namespace Funkin
 		bool mPlayedMenuIntro = false;
 		bool mFirstMenuFrame = false;
 		bool mFirstButtonFrame = false;
+		bool mIsPlayingHand = false;
+		bool mProcessNextEvent = false;
+
+		uint32_t mPlayedCardsCount = 0;
+
+		std::vector<GameEvent> mEvents;
 
 	};
 }

@@ -1,7 +1,7 @@
 #include "Input.h"
 #include "InputLayer.h"
 #include "Core/Logger.h"
-#include "Event/EventHandler.h"
+#include "Event/EventBus.h"
 
 #include <vcruntime_string.h>
 #include <SDL3/SDL.h>
@@ -15,6 +15,8 @@ bool g_IsMouseGrabbed = false;
 // Maybe rewrite the entire thing? (Originally GLFW then SDL ass ugly port)
 // This thing comes from 2019
 // There is a reason the engine is called Stratum lol
+
+std::unordered_map<SDL_JoystickID, SDL_Gamepad*> g_Gamepads;
 
 bool BaseInputLayer::SetKey(int key, bool press)
 {
@@ -56,16 +58,50 @@ void Input::Init(SDL_Window* window)
 	memset(m_GamePadButtons, 0, sizeof(m_GamePadButtons));
 	memset(m_GamepadAxis, 0, sizeof(m_GamepadAxis));
 
-	EventHandler::RegisterListener([&](void*, void**, uint32_t) {
+	EventBus::RegisterListener<ApplicationSDLEvent>([&](const ApplicationSDLEvent& event) {
+		SDL_Event& e = *reinterpret_cast<SDL_Event*>(event.pEventData);
+		
+		if (e.type == SDL_EVENT_GAMEPAD_ADDED)
+		{
+			m_GamepadCount++;
+			g_Gamepads[e.gdevice.which] = SDL_OpenGamepad(e.gdevice.which);
+			Z_INFO("Gamepad found! id: {}-{}", e.gdevice.which, SDL_GetGamepadName(g_Gamepads[e.gdevice.which]))
+		}
 
-		m_GamepadCount += 1;
+		if (e.type == SDL_EVENT_GAMEPAD_REMOVED)
+		{
+			m_GamepadCount--;
+			SDL_CloseGamepad(g_Gamepads[e.gdevice.which]);
+			g_Gamepads.erase(e.gdevice.which);
+		}
 
-		}, EventHandler::GetEventID("gamepad_connect"));
-	EventHandler::RegisterListener([&](void*, void**, uint32_t) {
+		switch (e.type)
+		{
+		case SDL_EVENT_KEY_DOWN:
+		case SDL_EVENT_KEY_UP:
+			SetKey(e.key.keysym.scancode, e.key.state);
+			break;
+		case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+		case SDL_EVENT_GAMEPAD_BUTTON_UP:
+			SetGamepad(e.gbutton.button, e.gbutton.state);
+			break;
+		case SDL_EVENT_GAMEPAD_AXIS_MOTION:
+			SetGamepadAxis(e.gaxis.axis, e.gaxis.value);
+			break;
+		case SDL_EVENT_MOUSE_BUTTON_DOWN:
+		case SDL_EVENT_MOUSE_BUTTON_UP:
 
-		m_GamepadCount -= 1;
+			SetMouse(e.button.button, e.button.state);
+			//Input::SetMousePos(glm::vec2((float)xpos, (float)ypos));
+			break;
+		case SDL_EVENT_MOUSE_MOTION:
+			Input::s_ThreadedMousePos = glm::vec2(e.motion.x, e.motion.y);
+			break;
+		default:
+			break;
+		}
 
-		}, EventHandler::GetEventID("gamepad_remove"));
+		}, EF_NONE);
 
 	PushInputLayer(new BaseInputLayer()); // Push default input layer
 }

@@ -7,9 +7,11 @@
 #include <Input/Input.h>
 #include <Font/FontRegistry.h>
 #include <Util/Globals.h>
-#include <Event/EventHandler.h>
-
+#include <Event/EventBus.h>
 #include <Sound/AudioEngine.h>
+ 
+#include "CardSystem.h"
+
 #undef min
 #undef max
 
@@ -19,66 +21,21 @@ struct BalatroFrameData
 	float dissolve;
 };
 
-const float PI = glm::pi<float>();
-
-static inline float easeInElastic(float x) {
-	float c4 = (2 * PI) / 3;
-
-	return x == 0.0f
-		? 0
-		: x == 1.0f
-		? 1
-		: -glm::pow(2, 10 * x - 10) * glm::sin((x * 10 - 10.75) * c4);
-}
-
-static inline float easeOutElastic(float x) {
-	float c4 = (2 * PI) / 3;
-
-	return x == 0
-		? 0
-		: x == 1
-		? 1
-		: glm::pow(2, -10 * x) * glm::sin((x * 10 - 0.75) * c4) + 1;
-}
-
-static inline float easeInOutElastic(float x) {
-	float c5 = (2 * PI) / 4.5;
-
-	return x == 0
-		? 0
-		: x == 1
-		? 1
-		: x < 0.5
-		? -(glm::pow(2, 20 * x - 10) * glm::sin((20 * x - 11.125) * c5)) / 2
-		: (glm::pow(2, -20 * x + 10) * glm::sin((20 * x - 11.125) * c5)) / 2 + 1;
-}
-
-static inline float easeInBack(float x) {
-	float c1 = 1.70158;
-	float c3 = c1 + 1;
-
-	return c3 * x * x * x - c1 * x * x;
-}
-
-static inline float easeOutBack(float x) {
-	float c1 = 1.70158;
-	float c3 = c1 + 1;
-
-	return 1 + c3 * glm::pow(x - 1, 3) + c1 * glm::pow(x - 1, 2);
-}
-
-static inline float easeInOutBack(float x) {
-	float c1 = 1.70158;
-	float c2 = c1 * 1.525;
-
-	return x < 0.5
-		? (glm::pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2)) / 2
-		: (glm::pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2;
-}
-
-Funkin::BalatroSystem::BalatroSystem()
+template<typename T>
+static inline T clampMix(T a, T b, float t)
 {
-	
+	return glm::mix(a, b, glm::clamp(t, 0.0f, 1.0f));
+}
+
+Funkin::BalatroSystem::BalatroSystem() : 
+	mBgEntity(Stratum::ECS::C_INVALID_ENTITY),
+	mCardEntity(Stratum::ECS::C_INVALID_ENTITY),
+	mExitButton(Stratum::ECS::C_INVALID_ENTITY),
+	mExitText(Stratum::ECS::C_INVALID_ENTITY),
+	mLogoEntity(Stratum::ECS::C_INVALID_ENTITY),
+	mScene(nullptr),
+	pTimedActionSystem(nullptr)
+{
 }
 
 void Funkin::BalatroSystem::Init(Stratum::Scene* scene)
@@ -86,10 +43,15 @@ void Funkin::BalatroSystem::Init(Stratum::Scene* scene)
 	mCanDissolve = true;
 	mScene = scene;
 
-	scene->FontRegistry.LoadFont("balatro", "fonts/m6x11plus.ttf");
+	mScene->RegisterCustomSystem(new CardSystem());
 
+	scene->FontRegistry.LoadFont("balatro", "fonts/m6x11plus.ttf");
+	scene->RegisterCustomSystem(pTimedActionSystem = new TimedActionSystem());
+
+	auto playingCardManager = new Stratum::ECS::ComponentManager<PlayingCardComponent>();
 	auto cardManager = new Stratum::ECS::ComponentManager<CardComponent>();
 	auto textManager = new Stratum::ECS::ComponentManager<TextTiltComponent>();
+	mScene->RegisterCustomComponent(playingCardManager, C_PLAY_CARD_COMPONENT);
 	mScene->RegisterCustomComponent(cardManager, C_CARD_COMPONENT);
 	mScene->RegisterCustomComponent(textManager, C_TILT_COMPONENT);
 
@@ -130,7 +92,7 @@ void Funkin::BalatroSystem::Init(Stratum::Scene* scene)
 	sprite.IsGui = false;
 	sprite.Center = {};
 	sprite.pCustomShader = mBalatroBgShader.get();
-	
+
 	{
 		auto entity = mScene->EntityManager.CreateEntity();
 		auto& sprite = mScene->SpriteRenderers.Create(entity);
@@ -155,6 +117,7 @@ void Funkin::BalatroSystem::Init(Stratum::Scene* scene)
 
 	mBalatroWhoosh = Stratum::CreateRef<Stratum::MP3AudioSource>("balatro/whoosh.mp3", mScene->AudioEngine->GetEngine());
 	mBalatroMagic = Stratum::CreateRef<Stratum::MP3AudioSource>("balatro/crumple.mp3", mScene->AudioEngine->GetEngine());
+	mBalatroChips = Stratum::CreateRef<Stratum::MP3AudioSource>("balatro/chips1.mp3", mScene->AudioEngine->GetEngine());
 	mBalatroCrumple = Stratum::CreateRef<Stratum::MP3AudioSource>("balatro/card.mp3", mScene->AudioEngine->GetEngine());
 	mBalatroPick = Stratum::CreateRef<Stratum::MP3AudioSource>("balatro/pick.mp3", mScene->AudioEngine->GetEngine());
 	mBalatroSoundtrack = Stratum::CreateRef<Stratum::SngAudioSource>("balatro/music1.sng", mScene->AudioEngine->GetEngine());
@@ -163,6 +126,7 @@ void Funkin::BalatroSystem::Init(Stratum::Scene* scene)
 	mScene->AudioEngine->AddSource(mBalatroMagic);
 	mScene->AudioEngine->AddSource(mBalatroCrumple);
 	mScene->AudioEngine->AddSource(mBalatroPick);
+	mScene->AudioEngine->AddSource(mBalatroChips);
 	mBalatroSoundtrack->Play();
 	mBalatroSoundtrack->SetPitch(0.70f);
 	mBalatroSoundtrack->SetVolume(0.5f);
@@ -172,6 +136,16 @@ void Funkin::BalatroSystem::Init(Stratum::Scene* scene)
 	mBalatroPick->SetVolume(0.45f);
 
 	mExitText = CreateTextEntity(L"Exit", { 0.0f, -2000.0f }, 100.0f, true, 10000, 0.5f);
+
+	mPokerHandText = CreateTextEntity(L"HAND HERE", {}, 100.0f, true, 10000, 0.5f);
+	auto& pokerHandAnchor = mScene->GuiAnchors.Create(mPokerHandText);
+	pokerHandAnchor.AnchorPoint = Stratum::GuiAnchorPoint::BOTTOM;
+	pokerHandAnchor.Position = { 0.0f, 200.0f };
+
+	mChipsText = CreateTextEntity(L"CHIPS HERE", {}, 100.0f, true, 10000, 0.0f);
+	auto& chipsTextAnchor = mScene->GuiAnchors.Create(mChipsText);
+	chipsTextAnchor.AnchorPoint = Stratum::GuiAnchorPoint::BOTTOM_LEFT;
+	chipsTextAnchor.Position = { 100.0f, 200.0f };
 
 	auto exitButton = mExitButton = CreateRectEntity({ 0.0f, -2000.0f }, { 500, 100 }, { 0.0f, 0.0f }, true, 9000);
 	textManager->Create(exitButton).credits = false;
@@ -185,6 +159,21 @@ void Funkin::BalatroSystem::Init(Stratum::Scene* scene)
 	exitSprite.Rotation.x = 90.0f;
 	exitSprite.SpriteColor = { 0.0f, 0.5f, 1.0f, 1.0f };
 	exitTransform.SetScale(glm::vec3(1.2f, 0.8f, 1.0f));
+
+	for (int i = 0; i < 6; i++)
+	{
+		CreatePlayingCard((CardType)(12 - i), CARD_SUIT_HEARTS);
+	}
+	for (int i = 0; i < 4; i++)
+	{
+		CreatePlayingCard(CARD_TYPE_KING, (CardSuit)i);
+	}
+	for (int i = 0; i < 2; i++)
+	{
+		CreatePlayingCard(CARD_TYPE_JACK, (CardSuit)i);
+	}
+
+	SortCards();
 }
 
 void Funkin::BalatroSystem::Update(Stratum::Scene* scene)
@@ -195,11 +184,11 @@ void Funkin::BalatroSystem::Update(Stratum::Scene* scene)
 	{
 		mPlayedMenuIntro = true;
 		mBalatroMagic->Play();
-		PushAction(&mDissolveTime, 0.0f, 2.5f, Easing::Linear, [&]
+		pTimedActionSystem->PushAction(&mDissolveTime, 0.0f, 2.5f, Easing::Linear, [cardManager, this]
 			{
 				auto& sprite = mScene->SpriteRenderers.Get(mLogoEntity);
 				sprite.pCustomShader = NULL;
-				mCardEntity = CreateCard(11, 0);
+				mCardEntity = CreateCard(CARD_TYPE_KING, CARD_SUIT_HEARTS);
 
 				auto& transform = mScene->Transforms.Get(mLogoEntity);
 				auto& card = cardManager->Get(mCardEntity);
@@ -221,7 +210,7 @@ void Funkin::BalatroSystem::Update(Stratum::Scene* scene)
 				mDissolveTime = 1.0f;
 				mBalatroCrumple->Play();
 
-				PushAction(&mDissolveTime, 0.0f, 0.8f, Easing::Linear, [&]
+				pTimedActionSystem->PushAction(&mDissolveTime, 0.0f, 0.8f, Easing::Linear, [this]
 					{
 						mPlayMenu = true;
 					});
@@ -229,106 +218,10 @@ void Funkin::BalatroSystem::Update(Stratum::Scene* scene)
 			});
 	}
 
-	for (int i = 0; i < mActions.size(); i++)
-	{
-		Action& act = mActions[i];
-
-		if (act.time == 0.0f)
-		{
-			for (int i = 0; i < act.count; i++)
-			{
-				act.srcFloat[i] = act.floatPtr[i];
-			}
-		}
-
-		act.time += Stratum::gpGlobals->deltaTime;
-
-		float interp = glm::clamp(act.time / act.params.duration, 0.0f, 1.0f);
-
-		for (int i = 0; i < act.count; i++)
-		{
-			float val = 0.0f;
-
-			switch (act.easing)
-			{
-			case Easing::Linear:
-				val = glm::mix(act.srcFloat[i], act.targetFloat[i], interp);
-				break;
-			case Easing::Random:
-			{
-				float randomVal = ((float)rand() / (float)RAND_MAX) * 0.2f - 0.1f;
-				val = glm::mix(act.srcFloat[i], act.targetFloat[i], glm::clamp(interp + randomVal, 0.0f, 1.0f));
-			}
-			break;
-			case Easing::SineIn:
-				val = glm::mix(act.srcFloat[i], act.targetFloat[i], 1 - glm::cos((interp * PI) / 2));
-				break;
-			case Easing::SineOut:
-				val = glm::mix(act.srcFloat[i], act.targetFloat[i], glm::sin((interp * PI) / 2.0f));
-				break;
-			case Easing::SineInOut:
-				val = glm::mix(act.srcFloat[i], act.targetFloat[i], -(glm::cos(PI * interp) - 1) / 2.0f);
-				break;
-			case Easing::ElasticIn:
-				val = glm::mix(act.srcFloat[i], act.targetFloat[i], easeInElastic(interp));
-				break;
-			case Easing::ElasticOut:
-				val = glm::mix(act.srcFloat[i], act.targetFloat[i], easeOutElastic(interp));
-				break;
-			case Easing::ElasticInOut:
-				val = glm::mix(act.srcFloat[i], act.targetFloat[i], easeInOutElastic(interp));
-				break;
-			case Easing::BackIn:
-				val = glm::mix(act.srcFloat[i], act.targetFloat[i], easeInBack(interp));
-				break;
-			case Easing::BackOut:
-				val = glm::mix(act.srcFloat[i], act.targetFloat[i], easeOutBack(interp));
-				break;
-			case Easing::BackInOut:
-				val = glm::mix(act.srcFloat[i], act.targetFloat[i], easeInOutBack(interp));
-				break;
-			case Easing::Sine:
-				interp = glm::sin((interp * PI) / 2.0f);
-				val = glm::mix(act.srcFloat[i], act.targetFloat[i], glm::sin(interp * (PI * 2) * act.params.amplitude));
-				break;
-			case Easing::Cosine:
-				val = glm::mix(act.srcFloat[i], act.targetFloat[i], glm::cos(interp * (PI * 2) * act.params.amplitude));
-				break;
-			default:
-				break;
-			}
-
-			act.floatPtr[i] = val;
-		}
-
-		if (act.time >= act.params.duration)
-		{
-			if (act.cb)
-			{
-				act.cb();
-			}
-			mActions.erase(mActions.begin() + i);
-			i--;
-			continue;
-		}
-	}
-
 	mScene->RenderPath3D->RenderPath2D->SetConstantBuffer(mPerFrameData.get(), 2);
 
 	auto& sprite = mScene->SpriteRenderers.Get(mBgEntity);
 	sprite.Rect.size = scene->VirtualScreenSize;
-
-	mCmdBuffer->Begin();
-
-	BalatroFrameData frameData{};
-
-	frameData.time = Stratum::Time::GlobalTime;
-	frameData.dissolve = mDissolveTime;
-
-	mCmdBuffer->UpdateConstantBuffer(mPerFrameData.get(), &frameData);
-
-	mCmdBuffer->End();
-	mCmdBuffer->Submit();
 
 	if (!mPlayMenu)
 		return;
@@ -392,8 +285,8 @@ void Funkin::BalatroSystem::Update(Stratum::Scene* scene)
 	if (!mFirstButtonFrame && minY > mScene->VirtualScreenSize.y)
 	{
 		mFirstButtonFrame = true;
-		PushAction(&exitTextTransform.Position.y, -700.0f, 0.3f, Easing::BackOut);
-		PushAction(&exitTransform.Position.y, -700.0f, 0.3f, Easing::BackOut);
+		pTimedActionSystem->PushAction(&exitTextTransform.Position.y, -700.0f, 0.3f, Easing::BackOut);
+		pTimedActionSystem->PushAction(&exitTransform.Position.y, -700.0f, 0.3f, Easing::BackOut);
 	}
 
 	auto& transform = mScene->Transforms.Get(mLogoEntity);
@@ -403,15 +296,13 @@ void Funkin::BalatroSystem::Update(Stratum::Scene* scene)
 	if (!card.grabbed)
 		card.position = transform.Position;
 
-	mNextCardTimer += Stratum::gpGlobals->deltaTime;
+	//mNextCardTimer += Stratum::gpGlobals->deltaTime;
 
 	if (mNextCardTimer > 5.0f && !mCurrentGrab && mCanDissolve)
 	{
 		mNextCardTimer = 0.0f;
 		DissolveCard(mCardEntity);
 	}
-
-	UpdateCards();
 
 	struct AABB
 	{
@@ -446,12 +337,12 @@ void Funkin::BalatroSystem::Update(Stratum::Scene* scene)
 	if (cardAABB.PointInside(mScene->VirtualMousePosition))
 	{
 		if (Stratum::Input::GetMouseButttonDown(0))
-			Stratum::EventHandler::InvokeEvent(Stratum::EventHandler::GetEventID("app_close"), this);
+			Stratum::EventBus::InvokeEvent(Stratum::ApplicationEvent{Stratum::ApplicationEvent::APP_EVENT_SHUTDOWN});
 
 		if (!enter)
 		{
 			enter = true;
-			timer = PI;
+			timer = glm::pi<float>();
 		}
 
 		original *= 1.1f;
@@ -461,11 +352,82 @@ void Funkin::BalatroSystem::Update(Stratum::Scene* scene)
 		enter = false;
 	}
 
-	timer -= Stratum::gpGlobals->deltaTime * PI * 5.0f;
+	timer -= Stratum::gpGlobals->deltaTime * glm::pi<float>() * 5.0f;
 	if (timer < 0.0f)
 		timer = 0.0f;
 
 	exitTransform.SetScale(original + glm::vec3(0.05f) * glm::sin(timer * 4.0f));
+
+	const float gameSpeed = 4.0f;
+
+	if (mIsPlayingHand)
+	{
+		auto playingCardManager = mScene->GetComponentManager<PlayingCardComponent>(C_PLAY_CARD_COMPONENT);
+		auto cardManager = mScene->GetComponentManager<CardComponent>(C_CARD_COMPONENT);
+		auto& entities = playingCardManager->GetEntities();
+
+		if (!mEvents.empty())
+		{
+			auto& event = mEvents[0];
+
+			if (mProcessNextEvent)
+			{
+				event.Duration /= gameSpeed;
+				if (event.Type == EVENT_DRAW_CARD)
+				{
+					auto& playingCard = playingCardManager->Get(event.Entity);
+					auto& card = cardManager->Get(event.Entity);
+					card.position.y += 400.0f;
+					const glm::vec2 handRect = { 142 * 2.1f * mPlayedCardsCount / 2.0f, -300.0f };
+					float cardMargin = (handRect.x * 2.0f) / mPlayedCardsCount;
+					card.position.x = -handRect.x + (event.drawCardIndex + 0.5f) * cardMargin;
+					mBalatroPick->Play();
+				}
+				if (event.Type == EVENT_SCORE_CARD)
+				{
+					auto& playingCard = playingCardManager->Get(event.Entity);
+					auto& card = cardManager->Get(event.Entity);
+
+					pTimedActionSystem->PushAction(&card.scaleFactor, 0.02f, { event.Duration, 9.0f }, Easing::SineAdd);
+					mBalatroChips->SetPitch(event.SoundPitch);
+					mBalatroChips->Play();
+				}
+				if (event.Type == EVENT_END_SCORING)
+				{
+					mEvents.clear();
+					mProcessNextEvent = true;
+					mIsPlayingHand = false;
+					return;
+				}
+				mProcessNextEvent = false;
+			}
+
+			event.Duration -= Stratum::Time::DeltaTime;
+
+			if (event.Duration <= 0.0f)
+			{
+				mEvents.erase(mEvents.begin());
+				mProcessNextEvent = true;
+			}
+		}
+		return;
+	}
+
+	mProcessNextEvent = true;
+
+	UpdateCards();
+
+	if (Stratum::Input::GetKeyDown(KeyCode::S))
+	{
+		SortCards();
+	}
+
+	if (Stratum::Input::GetKeyDown(KeyCode::P))
+	{
+		SolvePokerHandType(true);
+	}
+
+	SolvePokerHandType();
 }
 
 void Funkin::BalatroSystem::PostUpdate(Stratum::Scene* scene)
@@ -475,6 +437,18 @@ void Funkin::BalatroSystem::PostUpdate(Stratum::Scene* scene)
 		mBalatroBgShader->SetRenderTarget(mScene->RenderPath3D->RenderPath2D->GetRenderTarget());
 		mBalatroDissolveShader->SetRenderTarget(mScene->RenderPath3D->RenderPath2D->GetRenderTarget());
 	}
+
+	mCmdBuffer->Begin();
+
+	BalatroFrameData frameData{};
+
+	frameData.time = Stratum::Time::GlobalTime;
+	frameData.dissolve = mDissolveTime;
+
+	mCmdBuffer->UpdateConstantBuffer(mPerFrameData.get(), &frameData);
+
+	mCmdBuffer->End();
+	mCmdBuffer->Submit();
 }
 
 void Funkin::BalatroSystem::RenderImGui(Stratum::Scene* scene)
@@ -484,6 +458,31 @@ void Funkin::BalatroSystem::RenderImGui(Stratum::Scene* scene)
 
 void Funkin::BalatroSystem::UpdateCards()
 {
+	struct CardInstance
+	{
+		Stratum::ECS::edict_t entity;
+
+		union
+		{
+			uint64_t sort;
+			CardSuit suit;
+			CardType type;
+		};
+
+		int32_t cardPos;
+
+		constexpr bool operator >(const CardInstance& other) const
+		{
+			return sort > other.sort || cardPos > other.cardPos;
+		}
+
+		constexpr bool operator <(const CardInstance& other) const
+		{
+			return sort < other.sort || cardPos < other.cardPos;
+		}
+
+	};
+
 	struct AABB
 	{
 		float x0;
@@ -501,49 +500,25 @@ void Funkin::BalatroSystem::UpdateCards()
 	};
 
 	auto cardManager = mScene->GetComponentManager<CardComponent>(C_CARD_COMPONENT);
+	auto playingCardManager = mScene->GetComponentManager<PlayingCardComponent>(C_PLAY_CARD_COMPONENT);
 	auto& entities = cardManager->GetEntities();
 
 	static glm::vec3 grabOffset = {};
+	static glm::vec3 grabPosition = {};
 	static Stratum::ECS::edict_t grab = Stratum::ECS::C_INVALID_ENTITY;
 
+	std::vector<CardInstance> overEntities;
+	const uint32_t maxSelectedCards = 5;
+	uint32_t selectedCardAmt = 0;
 
 	for (auto entity : entities)
 	{
+		float fps = 1.0f / Stratum::Time::UnscaledDeltaTime;
+
 		auto& card = cardManager->Get(entity);
+
 		auto& transform1 = mScene->Transforms.Get(entity);
-		auto& transform2 = mScene->Transforms.Get(card.bgEntity);
-		auto& transform3 = mScene->Transforms.Get(card.bgShadowEntity);
-
 		auto& sprite1 = mScene->SpriteRenderers.Get(entity);
-		auto& sprite2 = mScene->SpriteRenderers.Get(card.bgEntity);
-		auto& sprite3 = mScene->SpriteRenderers.Get(card.bgShadowEntity);
-
-		float rotation = glm::sin(Stratum::Time::GlobalTime + card.seed) * 2.0f;
-		float tiltX = glm::sin(Stratum::Time::GlobalTime + card.seed) * card.tiltFactor;
-		float tiltY = glm::cos(Stratum::Time::GlobalTime + card.seed) * card.tiltFactor;
-		float offset = glm::cos(Stratum::Time::GlobalTime + card.seed) * 4.0f;
-
-		glm::vec3 position = card.position + glm::vec3(0.0f, offset, 0.0f);
-		glm::vec3 scale = transform1.Scale;
-
-		auto lastPos = transform1.Position;
-
-		transform1.SetPosition(glm::mix(transform1.Position, position, Stratum::Time::UnscaledDeltaTime * card.moveSpeed));
-		transform2.SetPosition(transform1.Position);
-		transform3.Position = transform1.Position;
-
-		auto newPos = transform1.Position;
-
-		rotation -= (newPos.x - lastPos.x);
-		tiltX += (newPos.y - lastPos.y);
-
-		card.rotation = glm::mix(card.rotation, rotation, Stratum::Time::UnscaledDeltaTime * 32.0f);
-
-		transform1.SetRotation(glm::vec3(glm::radians(tiltX + card.tiltX), glm::radians(tiltY + card.tiltY), glm::radians(card.rotation)));
-		transform2.SetRotation(transform1.Rotation);
-		transform3.Rotation = transform1.Rotation;
-
-		transform3.ModelMatrix = glm::translate(transform1.ModelMatrix, glm::vec3(9.0f, -9.0f, 0.0f));
 
 		AABB cardAABB = {
 			transform1.Position.x - sprite1.Rect.size.x * transform1.Scale.x,
@@ -551,53 +526,76 @@ void Funkin::BalatroSystem::UpdateCards()
 			transform1.Position.x + sprite1.Rect.size.x * transform1.Scale.x,
 			transform1.Position.y + sprite1.Rect.size.y * transform1.Scale.y
 		};
-		
-		card.grabbed = (grab == entity);
-
-		tiltX = 0.0f;
-		tiltY = 0.0f;
 
 		if (cardAABB.PointInside(mScene->VirtualMousePosition))
 		{
-			if (Stratum::Input::GetMouseButttonDown(0))
-			{
-				grabOffset = transform1.Position - glm::vec3(mScene->VirtualMousePosition, 0.0f);
-				grab = entity;
-				mBalatroPick->Play();
-			}
-			if (!Stratum::Input::GetMouseButton(0))
-				grab = Stratum::ECS::C_INVALID_ENTITY;
+			CardInstance c;
+			c.sort = card.renderLayer;
+			c.entity = entity;
 
-			if (!card.grabbed)
-			{
-				tiltX = (mScene->VirtualMousePosition.y - transform1.Position.y) / sprite1.Rect.size.y * 24.0f;
-				tiltY = (transform1.Position.x - mScene->VirtualMousePosition.x) / sprite1.Rect.size.x * 24.0f;
-			}
-		}
-		else
-		{
-			if (grab == entity)
-				grab = Stratum::ECS::C_INVALID_ENTITY;
-			card.moveSpeed = 4.0f;
+			overEntities.push_back(c);
 		}
 
-		card.tiltX = glm::mix(card.tiltX, tiltX, Stratum::Time::DeltaTime * 8.0f);
-		card.tiltY = glm::mix(card.tiltY, tiltY, Stratum::Time::DeltaTime * 8.0f);
+		card.grabbed = (grab == entity);
+		card.isHovered = false;
 
 		if (card.grabbed)
 		{
-			card.moveSpeed = 200.0f;
-			scale = glm::mix(scale, glm::vec3(1.60f), Stratum::Time::DeltaTime * 100.0f);
+			card.grabbedTimer += Stratum::Time::DeltaTime;
 		}
 		else
 		{
-			card.moveSpeed = 4.0f;
-			scale = glm::mix(scale, glm::vec3(1.55f), Stratum::Time::DeltaTime * 8.0f);
+			card.grabbedTimer = 0;
 		}
 
-		transform1.SetScale(scale);
-		transform2.SetScale(transform1.Scale);
+		if (playingCardManager->HasComponent(entity))
+		{
+			auto& playingCard = playingCardManager->Get(entity);
+			if (playingCard.selected)
+			{
+				selectedCardAmt++;
+			}
+		}
 
+	}
+
+	std::sort(overEntities.begin(), overEntities.end(), std::greater<CardInstance>());
+
+	if (!overEntities.empty()) 
+	{
+		auto entity = overEntities[0].entity;
+		auto& card = cardManager->Get(entity);
+
+		auto& transform1 = mScene->Transforms.Get(entity);
+		auto& sprite1 = mScene->SpriteRenderers.Get(entity);
+
+		if (Stratum::Input::GetMouseButttonDown(0))
+		{
+			grabOffset = transform1.Position - glm::vec3(mScene->VirtualMousePosition, 0.0f);
+			grabPosition = transform1.Position;
+			grab = entity;
+			mBalatroPick->Play();
+		}
+		if (!Stratum::Input::GetMouseButton(0) && grab != Stratum::ECS::C_INVALID_ENTITY)
+		{
+			auto& card1 = cardManager->Get(grab);
+			if (playingCardManager->HasComponent(grab) && card1.grabbedTimer < 0.1f)
+			{
+				auto& playingCard = playingCardManager->Get(grab);
+				bool newSelected = !playingCard.selected;
+
+				if (newSelected && selectedCardAmt >= maxSelectedCards)
+				{
+					newSelected = false;
+				}
+
+				playingCard.selected = newSelected;
+			}
+			grab = Stratum::ECS::C_INVALID_ENTITY;
+		}
+		
+		card.isHovered = true;
+		card.grabbed = (grab == entity);
 	}
 
 	float tiltX = 0.0f;
@@ -606,10 +604,426 @@ void Funkin::BalatroSystem::UpdateCards()
 	if (grab != Stratum::ECS::C_INVALID_ENTITY)
 	{
 		auto& card = cardManager->Get(grab);
-		card.position = glm::vec3(mScene->VirtualMousePosition, 0.0f) + grabOffset;
+		if (card.grabbedTimer > 0.1f)
+			card.position = glm::vec3(mScene->VirtualMousePosition, 0.0f) + grabOffset;
 	}
 
 	mCurrentGrab = grab;
+
+	auto& cards = playingCardManager->GetEntities();
+
+	const glm::vec2 handRect = { 142 * 1.5f * 10.0f / 2.0f, -300.0f };
+
+	std::vector<CardInstance> sortedCards;
+	bool cardGrabbed = false;
+
+	for (auto entity : cards)
+	{
+		auto& card = cardManager->Get(entity);
+		auto& playingCard = playingCardManager->Get(entity);
+
+		CardInstance i;
+		i.cardPos = card.position.x;
+		i.entity = entity;
+
+		sortedCards.push_back(i);
+
+		if (card.grabbed)
+		{
+			cardGrabbed = true;
+		}
+	}
+
+	if (cardGrabbed)
+	{
+		std::sort(sortedCards.begin(), sortedCards.end(), std::less<CardInstance>());
+
+		uint32_t i = 0;
+		for (auto& c : sortedCards)
+		{
+			auto& card = cardManager->Get(c.entity);
+			auto& playingCard = playingCardManager->Get(c.entity);
+
+			playingCard.cardIndex = i;
+
+			i++;
+		}
+	}
+
+	float cardMargin = (handRect.x * 2.0f) / sortedCards.size();
+
+	for (auto& c : cards)
+	{
+		auto& card = cardManager->Get(c);
+		auto& playingCard = playingCardManager->Get(c);
+
+		card.renderLayer = playingCard.cardIndex * 3 + 10;
+		if (!card.grabbed)
+		{
+			card.position.x = -handRect.x + (playingCard.cardIndex + 0.5f) * cardMargin;
+			if (playingCard.selected)
+			{
+				card.position.y = clampMix(card.position.y, handRect.y + 100.0f, Stratum::Time::DeltaTime * 32.0f);
+			}
+			else
+			{
+				card.position.y = clampMix(card.position.y, handRect.y, Stratum::Time::DeltaTime * 32.0f);
+			}
+		}
+	}
+}
+
+void Funkin::BalatroSystem::SortCards()
+{
+	struct CardInstance
+	{
+		Stratum::ECS::edict_t entity;
+
+		union
+		{
+			uint64_t sort;
+			struct
+			{
+				uint8_t type;
+				CardSuit suit;
+			} bits;
+		};
+
+		constexpr bool operator >(const CardInstance& other) const
+		{
+			return sort > other.sort;
+		}
+
+		constexpr bool operator <(const CardInstance& other) const
+		{
+			return sort < other.sort;
+		}
+
+	};
+
+	auto playingCardManager = mScene->GetComponentManager<PlayingCardComponent>(C_PLAY_CARD_COMPONENT);
+	auto cardManager = mScene->GetComponentManager<CardComponent>(C_CARD_COMPONENT);
+
+	auto& cards = playingCardManager->GetEntities();
+
+	std::vector<CardInstance> sortedCards;
+
+	for (auto entity : cards)
+	{
+		auto& card = cardManager->Get(entity);
+		auto& playingCard = playingCardManager->Get(entity);
+
+		CardInstance i{};
+		i.bits.type = CardTypeSordWeight[playingCard.type];
+		i.bits.suit = playingCard.suit;
+		i.entity = entity;
+
+		sortedCards.push_back(i);
+	}
+
+	std::sort(sortedCards.begin(), sortedCards.end(), std::greater<CardInstance>());
+
+
+	uint32_t i = 0;
+	for (auto& c : sortedCards)
+	{
+		auto& card = cardManager->Get(c.entity);
+		auto& playingCard = playingCardManager->Get(c.entity);
+
+		playingCard.cardIndex = i;
+
+		i++;
+	}
+}
+
+void Funkin::BalatroSystem::SolvePokerHandType(bool playCards)
+{
+	struct CardInstance
+	{
+		Stratum::ECS::edict_t entity;
+
+		uint8_t sort;
+
+		constexpr bool operator >(const CardInstance& other) const
+		{
+			return sort > other.sort;
+		}
+
+		constexpr bool operator <(const CardInstance& other) const
+		{
+			return sort < other.sort;
+		}
+
+	};
+
+	if (mIsPlayingHand)
+		return;
+	std::vector<CardInstance> selectedCards;
+	std::array<uint32_t, 13> cardCount{};
+	std::array<uint32_t, 4> suitCount{};
+	std::array<std::array<uint32_t, 13>, 4> cardsPerSuitCount{};
+	uint32_t cardsSelected = 0;
+
+	auto playingCardManager = mScene->GetComponentManager<PlayingCardComponent>(C_PLAY_CARD_COMPONENT);
+	auto cardManager = mScene->GetComponentManager<CardComponent>(C_CARD_COMPONENT);
+
+	auto& cards = playingCardManager->GetEntities();
+
+	for (auto entity : cards)
+	{
+		auto& playingCard = playingCardManager->Get(entity);
+		auto& card = cardManager->Get(entity);
+
+		if (playingCard.selected)
+		{
+			suitCount[playingCard.suit] += 1;
+			cardCount[playingCard.type] += 1;
+			cardsPerSuitCount[playingCard.suit][playingCard.type] += 1;
+			cardsSelected++;
+			selectedCards.push_back({ entity, playingCard.cardIndex });
+		}
+	}
+
+	std::sort(selectedCards.begin(), selectedCards.end(), std::less<CardInstance>());
+
+	bool isHighCard = cardsSelected;
+	bool isFlush = suitCount[0] == 5 || suitCount[1] == 5 || suitCount[2] == 5 || suitCount[3] == 5;
+	bool isRoyal = false;
+	bool isStraight = false;
+	bool isStraightFlush = false;
+	bool isThreeOfAKind = false;
+	bool isFourOfAKind = false;
+	bool isFiveOfAKind = false;
+	bool isPair = false;
+	bool isTwoPair = false;
+	bool isFlushHouse = false;
+	bool isFlushFive = false;
+
+	CardType cardTypeThreeOfAKind = CARD_TYPE_INVALID;
+	CardType cardTypeFourOfAKind = CARD_TYPE_INVALID;
+	CardType cardTypePair1 = CARD_TYPE_INVALID;
+	CardType cardTypePair2 = CARD_TYPE_INVALID;
+	CardType cardTypeHighest = CARD_TYPE_INVALID;
+
+	uint32_t consecutiveCardsCount = 0;
+
+	for (int i = 0; i < 13; i++)
+	{
+		if (cardCount[i] != 0)
+		{
+			cardTypeHighest = (CardType)i;
+		}
+		if (cardCount[i] == 5)
+		{
+			isFiveOfAKind = true;
+		}
+		if (cardCount[i] == 4)
+		{
+			isFourOfAKind = true;
+			cardTypeFourOfAKind = (CardType)i;
+		}
+		if (cardCount[i] == 3)
+		{
+			isThreeOfAKind = true;
+			cardTypeThreeOfAKind = (CardType)i;
+		}
+		if (cardCount[i] == 2)
+		{
+			isPair = true;
+			cardTypePair1 = (CardType)i;
+			for (int j = 0; j < 13; j++)
+			{
+				if (i != j && cardCount[j] == 2)
+				{
+					isTwoPair = true;
+					cardTypePair2 = (CardType)j;
+					break;
+				}
+			}
+		}
+		if (cardCount[i] > 0)
+		{
+			consecutiveCardsCount++;
+			if (consecutiveCardsCount >= 5)
+			{
+				isStraight = true;
+			}
+		}
+		else
+		{
+			consecutiveCardsCount = 0;
+		}
+	}
+
+	if (isFlush)
+	{
+		for (int k = 0; k < 4; k++)
+		{
+			bool containsPair = false;
+			bool containsThree = false;
+			uint32_t count = 0;
+			for (int i = 0; i < 13; i++)
+			{
+				if (cardsPerSuitCount[k][i] == 5)
+				{
+					isFlushFive = true;
+					break;
+				}
+				if (cardsPerSuitCount[k][i] == 2)
+				{
+					containsPair = true;
+				}
+				if (cardsPerSuitCount[k][i] == 3)
+				{
+					containsThree = true;
+				}
+				if (containsPair && containsThree)
+				{
+					isFlushHouse = true;
+					break;
+				}
+			}
+			
+			for (int i = 8; i < 13; i++)
+			{
+				count += (bool)cardsPerSuitCount[k][i] ? 1 : 0;
+			}
+			if (count == 5)
+			{
+				isRoyal = true;
+				break;
+			}
+			uint32_t consecutiveCount = 0;
+			for (int i = 0; i < 13; i++)
+			{
+				if (cardsPerSuitCount[k][i] > 0)
+				{
+					consecutiveCount++;
+					if (consecutiveCount >= 5)
+					{
+						isStraightFlush = true;
+						break;
+					}
+				}
+				else
+				{
+					consecutiveCount = 0;
+				}
+			}
+		}
+	}
+
+	bool isFullHouse = isThreeOfAKind && isPair;
+
+	auto& text = mScene->TextComponents.Get(mPokerHandText);
+
+	text.Text = L"";
+
+	if (isHighCard) text.Text = L"High Card";
+	if (isPair) text.Text = L"Pair";
+	if (isTwoPair) text.Text = L"Two Pair";
+	if (isThreeOfAKind) text.Text = L"Three of a kind";
+	if (isStraight) text.Text = L"Straight";
+	if (isFlush) text.Text = L"Flush";
+	if (isFullHouse) text.Text = L"Full House";
+	if (isFourOfAKind) text.Text = L"Four of a kind";
+	if (isStraightFlush) text.Text = L"Straight Flush";
+	if (isRoyal) text.Text = L"Royal Flush";
+	if (isFiveOfAKind) text.Text = L"Five of a kind";
+	if (isFlushHouse) text.Text = L"Flush House";
+	if (isFlushFive) text.Text = L"Flush Five";
+
+	bool doesHandPlayFivecards = isFlush || isFullHouse || isStraight || isRoyal || isFlushHouse || isFlushFive;
+
+	if (playCards)
+	{
+		mEvents.clear();
+		mIsPlayingHand = true;
+
+		uint32_t cardIndex = 0;
+
+		std::vector<GameEvent> scoreEvents;
+
+		for (auto c : selectedCards)
+		{
+			auto& playingCard = playingCardManager->Get(c.entity);
+			auto& card = cardManager->Get(c.entity);
+			playingCard.selected = false;
+
+			GameEvent event{};
+
+			event.Type = EVENT_DRAW_CARD;
+			event.Entity = c.entity;
+			event.Duration = 0.5f;
+			event.drawCardIndex = cardIndex;
+			mEvents.push_back(event);
+			cardIndex++;
+
+			if (!doesHandPlayFivecards)
+			{
+				if (isFourOfAKind)
+				{
+					if (playingCard.type != cardTypeFourOfAKind)
+					{
+						continue;
+					}
+				}
+				else if (isThreeOfAKind)
+				{
+					if (playingCard.type != cardTypeThreeOfAKind)
+					{
+						continue;
+					}
+				}
+				else if (isTwoPair)
+				{
+					if (playingCard.type != cardTypePair1 && playingCard.type != cardTypePair2)
+					{
+						continue;
+					}
+				}
+				else if (isPair)
+				{
+					if (playingCard.type != cardTypePair1)
+					{
+						continue;
+					}
+				}
+				else if (isHighCard)
+				{
+					if (playingCard.type != cardTypeHighest)
+					{
+						continue;
+					}
+				}
+			}
+
+			event.Duration = 1.0f;
+			event.Type = EVENT_SCORE_CARD;
+			event.SoundPitch = 0.75f + cardIndex * 0.1f;
+			scoreEvents.push_back(event);
+		}
+
+		GameEvent wait{};
+		wait.Type = EVENT_WAIT;
+		wait.Duration = 1.0f;
+
+		mEvents.push_back(wait);
+
+		for (auto e : scoreEvents)
+		{
+			mEvents.push_back(e);
+		}
+
+		mEvents.push_back(wait);
+
+		GameEvent event{};
+		event.Type = EVENT_END_SCORING;
+		mEvents.push_back(event);
+
+		mPlayedCardsCount = selectedCards.size();
+	}
+
 }
 
 void Funkin::BalatroSystem::DissolveCard(Stratum::ECS::edict_t cardEntity)
@@ -627,13 +1041,13 @@ void Funkin::BalatroSystem::DissolveCard(Stratum::ECS::edict_t cardEntity)
 	auto& sprite1 = mScene->SpriteRenderers.Get(card.bgEntity);
 	auto& sprite2 = mScene->SpriteRenderers.Get(card.bgShadowEntity);
 
-	PushAction(&sprite.Rotation.x, 4.0f, { 0.5f, 4 }, Easing::Sine);
-	PushAction(&sprite1.Rotation.x, 4.0f, { 0.5f, 4 }, Easing::Sine);
-	PushAction(&sprite2.Rotation.x, 4.0f, { 0.5f, 4 }, Easing::Sine);
-
-	PushAction(&mDissolveTime, 1.0f, 0.5f, Easing::Linear, [&, cardEntity]
+	pTimedActionSystem->PushAction(&sprite.Rotation.x, 4.0f, { 0.5f, 4 }, Easing::Sine);
+	pTimedActionSystem->PushAction(&sprite1.Rotation.x, 4.0f, { 0.5f, 4 }, Easing::Sine);
+	pTimedActionSystem->PushAction(&sprite2.Rotation.x, 4.0f, { 0.5f, 4 }, Easing::Sine);
+	 
+	pTimedActionSystem->PushAction(&mDissolveTime, 1.0f, 0.5f, Easing::Linear, [&, cardEntity]
 		{
-			static int lastCard = -1;
+			static int lastCard = 0;
 			auto cardX = 11 + rand() % 2;
 			auto cardY = rand() % 4;
 
@@ -645,9 +1059,9 @@ void Funkin::BalatroSystem::DissolveCard(Stratum::ECS::edict_t cardEntity)
 			lastCard = cardY;
 
 			DestroyCard(cardEntity);
-			mCardEntity = CreateCard(cardX, cardY);
+			mCardEntity = CreateCard((CardType)cardX, (CardSuit)cardY);
 
-			PushAction(&mDissolveTime, 0.0f, 0.8f, Easing::Linear, [&, cardEntity]
+			pTimedActionSystem->PushAction(&mDissolveTime, 0.0f, 0.8f, Easing::Linear, [&, cardEntity]
 				{
 					mCanDissolve = true;
 				});
@@ -664,8 +1078,11 @@ void Funkin::BalatroSystem::DestroyCard(Stratum::ECS::edict_t cardEntity)
 	mScene->EntityManager.DestroyEntity(cardEntity);
 }
 
-Stratum::ECS::edict_t Funkin::BalatroSystem::CreateCard(uint32_t cardX, uint32_t cardY)
+Stratum::ECS::edict_t Funkin::BalatroSystem::CreateCard(CardType type, CardSuit suit)
 {
+	uint32_t cardX = type;
+	uint32_t cardY = suit;
+
 	uint32_t enhancementX = 1;
 	uint32_t enhancementY = 0;
 
@@ -734,6 +1151,20 @@ Stratum::ECS::edict_t Funkin::BalatroSystem::CreateCard(uint32_t cardX, uint32_t
 	return cardEntity;
 }
 
+Stratum::ECS::edict_t Funkin::BalatroSystem::CreatePlayingCard(CardType type, CardSuit suit)
+{
+	auto entity = CreateCard(type, suit);
+
+	auto playingCardManager = mScene->GetComponentManager<PlayingCardComponent>(C_PLAY_CARD_COMPONENT);
+	auto& playingCard = playingCardManager->Create(entity);
+
+	playingCard.chips = BaseCardChips[type];
+	playingCard.suit = suit;
+	playingCard.type = type;
+
+	return entity;
+}
+
 Stratum::ECS::edict_t Funkin::BalatroSystem::CreateTextEntity(const std::wstring& defaultText, const glm::vec2& pos, float fontSize, bool isGui, uint32_t renderLayer, float align)
 {
 	auto entity = mScene->EntityManager.CreateEntity();
@@ -767,123 +1198,6 @@ Stratum::ECS::edict_t Funkin::BalatroSystem::CreateRectEntity(const glm::vec2& p
 	transform.SetPosition(glm::vec3(pos, 1.0f));
 
 	return entity;
-}
-
-
-// Some hot shit incoming, but it does the job
-
-void Funkin::BalatroSystem::PushAction(float* dst, float targetVal, ActionParameters params, Easing easing)
-{
-	Action action{};
-	action.count = 1;
-	action.params = params;
-	action.easing = easing;
-	action.floatPtr = dst;
-	action.targetFloat[0] = targetVal;
-	mActions.push_back(action);
-}
-
-void Funkin::BalatroSystem::PushAction(glm::vec2* dst, glm::vec2 targetVal, ActionParameters params, Easing easing)
-{
-	Action action{};
-	action.count = 2;
-	action.params = params;
-	action.easing = easing;
-	action.floatPtr = glm::value_ptr(*dst);
-	action.targetFloat[0] = targetVal.x;
-	action.targetFloat[1] = targetVal.y;
-	mActions.push_back(action);
-}
-
-void Funkin::BalatroSystem::PushAction(glm::vec3* dst, glm::vec3 targetVal, ActionParameters params, Easing easing)
-{
-	Action action{};
-	action.count = 3;
-	action.params = params;
-	action.easing = easing;
-	action.floatPtr = glm::value_ptr(*dst);
-	action.targetFloat[0] = targetVal.x;
-	action.targetFloat[1] = targetVal.y;
-	action.targetFloat[2] = targetVal.z;
-	mActions.push_back(action);
-}
-
-void Funkin::BalatroSystem::PushAction(glm::vec4* dst, glm::vec4 targetVal, ActionParameters params, Easing easing)
-{
-	Action action{};
-	action.count = 4;
-	action.params = params;
-	action.easing = easing;
-	action.floatPtr = glm::value_ptr(*dst);
-	action.targetFloat[0] = targetVal.x;
-	action.targetFloat[1] = targetVal.y;
-	action.targetFloat[2] = targetVal.z;
-	action.targetFloat[3] = targetVal.w;
-	mActions.push_back(action);
-}
-
-void Funkin::BalatroSystem::PushAction(float* dst, float targetVal, ActionParameters params, Easing easing, std::function<void()> cb)
-{
-	Action action{};
-	action.count = 1;
-	action.params = params;
-	action.easing = easing;
-	action.floatPtr = dst;
-	action.targetFloat[0] = targetVal;
-	action.cb = cb;
-	mActions.push_back(action);
-}
-
-void Funkin::BalatroSystem::PushAction(glm::vec2* dst, glm::vec2 targetVal, ActionParameters params, Easing easing, std::function<void()> cb)
-{
-	Action action{};
-	action.count = 2;
-	action.params = params;
-	action.easing = easing;
-	action.floatPtr = glm::value_ptr(*dst);
-	action.targetFloat[0] = targetVal.x;
-	action.targetFloat[1] = targetVal.y;
-	action.cb = cb;
-	mActions.push_back(action);
-}
-
-void Funkin::BalatroSystem::PushAction(glm::vec3* dst, glm::vec3 targetVal, ActionParameters params, Easing easing, std::function<void()> cb)
-{
-	Action action{};
-	action.count = 3;
-	action.params = params;
-	action.easing = easing;
-	action.floatPtr = glm::value_ptr(*dst);
-	action.targetFloat[0] = targetVal.x;
-	action.targetFloat[1] = targetVal.y;
-	action.targetFloat[2] = targetVal.z;
-	action.cb = cb;
-	mActions.push_back(action);
-}
-
-void Funkin::BalatroSystem::PushAction(glm::vec4* dst, glm::vec4 targetVal, ActionParameters params, Easing easing, std::function<void()> cb)
-{
-	Action action{};
-	action.count = 4;
-	action.params = params;
-	action.easing = easing;
-	action.floatPtr = glm::value_ptr(*dst);
-	action.targetFloat[0] = targetVal.x;
-	action.targetFloat[1] = targetVal.y;
-	action.targetFloat[2] = targetVal.z;
-	action.targetFloat[3] = targetVal.w;
-	action.cb = cb;
-	mActions.push_back(action);
-}
-
-// End of hot shit
-
-Funkin::BalatroSystem::ActionParameters::ActionParameters(const float dur) : duration(dur)
-{
-}
-
-Funkin::BalatroSystem::ActionParameters::ActionParameters(const float dur, const float amp) : duration(dur), amplitude(amp)
-{
 }
 
 Funkin::BalatroSystem::~BalatroSystem()

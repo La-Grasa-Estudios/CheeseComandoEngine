@@ -1,7 +1,7 @@
 #pragma once
 #ifndef ANIMATEDSPRITE_HPP
 #define ANIMATEDSPRITE_HPP
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "ResourceManager.hpp"
 #include "TexturedRectangle.hpp"
 class AnimatedSprite

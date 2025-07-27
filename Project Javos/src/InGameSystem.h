@@ -6,6 +6,8 @@
 #include <Scene/Scene.h>
 #include <Sound/AudioSystem.h>
 
+#include "TimedActionSystem.h"
+
 #include <atomic>
 
 namespace Funkin
@@ -37,6 +39,8 @@ namespace Funkin
 		Stratum::ECS::edict_t CreateTextEntity(const std::wstring& defaultText, const glm::vec2& pos, float fontSize = 64.0f, bool isGui = false, uint32_t renderLayer = 0, float align = 0.0f);
 		Stratum::ECS::edict_t CreateSpriteEntity(const::std::string& spritePath, const glm::vec2& pos, const glm::vec2& scale = { 1.0f, 1.0f }, bool isGui = false, uint32_t renderLayer = 0, bool flipX = false);
 		Stratum::ECS::edict_t CreateRectEntity(const glm::vec2& pos, const glm::ivec2& rectSize = { 1.0f, 1.0f }, const glm::vec2& center = { 0.0f, 0.0f }, bool isGui = false, uint32_t renderLayer = 0);
+
+		TimedActionSystem* pTimedActionSystem;
 
 	private:
 

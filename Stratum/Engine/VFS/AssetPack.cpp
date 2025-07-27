@@ -154,6 +154,10 @@ static bool IsSupportedCompressableFile(std::filesystem::path path) {
     {
         return false;
     }
+    if (ex.ends_with("sng"))
+    {
+        return false;
+    }
     return !(strncmp(ex.c_str(), ".mp4", 4) == 0 || strncmp(ex.c_str(), ".webm", 5) == 0 || strncmp(ex.c_str(), ".brstm", 6) == 0) || !(strncmp(ex.c_str(), ".ctex", 5) == 0);
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "..\core\System.hpp"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 //fix
 class RenderSystem : public System
 {

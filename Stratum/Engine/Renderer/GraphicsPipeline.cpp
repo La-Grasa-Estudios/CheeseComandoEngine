@@ -411,6 +411,11 @@ void Render::GraphicsPipeline::UpdatePipeline()
     auto SourceVertex = GetShaderBinaryData(*ShaderStream, "vertex", ShaderDesc.PermutationKey, RendererContext::get_api());
     auto SourcePixel = GetShaderBinaryData(*ShaderStream, "pixel", ShaderDesc.PermutationKey, RendererContext::get_api());
     
+    RendererContext::s_Context->RemoveBackBufferPipeline(this);
+
+    if (desc.RenderTarget && desc.RenderTarget->IsWindowFramebuffer())
+        RendererContext::s_Context->RegisterBackBufferPipeline(this);
+
     std::vector<shaderbinding_t> bindings;
 
     {

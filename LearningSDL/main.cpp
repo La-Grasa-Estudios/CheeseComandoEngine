@@ -1,5 +1,5 @@
 #define SDL_MAIN_HANDLED
-#include <SDL.h> 
+#include <SDL3/SDL.h> 
 #include <SDL_image.h>
 #include "core\Coordinator.hpp"
 #include "systems\TransformSystem.hpp"

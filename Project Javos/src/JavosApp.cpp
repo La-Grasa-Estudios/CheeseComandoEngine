@@ -26,6 +26,7 @@ void Funkin::JavosApp::OnInit()
 	auto scene = new Stratum::Scene();
 	SetScene(scene);
 
+	//scene->RegisterCustomSystem(new BalatroSystem());
 	scene->RegisterCustomSystem(new LoadingScreenSystem(params));
 }
 
