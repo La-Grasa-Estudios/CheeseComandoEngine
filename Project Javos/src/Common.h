@@ -1,6 +1,9 @@
 #pragma once
 
+#include "Song/SongBase.h"
+
 #include <string>
+#include <Core/Ref.h>
 
 namespace Funkin
 {
@@ -16,5 +19,6 @@ namespace Funkin
 		std::string ChartPath;
 		std::string OverrideStage;
 		std::string OverridePlayer1;
+		Stratum::Ref<SongBase> SongScript;
 	};
 }

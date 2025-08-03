@@ -18,6 +18,8 @@
 
 #include <format>
 
+// #define DEBUG_RENDERER
+
 using namespace ENGINE_NAMESPACE;
 
 Render::PostProcessingStack* pStack;

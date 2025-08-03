@@ -2,12 +2,10 @@
 
 #include "Common.h"
 #include "CharaSprite.h"
+#include "TimedActionSystem.h"
 
 #include <Scene/Scene.h>
 #include <Sound/AudioSystem.h>
-
-#include "TimedActionSystem.h"
-
 #include <atomic>
 
 namespace Funkin
@@ -42,9 +40,15 @@ namespace Funkin
 
 		TimedActionSystem* pTimedActionSystem;
 
+		float CameraZoomModifier = 1.0f;
+		float GuiZoomModifier = 0.0f;
+		bool TrackPlayersEnabled = true;
+
 	private:
 
 		void UpdateStage();
+
+		Stratum::Ref<SongBase> mSong;
 
 		LoadChartParams mLoadParams;
 		Stratum::ECS::edict_t mPlayerSprite;

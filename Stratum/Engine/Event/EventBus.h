@@ -35,8 +35,9 @@ class EventBus {
 	public:
 		EventFn<T> FnStor;
 		EventListener(EventFn<T> handler, EventFlagBits flags = EF_NONE)
-			: FnStor(handler) {
+		{
 			this->Flags = flags;
+			this->FnStor = std::move(handler);
 		}
 	};
 

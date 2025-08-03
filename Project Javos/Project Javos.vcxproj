@@ -152,6 +152,8 @@
     <ClCompile Include="src\LoadingScreenSystem.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Player.cpp" />
+    <ClCompile Include="src\Song\BiteFernanSong.cpp" />
+    <ClCompile Include="src\Song\ErectDadBattleSong.cpp" />
     <ClCompile Include="src\SparrowReader.cpp" />
     <ClCompile Include="src\StageEditorSystem.cpp" />
     <ClCompile Include="src\StageRegistry.cpp" />
@@ -176,6 +178,10 @@
     <ClInclude Include="src\JavosApp.h" />
     <ClInclude Include="src\LoadingScreenSystem.h" />
     <ClInclude Include="src\Player.h" />
+    <ClInclude Include="src\Song\BiteFernanSong.h" />
+    <ClInclude Include="src\Song\ErectDadBattleSong.h" />
+    <ClInclude Include="src\Song\SongBase.h" />
+    <ClInclude Include="src\Song\SongCommon.h" />
     <ClInclude Include="src\SparrowReader.h" />
     <ClInclude Include="src\StageEditorSystem.h" />
     <ClInclude Include="src\StageInfo.h" />

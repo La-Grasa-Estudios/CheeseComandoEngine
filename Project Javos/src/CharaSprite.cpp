@@ -103,7 +103,7 @@ void Funkin::CharaSprite::Update()
 	size_t frameCount = animator.AnimationMap["idle"].rects.size();
 
 	float bpmIdleFps = 1.0f / (frameCount * (gGameState.pConductor->chart.info.bpm / 2.0f) / 60.0f);
-	mBeatAcumulator += Stratum::gpGlobals->deltaTime;
+	mBeatAcumulator += Stratum::gpGlobals->deltaTime * FpsMultiplier;
 
 	while (mBeatAcumulator >= bpmIdleFps)
 	{
@@ -144,6 +144,8 @@ void Funkin::CharaSprite::UpdateTransform()
 
 void Funkin::CharaSprite::AddAnimation(const std::string& name, const std::string& prefix, const std::string& nextState, float fps, bool loop, bool alwaysSync)
 {
+	if (!this)
+		return;
 	auto frames = SparrowReader::readXML(mSparrowPath, prefix, false);
 
 	Stratum::SpriteAnimator::Animation animation = Stratum::SpriteAnimator::Animation()

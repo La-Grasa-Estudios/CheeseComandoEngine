@@ -606,6 +606,9 @@
     <ClInclude Include="Engine\Event\Events.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Renderer\NVRHI_Vulkan.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Asset\ShaderPermutationFile.cpp">
@@ -945,6 +948,9 @@
       <Filter>Archivos de origen</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Event\EventBus.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Renderer\NVRHI_Vulkan.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>

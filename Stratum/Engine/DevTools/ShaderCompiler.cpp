@@ -226,6 +226,12 @@ std::vector<uint8_t> ShaderCompiler::GetShaderBinary(RefBinaryStream& ss, Shader
 		L"-Qembed_debug",         
 	};
 
+	if (targetApi == Render::RendererAPI::VULKAN)
+	{
+		pszArgs.push_back(L"-spirv");
+		pszArgs.push_back(L"-fspv-target-env=vulkan1.3");
+	}
+
 	// Why does windows use wchar, need to do this every time i need to interact with DXIL
 	for (auto s1 : defines)
 	{
@@ -262,14 +268,22 @@ std::vector<uint8_t> ShaderCompiler::GetShaderBinary(RefBinaryStream& ss, Shader
 
 	CComPtr<IDxcBlobUtf8> pErrors = nullptr;
 	pResults->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&pErrors), nullptr);
+
 	// Note that d3dcompiler would return null if no errors or warnings are present.
 	// IDxcCompiler3::Compile will always return an error buffer, but its length
 	// will be zero if there are no warnings or errors.
+
 	if (pErrors != nullptr && pErrors->GetStringLength() != 0)
 		wprintf(L"Warnings and Errors:\n%S\n", pErrors->GetStringPointer());
 
 	HRESULT hrStatus;
 	pResults->GetStatus(&hrStatus);
+	if (FAILED(hrStatus))
+	{
+		wprintf(L"Compilation Failed\n");
+		exit(-1);
+	}
+
 	if (FAILED(hrStatus))
 	{
 		wprintf(L"Compilation Failed\n");
@@ -288,125 +302,128 @@ std::vector<uint8_t> ShaderCompiler::GetShaderBinary(RefBinaryStream& ss, Shader
 			compiledShader.push_back(reinterpret_cast<uint8_t*>(pShader->GetBufferPointer())[i]);
 		}
 
-		ComPtr<IDxcBlob> reflectionBlob{};
-		pResults->GetOutput(DXC_OUT_REFLECTION, IID_PPV_ARGS(&reflectionBlob), nullptr);
-
-		const DxcBuffer reflectionBuffer
+		if (targetApi != Render::RendererAPI::VULKAN)
 		{
-			.Ptr = reflectionBlob->GetBufferPointer(),
-			.Size = reflectionBlob->GetBufferSize(),
-			.Encoding = 0,
-		};
+			ComPtr<IDxcBlob> reflectionBlob{};
+			pResults->GetOutput(DXC_OUT_REFLECTION, IID_PPV_ARGS(&reflectionBlob), nullptr);
 
-		ComPtr<ID3D12ShaderReflection> shaderReflection{};
-		pUtils->CreateReflection(&reflectionBuffer, IID_PPV_ARGS(&shaderReflection));
-		D3D12_SHADER_DESC shaderDesc{};
-		shaderReflection->GetDesc(&shaderDesc);
-
-		// Reflection!
-		// Now i don't need to manually create root signatures :DDD
-		for (int i = 0; i < shaderDesc.BoundResources; i++)
-		{
-			D3D12_SHADER_INPUT_BIND_DESC shaderInputBindDesc{};
-			shaderReflection->GetResourceBindingDesc(i, &shaderInputBindDesc);
-
-			if (shaderInputBindDesc.Type == D3D_SIT_CBUFFER)
+			const DxcBuffer reflectionBuffer
 			{
-				shaderbinding_t binding{};
+				.Ptr = reflectionBlob->GetBufferPointer(),
+				.Size = reflectionBlob->GetBufferSize(),
+				.Encoding = 0,
+			};
 
-				binding.Type = ShaderReflectionResourceType::CBUFFER;
-				binding.Dimension = ShaderReflectionResourceDimension::BUFFER;
-				binding.BindingPoint = shaderInputBindDesc.BindPoint;
-				binding.BindingSpace = shaderInputBindDesc.Space;
+			ComPtr<ID3D12ShaderReflection> shaderReflection{};
+			pUtils->CreateReflection(&reflectionBuffer, IID_PPV_ARGS(&shaderReflection));
+			D3D12_SHADER_DESC shaderDesc{};
+			shaderReflection->GetDesc(&shaderDesc);
 
-				shaderBindings.push_back(binding);
-			}
-
-			if (shaderInputBindDesc.Type == D3D_SIT_SAMPLER)
+			// Reflection!
+			// Now i don't need to manually create root signatures :DDD
+			for (int i = 0; i < shaderDesc.BoundResources; i++)
 			{
-				shaderbinding_t binding{};
+				D3D12_SHADER_INPUT_BIND_DESC shaderInputBindDesc{};
+				shaderReflection->GetResourceBindingDesc(i, &shaderInputBindDesc);
 
-				binding.Type = ShaderReflectionResourceType::SAMPLER;
-				binding.Dimension = ShaderReflectionResourceDimension::UNKNOWN;
-				binding.BindingPoint = shaderInputBindDesc.BindPoint;
-				binding.BindingSpace = shaderInputBindDesc.Space;
+				if (shaderInputBindDesc.Type == D3D_SIT_CBUFFER)
+				{
+					shaderbinding_t binding{};
 
-				shaderBindings.push_back(binding);
+					binding.Type = ShaderReflectionResourceType::CBUFFER;
+					binding.Dimension = ShaderReflectionResourceDimension::BUFFER;
+					binding.BindingPoint = shaderInputBindDesc.BindPoint;
+					binding.BindingSpace = shaderInputBindDesc.Space;
+
+					shaderBindings.push_back(binding);
+				}
+
+				if (shaderInputBindDesc.Type == D3D_SIT_SAMPLER)
+				{
+					shaderbinding_t binding{};
+
+					binding.Type = ShaderReflectionResourceType::SAMPLER;
+					binding.Dimension = ShaderReflectionResourceDimension::UNKNOWN;
+					binding.BindingPoint = shaderInputBindDesc.BindPoint;
+					binding.BindingSpace = shaderInputBindDesc.Space;
+
+					shaderBindings.push_back(binding);
+				}
+
+				if (shaderInputBindDesc.Type == D3D_SIT_TEXTURE)
+				{
+					shaderbinding_t binding{};
+
+					binding.Type = ShaderReflectionResourceType::TEXTURE;
+					binding.Dimension = ShaderReflectionResourceDimension::UNKNOWN;
+					binding.BindingPoint = shaderInputBindDesc.BindPoint;
+					binding.BindingSpace = shaderInputBindDesc.Space;
+
+					shaderBindings.push_back(binding);
+				}
+
+				if (shaderInputBindDesc.Type == D3D_SIT_BYTEADDRESS)
+				{
+					shaderbinding_t binding{};
+
+					binding.Type = ShaderReflectionResourceType::BYTEADDRESS;
+					binding.BindingPoint = shaderInputBindDesc.BindPoint;
+					binding.Dimension = ConvertD3DDimensionToEngine(shaderInputBindDesc.Dimension);
+					binding.BindingSpace = shaderInputBindDesc.Space;
+
+					shaderBindings.push_back(binding);
+				}
+
+				if (shaderInputBindDesc.Type == D3D_SIT_STRUCTURED)
+				{
+					shaderbinding_t binding{};
+
+					binding.Type = ShaderReflectionResourceType::STRUCTURED_BUFFER;
+					binding.BindingPoint = shaderInputBindDesc.BindPoint;
+					binding.Dimension = ConvertD3DDimensionToEngine(shaderInputBindDesc.Dimension);
+					binding.BindingSpace = shaderInputBindDesc.Space;
+
+					shaderBindings.push_back(binding);
+				}
+
+				if (shaderInputBindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS)
+				{
+					shaderbinding_t binding{};
+
+					binding.Type = ShaderReflectionResourceType::UAV_RW_BYTEADDRESS;
+					binding.BindingPoint = shaderInputBindDesc.BindPoint;
+					binding.Dimension = ConvertD3DDimensionToEngine(shaderInputBindDesc.Dimension);
+					binding.BindingSpace = shaderInputBindDesc.Space;
+
+					shaderBindings.push_back(binding);
+				}
+
+				if (shaderInputBindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED)
+				{
+					shaderbinding_t binding{};
+
+					binding.Type = ShaderReflectionResourceType::UAV_RW_STRUCTURED;
+					binding.BindingPoint = shaderInputBindDesc.BindPoint;
+					binding.Dimension = ConvertD3DDimensionToEngine(shaderInputBindDesc.Dimension);
+					binding.BindingSpace = shaderInputBindDesc.Space;
+
+					shaderBindings.push_back(binding);
+				}
+
+				if (shaderInputBindDesc.Type == D3D_SIT_UAV_RWTYPED)
+				{
+					shaderbinding_t binding{};
+
+					binding.Type = ShaderReflectionResourceType::UAV_RW_TYPED;
+					binding.BindingPoint = shaderInputBindDesc.BindPoint;
+					binding.Dimension = ConvertD3DDimensionToEngine(shaderInputBindDesc.Dimension);
+					binding.BindingSpace = shaderInputBindDesc.Space;
+
+					shaderBindings.push_back(binding);
+				}
+
+				Z_INFO(std::to_string((int)shaderInputBindDesc.Type));
 			}
-
-			if (shaderInputBindDesc.Type == D3D_SIT_TEXTURE)
-			{
-				shaderbinding_t binding{};
-
-				binding.Type = ShaderReflectionResourceType::TEXTURE;
-				binding.Dimension = ShaderReflectionResourceDimension::UNKNOWN;
-				binding.BindingPoint = shaderInputBindDesc.BindPoint;
-				binding.BindingSpace = shaderInputBindDesc.Space;
-
-				shaderBindings.push_back(binding);
-			}
-
-			if (shaderInputBindDesc.Type == D3D_SIT_BYTEADDRESS)
-			{
-				shaderbinding_t binding{};
-
-				binding.Type = ShaderReflectionResourceType::BYTEADDRESS;
-				binding.BindingPoint = shaderInputBindDesc.BindPoint;
-				binding.Dimension = ConvertD3DDimensionToEngine(shaderInputBindDesc.Dimension);
-				binding.BindingSpace = shaderInputBindDesc.Space;
-
-				shaderBindings.push_back(binding);
-			}
-
-			if (shaderInputBindDesc.Type == D3D_SIT_STRUCTURED)
-			{
-				shaderbinding_t binding{};
-
-				binding.Type = ShaderReflectionResourceType::STRUCTURED_BUFFER;
-				binding.BindingPoint = shaderInputBindDesc.BindPoint;
-				binding.Dimension = ConvertD3DDimensionToEngine(shaderInputBindDesc.Dimension);
-				binding.BindingSpace = shaderInputBindDesc.Space;
-
-				shaderBindings.push_back(binding);
-			}
-
-			if (shaderInputBindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS)
-			{
-				shaderbinding_t binding{};
-
-				binding.Type = ShaderReflectionResourceType::UAV_RW_BYTEADDRESS;
-				binding.BindingPoint = shaderInputBindDesc.BindPoint;
-				binding.Dimension = ConvertD3DDimensionToEngine(shaderInputBindDesc.Dimension);
-				binding.BindingSpace = shaderInputBindDesc.Space;
-
-				shaderBindings.push_back(binding);
-			}
-
-			if (shaderInputBindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED)
-			{
-				shaderbinding_t binding{};
-
-				binding.Type = ShaderReflectionResourceType::UAV_RW_STRUCTURED;
-				binding.BindingPoint = shaderInputBindDesc.BindPoint;
-				binding.Dimension = ConvertD3DDimensionToEngine(shaderInputBindDesc.Dimension);
-				binding.BindingSpace = shaderInputBindDesc.Space;
-
-				shaderBindings.push_back(binding);
-			}
-
-			if (shaderInputBindDesc.Type == D3D_SIT_UAV_RWTYPED)
-			{
-				shaderbinding_t binding{};
-
-				binding.Type = ShaderReflectionResourceType::UAV_RW_TYPED;
-				binding.BindingPoint = shaderInputBindDesc.BindPoint;
-				binding.Dimension = ConvertD3DDimensionToEngine(shaderInputBindDesc.Dimension);
-				binding.BindingSpace = shaderInputBindDesc.Space;
-
-				shaderBindings.push_back(binding);
-			}
-
-			Z_INFO(std::to_string((int)shaderInputBindDesc.Type));
 		}
 
 		return compiledShader;
@@ -568,7 +585,9 @@ bool ShaderCompiler::build_object(const char* input, const char* output, shader_
 				type = types[k];
 
 				std::vector<shaderbinding_t> shaderBindings;
+				std::vector<shaderbinding_t> shaderBindingsVk;
 				std::vector<uint8_t> targetDX = GetShaderBinary(ss, sourcePreprocessor1, input, type, 0, sourcePreprocessor.GetPermutation(i), shaderBindings, Render::RendererAPI::DX12);
+				std::vector<uint8_t> targetVK = GetShaderBinary(ss, sourcePreprocessor1, input, type, 0, sourcePreprocessor.GetPermutation(i), shaderBindingsVk, Render::RendererAPI::VULKAN);
 
 				std::stringstream shaderBindingStream;
 
@@ -613,6 +632,7 @@ bool ShaderCompiler::build_object(const char* input, const char* output, shader_
 				{
 					"dx11",
 					"dx12",
+					"vk",
 				};
 
 				std::string stageName = "pixel";
@@ -624,8 +644,15 @@ bool ShaderCompiler::build_object(const char* input, const char* output, shader_
 
 				std::string SigBlob = shaderBindingStream.str();
 
-				for (int i = 0; i < 2; i++)
+				for (int i = 0; i < 3; i++)
 				{
+					std::vector<uint8_t>* target = &targetDX;
+
+					if (i == 2) // Vulkan
+					{
+						target = &targetVK;
+					}
+
 					std::string name = std::string(dxNames[i]).append(stageName).append(bitset.to_string());
 					std::string rootsigname = std::string(name).append(".sig");
 
@@ -635,13 +662,13 @@ bool ShaderCompiler::build_object(const char* input, const char* output, shader_
 					SpfFileMetadata* sigDxMetadata = new SpfFileMetadata(rootsigname);
 					fileIndex.FileMetaLen += sigDxMetadata->Size();
 
-					uint8_t* targetDX_Blob = new uint8_t[targetDX.size()];
-					memcpy(targetDX_Blob, targetDX.data(), targetDX.size());
+					uint8_t* targetDX_Blob = new uint8_t[target->size()];
+					memcpy(targetDX_Blob, target->data(), target->size());
 
 					uint8_t* pSigBlob = new uint8_t[SigBlob.size()];
 					memcpy(pSigBlob, SigBlob.data(), SigBlob.size());
 
-					shaderdxMetadata->ContentsLen = targetDX.size();
+					shaderdxMetadata->ContentsLen = target->size();
 					sigDxMetadata->ContentsLen = SigBlob.size();
 
 					access.acquire();

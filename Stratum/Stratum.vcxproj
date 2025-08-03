@@ -256,6 +256,7 @@
     <ClInclude Include="Engine\Renderer\Material.h" />
     <ClInclude Include="Engine\Renderer\Mesh.h" />
     <ClInclude Include="Engine\Renderer\NVRHI_d3d12.h" />
+    <ClInclude Include="Engine\Renderer\NVRHI_Vulkan.h" />
     <ClInclude Include="Engine\Renderer\RenderCommands.h" />
     <ClInclude Include="Engine\Renderer\RendererContext.h" />
     <ClInclude Include="Engine\Renderer\ShapeProvider.h" />
@@ -401,6 +402,7 @@
     <ClCompile Include="Engine\Renderer\Material.cpp" />
     <ClCompile Include="Engine\Renderer\Mesh.cpp" />
     <ClCompile Include="Engine\Renderer\NVRHI_d3d12.cpp" />
+    <ClCompile Include="Engine\Renderer\NVRHI_Vulkan.cpp" />
     <ClCompile Include="Engine\Renderer\RendererContext.cpp" />
     <ClCompile Include="Engine\Renderer\ShapeProvider.cpp" />
     <ClCompile Include="Engine\Renderer\Texture3D.cpp" />

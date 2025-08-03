@@ -40,7 +40,22 @@ Scene::Scene()
 
 Scene::~Scene()
 {
+	for (int i = 0; i < ECS::C_MAX_ENTITIES; i++)
+	{
+		if (VideoSurfaces.mAllocatedArray[i] && VideoSurfaces.mComponentArray[i].mDecoder)
+		{
+			VideoDecode* decode = reinterpret_cast<VideoDecode*>(VideoSurfaces.mComponentArray[i].mDecoder);
+			// This is hot shit.
+			// But for some reason without this the whole engine stutters to hell.
+			// TO DO: Make our own abstraction of the libav library
+			delete decode;
+
+			VideoSurfaces.mComponentArray[i].mDecoder = 0;
+		}
+	}
+
 	EntityManager.DestroyAll();
+
 	for (auto p : mCustomComponents)
 	{
 		delete p.second;

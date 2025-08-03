@@ -1,9 +1,5 @@
 #include "Application.h"
 
-// WTH when i remove this the engine doesn't compile?
-// Opengl support was removed 3 years ago!
-#define OPENGL_RENDERER
-
 #include "Renderer/RendererContext.h"
 #include "Renderer/GraphicsCommandBuffer.h"
 #include "Renderer/CopyCommandBuffer.h"
@@ -62,15 +58,11 @@ void Application::Run(std::vector<std::string> args)
 	// I know how to update the build date every time it compiles
 	// BUT i don't like the fact that every debug session i need to recompile a single file
 	// Pls microsoft, add a feature so i can run a command when there is a recompilation happening
-#ifdef _DEBUG
+
 	Z_INFO("Stratum Engine {} @ {} ", __DATE__, __TIME__);
-#endif
 
 	ZVFS::Init();
 	JobManager::Init(true);
-
-
-	//return;
 
 	// Idk why the engine crashes with a segfault without this hack
 	m_Console.Focused();

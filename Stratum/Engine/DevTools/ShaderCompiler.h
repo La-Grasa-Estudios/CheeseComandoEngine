@@ -32,6 +32,7 @@ public:
 	inline static const char* g_Apis[3] = {
 		"D3D",
 		"D3D",
+		"VK"
 	};
 
 	static std::vector<uint8_t> GetShaderBinary(RefBinaryStream& ss, ShaderPreprocessor& processor, const char* input, ShaderCompiler::shader_type type, int permIndex, std::vector<std::string> defines, std::vector<shaderbinding_t>& shaderBindings, Render::RendererAPI targetApi);

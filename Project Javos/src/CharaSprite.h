@@ -34,6 +34,7 @@ namespace Funkin
 		glm::vec2 CharaScale = glm::vec2(1.0f);
 
 		int32_t CharaEntity;
+		float FpsMultiplier = 1.0f;
 
 	private:
 

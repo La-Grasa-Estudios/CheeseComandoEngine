@@ -35,6 +35,12 @@ void Funkin::PlayerSystem::OnActivate(Stratum::Scene* scene)
 				"right"
 			};
 
+			if (mConductor->GetNoteByIndex(e.SectionIndex, e.NoteIndex).noteData.compare("Hey!") == 0)
+			{
+				mCharaSprite->PlayAnimation("hey");
+				return;
+			}
+
 			mCharaSprite->PlayAnimation(animations[e.NoteType]);
 
 		};
