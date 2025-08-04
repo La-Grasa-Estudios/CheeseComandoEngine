@@ -475,6 +475,12 @@ std::vector<uint8_t> ShaderCompiler::GetShaderBinary(RefBinaryStream& ss, Shader
 
 bool ShaderCompiler::build_object(const char* input, const char* output, shader_type type, int nbPermutations)
 {
+	if (!std::filesystem::exists("./Tools/dxc.exe") || !std::filesystem::exists("./Tools/ShaderMake.exe"))
+	{
+		Z_WARN("Could not find shadercompiler!");
+		return false;
+	}
+
 	RefBinaryStream ss = ENGINE_NAMESPACE::ZVFS::GetFile(input);
 
 	if (ss->Str().empty() || !std::filesystem::exists(std::string("Data/").append(input))) return false;

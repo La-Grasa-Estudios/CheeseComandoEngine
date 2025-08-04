@@ -14,7 +14,7 @@ Application* AppMain(std::vector<std::string> args)
 	info.WindowName = "Javos Mod";
 	info.WindowedResolutionX = 1600;
 	info.WindowedResolutionY = 900;
-	info.graphicsAPI = Render::RendererAPI::VULKAN;
+	info.graphicsAPI = Render::RendererAPI::DX12;
 
 	for (auto arg : args)
 	{
