@@ -25,6 +25,8 @@
 #include <Thirdparty/imgui/imgui.h>
 #include <json/json.hpp>
 
+#include "Song/BiteFernanSong.h"
+
 Funkin::GameState gGameState;
 
 #undef min
@@ -664,9 +666,20 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 		mWaitTimer += Stratum::Time::DeltaTime;
 		if (mWaitTimer > 1.0f)
 		{
+			/*
 			auto scene = new Stratum::Scene();
 			scene->RegisterCustomSystem(new BalatroSystem());
 			mScene->SwapScene(scene);
+			*/
+			LoadChartParams params;
+			params.ChartPath = "fnf/data/bite/bite-fernan.json";
+			params.SongScript = Stratum::CreateRef<BiteFernanSong>();
+
+			auto scene = new Stratum::Scene();
+			mScene->SwapScene(scene);
+
+			//scene->RegisterCustomSystem(new BalatroSystem());
+			scene->RegisterCustomSystem(new InGameSystem(params));
 		}
 	}
 }

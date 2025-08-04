@@ -20,12 +20,30 @@ struct Light
     uint Type;
 };
 
-#ifdef SPIRV
+#define REGISTER_HELPER(TY,REG,SPACE) register(TY##REG, space##SPACE)
+
+#ifdef VK
 #define VK_PUSH_CONSTANT [[vk::push_constant]]
 #define VK_BINDING(reg,dset) [[vk::binding(reg,dset)]]
+#define VK_SAMPLER [[vk::combinedImageSampler]]
+#define VK_IMAGE_FORMAT_UNKNOWN [[vk::image_format("unknown")]]
+
+#define REGISTER_SAMPLER(reg, space) REGISTER_HELPER(s, reg, space)
+#define REGISTER_CBUFFER(reg, space) REGISTER_HELPER(b, reg, space)
+#define REGISTER_UAV(reg, space)     REGISTER_HELPER(u, reg, space)
+#define REGISTER_SRV(reg, space)     REGISTER_HELPER(t, reg, space)
+
 #else
 #define VK_PUSH_CONSTANT
 #define VK_BINDING(reg,dset) 
+#define VK_SAMPLER
+#define VK_IMAGE_FORMAT_UNKNOWN
+
+#define REGISTER_SAMPLER(reg,space) REGISTER_HELPER(s, reg, space)
+#define REGISTER_CBUFFER(reg,space) REGISTER_HELPER(b, reg, space)
+#define REGISTER_UAV(reg,space)     REGISTER_HELPER(u, reg, space)
+#define REGISTER_SRV(reg,space)     REGISTER_HELPER(t, reg, space)
+
 #endif
 
 float4 Unpack4x8UNorm(uint packedValue)

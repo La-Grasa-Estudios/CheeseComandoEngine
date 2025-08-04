@@ -120,6 +120,13 @@ std::vector<uint8_t> GetShaderBinaryData(SpfFile& file, std::string kind, std::s
         {
             apiKey = "dx12";
             fileName = apiKey.append(kind).append(bitset.to_string()).append(".shader");
+            f = file.Files[fileName].get();
+        }
+
+        if (!f || api == Render::RendererAPI::VULKAN)
+        {
+            apiKey = "vk";
+            fileName = apiKey.append(kind).append(bitset.to_string()).append(".shader");
         }
 
     }
@@ -386,6 +393,7 @@ Render::GraphicsPipeline::GraphicsPipeline(PipelineDescription desc)
     }
 
     bindlessLayoutDesc.setFirstSlot(0);
+    bindlessLayoutDesc.setMaxCapacity(16384);
 
     bool enableBindless = ShaderDesc.UseBindless || bindlessLayoutDesc.registerSpaces.size() > 0;
 

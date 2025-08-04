@@ -119,8 +119,8 @@ namespace Render {
 		void Barrier(Texture3D* resource);
 		void Barrier(Buffer* resource);
 
-		void RequireTextureState(ImageResource* pImage, ResourceState before, ResourceState after, nvrhi::TextureSubresourceSet subResources = nvrhi::AllSubresources);
-		void RequireBufferState(Buffer* pBuffer, ResourceState before, ResourceState after);
+		void RequireTextureState(ImageResource* pImage, ResourceState before, ResourceState after, nvrhi::TextureSubresourceSet subResources = nvrhi::AllSubresources, bool vkOptional = false);
+		void RequireBufferState(Buffer* pBuffer, ResourceState before, ResourceState after, bool vkOptional = false);
 
 		void CommitBarriers();
 

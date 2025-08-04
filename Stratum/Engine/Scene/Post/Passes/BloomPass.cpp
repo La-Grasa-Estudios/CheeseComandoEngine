@@ -102,17 +102,19 @@ void Render::BloomPass::PreRender(const PostProcessingParameters& parameters)
 	parameters.gCommandBuffer->RequireTextureState(BloomMipChainImageResource[0].get(), ResourceState::ShaderResource, ResourceState::UnorderedAccess);
 	parameters.cCommandBuffer->SetTextureResource(parameters.pColorSampler, 0);
 	parameters.cCommandBuffer->SetComputePipeline(BloomFilterShader.get());
-	parameters.cCommandBuffer->SetTextureCompute(BloomMipChainImageResource[0].get(), 0);
+	parameters.cCommandBuffer->SetTextureCompute(BloomMipChainImageResource[0].get(), 1);
 	parameters.cCommandBuffer->Dispatch((int)glm::ceil(parameters.Resolution.x / 2 / 16.0f), (int)glm::ceil(parameters.Resolution.y / 2 / 16.0f), 1);
 }
 
 void Render::BloomPass::Render(const PostProcessingParameters& parameters)
 {
+	parameters.gCommandBuffer->RequireTextureState(BloomMipChainImageResource[0].get(), ResourceState::UnorderedAccess, ResourceState::ShaderResource);
+	
 	glm::ivec2 res = parameters.Resolution;
 
-	parameters.gCommandBuffer->RequireTextureState(BloomMipChainImageResource[0].get(), ResourceState::UnorderedAccess, ResourceState::ShaderResource);
 	parameters.gCommandBuffer->SetPipeline(BloomDownsampleShader.get());
 	parameters.gCommandBuffer->SetTextureSampler(parameters.pBilinearTextureSampler, 0);
+	parameters.gCommandBuffer->SetAutomaticBarrierPlacement(true);
 
 	for (int i = 1; i < bloomMipCount; i++)
 	{
@@ -160,5 +162,6 @@ void Render::BloomPass::Render(const PostProcessingParameters& parameters)
 	}
 
 	parameters.gCommandBuffer->RequireTextureState(BloomMipChainImageResource[0].get(), ResourceState::RenderTarget, ResourceState::ShaderResource);
+	parameters.gCommandBuffer->SetAutomaticBarrierPlacement(false);
 
 }

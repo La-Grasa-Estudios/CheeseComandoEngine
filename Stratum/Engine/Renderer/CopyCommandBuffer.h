@@ -4,6 +4,9 @@
 
 #include "RendererContext.h"
 #include "RenderCommands.h"
+#include "Buffer.h"
+
+#include <unordered_set>
 
 BEGIN_ENGINE
 
@@ -26,11 +29,18 @@ namespace Render {
 		void SetQueueInstance(CommandListQueueInstance queue); 
 		void TriggerWaitOnExecutionQueue(CommandQueue queue);
 
+		// Vulkan specific barriers, does not work on D3D12
+		void RequireTextureState(ImageResource* pImage, ResourceState before, ResourceState after, nvrhi::TextureSubresourceSet subResources = nvrhi::AllSubresources);
+		void RequireBufferState(Buffer* pBuffer, ResourceState before, ResourceState after);
+		void CommitBarriers();
+
 		void UpdateConstantBuffer(ConstantBuffer* pBuffer, void* data);
 
 		nvrhi::ICommandList* GetNativeCommandList();
 
 	private:
+
+		std::unordered_set<uintptr_t> mTrackedResources;
 
 		uint64_t mCmdInstance = 0;
 		nvrhi::CommandListHandle mCommandList;

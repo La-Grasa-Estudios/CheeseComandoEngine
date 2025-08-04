@@ -473,7 +473,14 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 	mCmdBuffer->RequireFramebufferState(mMainRenderTarget.get(), Render::ResourceState::ShaderResource, Render::ResourceState::RenderTarget);
 	mCmdBuffer->RequireFramebufferState(pOutput, Render::ResourceState::Present, Render::ResourceState::RenderTarget);
 
+	if (Render::RendererContext::get_api() == Render::RendererAPI::VULKAN)
+		mCmdBuffer->SetAutomaticBarrierPlacement(true);
 	mCmdBuffer->ClearBuffer(mMainRenderTarget.get(), 0, glm::vec4(0.0f));
+	if (Render::RendererContext::get_api() == Render::RendererAPI::VULKAN)
+		mCmdBuffer->SetAutomaticBarrierPlacement(false);
+
+	mCmdBuffer->RequireTextureState(mColorBufferRT.get(), Render::ResourceState::CopyDest, Render::ResourceState::RenderTarget, nvrhi::AllSubresources, true);
+	mCmdBuffer->CommitBarriers();
 
 	mCmdBuffer->SetFramebuffer(mMainRenderTarget.get());
 	mCmdBuffer->SetViewport(&viewport);
@@ -507,6 +514,8 @@ void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 	mCmdBuffer->RequireFramebufferState(mMainRenderTarget.get(), Render::ResourceState::RenderTarget, Render::ResourceState::ShaderResource);
 
 	pStack->Render(params);
+
+	mCmdBuffer->RequireFramebufferState(pOutput, Render::ResourceState::RenderTarget, Render::ResourceState::Present);
 
 	mCmdBuffer->End();
 

@@ -45,9 +45,9 @@ void Renderer3D::SetScene(Scene* scene)
 {
 
 	auto desc = nvrhi::BindlessLayoutDesc()
-		.addRegisterSpace(nvrhi::BindingLayoutItem::RawBuffer_SRV(1))
 		.addRegisterSpace(nvrhi::BindingLayoutItem::Texture_SRV(2))
 		.setFirstSlot(0)
+		.setMaxCapacity(16384)
 		.setVisibility(nvrhi::ShaderType::All);
 
 	if (!mBindlessLayout)

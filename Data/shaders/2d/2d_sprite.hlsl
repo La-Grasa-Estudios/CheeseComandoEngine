@@ -25,14 +25,16 @@ struct SpriteInstance
     uint padding;
 };
 
-VK_PUSH_CONSTANT cbuffer DrawData : register(b0)
+struct ConstantDataStruct
 {
     uint BatchIndex;
 };
 
+VK_PUSH_CONSTANT ConstantBuffer <ConstantDataStruct>DrawData : REGISTER_CBUFFER(0, 0);
+
 static const int FLAG_NEAREST = 0x1;
 
-StructuredBuffer<SpriteInstance> Instances : register(t10);
+StructuredBuffer<SpriteInstance> Instances : REGISTER_SRV(10, 0);
 
 #ifdef STAGE_VERTEX
 
@@ -53,13 +55,14 @@ static const int swlut[6] =
 
 v2f main(in i2v input, in uint vertexID : SV_VertexID)
 {
-    SpriteInstance instance = Instances[input.instanceID + BatchIndex];
+    SpriteInstance instance = Instances[input.instanceID + DrawData.BatchIndex];
     float4 uv = uvLut[vertexID] == 0 ? instance.uv1 : instance.uv2;
     
 	v2f output;
     output.ClipPos = mul(ProjView[instance.userData & 0x1], mul(instance.Transform, float4(float3(input.Position, 0.0), 1.0)));
+    output.ClipPos.z = 0.0f;
     output.TexCoord = swlut[vertexID] == 0 ? uv.xy : uv.zw;
-    output.instanceID = input.instanceID + BatchIndex;
+    output.instanceID = input.instanceID + DrawData.BatchIndex;
     
 	return output;
 }
@@ -68,15 +71,15 @@ v2f main(in i2v input, in uint vertexID : SV_VertexID)
 
 #ifdef STAGE_PIXEL
 
-VK_BINDING(0, 2) Texture2D Textures[] : register(t0, space2);
-SamplerState BilinearSampler : register(s0);
-SamplerState NearestSampler : register(s1);
+VK_BINDING(0, 1) Texture2D Textures[] : REGISTER_SRV(0, 1);
+SamplerState BilinearSampler : register(s0, space0);
+SamplerState NearestSampler : register(s1, space0);
 
 float4 main(v2f input) : SV_Target
 {
     float4 color = 1.0.xxxx;
     SpriteInstance instance = Instances[input.instanceID];
-    
+
     if (instance.texture != -1)
     {
         float2 TexCoord = input.TexCoord;
@@ -87,8 +90,8 @@ float4 main(v2f input) : SV_Target
             color = Textures[NonUniformResourceIndex(instance.texture)].Sample(NearestSampler, TexCoord);
         else
             color = Textures[NonUniformResourceIndex(instance.texture)].Sample(BilinearSampler, TexCoord);
-    }
-    
+    }  
+
     uint userData = instance.userData >> 1;
     
     if (userData == 2)

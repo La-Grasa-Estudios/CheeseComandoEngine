@@ -217,8 +217,6 @@ void Application::Run(std::vector<std::string> args)
 
 	std::string windowName = m_AppInfo.WindowName;
 
-	m_RenderContext->InitializeApi(Render::RendererAPI::DX12);
-
 	m_Window = CreateScope<Internal::Window>(m_RenderContext.get(), windowName.c_str());
 	m_AudioEngine = CreateRef<AudioEngine>();
 
@@ -227,6 +225,7 @@ void Application::Run(std::vector<std::string> args)
 	m_Window->SetInfo(Internal::WindowEnum::WINDOW_FULLSCREEN, m_AppInfo.Fullscreen);
 	m_Window->SetVSync(m_AppInfo.VSyncEnabled);
 
+	m_RenderContext->InitializeApi(m_AppInfo.graphicsAPI);
 	m_Window->Create(m_AppInfo.WindowedResolutionX, m_AppInfo.WindowedResolutionY);
 
 	EventBus::InvokeEvent(EngineModuleInitEvent(EngineModuleInitEvent::ENGINE_MODULE_WINDOW));
@@ -505,8 +504,17 @@ void Application::RenderStartupMedia()
 		Render::GraphicsCommandBuffer cmdBuffer{};
 		Render::CopyCommandBuffer copyCmdBuffer{};
 
+		bool firstVideo = true;
+
 		while (std::getline(*vids->Stream(), line))
 		{
+			if (firstVideo && m_AppInfo.graphicsAPI == Render::RendererAPI::VULKAN)
+			{
+				line = "media/vulkan.mp4";
+				vids = ZVFS::GetFile(path.c_str());
+				firstVideo = false;
+			}
+
 			std::string vpath = PathUtils::ResolvePath(line);
 
 			VideoDecode decode(vpath, m_AudioEngine.get());
@@ -564,9 +572,11 @@ void Application::RenderStartupMedia()
 						auto cmd = copyCmdBuffer.GetNativeCommandList();
 
 						copyCmdBuffer.Begin();
+						copyCmdBuffer.RequireTextureState(surface.get(), nvrhi::ResourceStates::ShaderResource, nvrhi::ResourceStates::CopyDest);
 
 						cmd->writeTexture(surface->Handle, 0, 0, frame->native()->data[0], params.width * 4);
 
+						copyCmdBuffer.RequireTextureState(surface.get(), nvrhi::ResourceStates::CopyDest, nvrhi::ResourceStates::ShaderResource);
 						copyCmdBuffer.End();
 
 						copyCmdBuffer.WaitForExecution(cmdBuffer.GetQueueExecutionInstance(), Render::CommandQueue::Graphics);
@@ -594,8 +604,8 @@ void Application::RenderStartupMedia()
 				cmdBuffer.SetViewport(&vp);
 				cmdBuffer.SetPipeline(&videoPipeline);
 				cmdBuffer.SetFramebuffer(m_Window->GetFramebuffer().get());
-				cmdBuffer.SetTextureResource(surface.get(), 0);
 				cmdBuffer.SetTextureSampler(&sampler, 0);
+				cmdBuffer.SetTextureResource(surface.get(), 0);
 
 				cmdBuffer.Draw(3, 0);
 

@@ -63,11 +63,29 @@ Render::ImageResource::ImageResource(const ImageDescription& desc)
 
 	if (desc.Immutable)
 	{
-		//textureDesc.setKeepInitialState(true);
 		textureDesc.setInitialState(nvrhi::ResourceStates::ShaderResource);
 	}
+	if (RendererContext::get_api() == RendererAPI::VULKAN)
+		textureDesc.setInitialState(nvrhi::ResourceStates::ShaderResource);
 
 	Handle = RendererContext::GetDevice()->createTexture(textureDesc);
+
+	// Vulkan hack
+	// Who the fuck thinks about creating an API so f'ing strict that you cannot create resources with a default state & w/o 
+	// layout decay/promotion modern GPU's don't require that and usually don't get penalized performance
+	// It's been 8 hours since i started trying to implement a vulkan backend and i only managed to get the opening video working
+	// What the fuck Khrono now i see why almost nobody in the AAA industry uses your fucking API
+	// Now i see why most directx 12 games don't get native ports over to linux
+	if (RendererContext::get_api() == RendererAPI::VULKAN)
+	{
+		auto cmdList = RendererContext::GetDevice()->createCommandList();
+		cmdList->open();
+		cmdList->beginTrackingTextureState(Handle, nvrhi::AllSubresources, nvrhi::ResourceStates::Common);
+		cmdList->setTextureState(Handle, nvrhi::AllSubresources, nvrhi::ResourceStates::ShaderResource);
+		cmdList->close();
+		RendererContext::GetDevice()->executeCommandList(cmdList);
+		RendererContext::GetDevice()->waitForIdle();
+	}
 
 	if (!desc.DefaultData.empty())
 	{
@@ -83,6 +101,7 @@ Render::ImageResource::ImageResource(const ImageDescription& desc)
 
 		if (desc.Immutable)
 		{
+			cmd.commandList->setTextureState(Handle, nvrhi::AllSubresources, nvrhi::ResourceStates::ShaderResource);
 			cmd.commandList->setPermanentTextureState(Handle, nvrhi::ResourceStates::ShaderResource);
 			cmd.commandList->commitBarriers();
 		}

@@ -12,7 +12,8 @@ using namespace ENGINE_NAMESPACE;
 Render::ComputeCommandBuffer::ComputeCommandBuffer(bool async)
 {
 	nvrhi::CommandListParameters params{};
-	params.queueType = nvrhi::CommandQueue::Compute;
+	params.queueType = nvrhi::CommandQueue::Graphics;
+	params.enableImmediateExecution = false;
 
 	if (RendererContext::get_api() == RendererAPI::DX11 || !async)
 	{
@@ -235,8 +236,10 @@ void Render::ComputeCommandBuffer::CommitBarriers()
 	mCommandList->commitBarriers();
 }
 
-void Render::ComputeCommandBuffer::RequireTextureState(ImageResource* pImage, ResourceState before, ResourceState after, nvrhi::TextureSubresourceSet subResources)
+void Render::ComputeCommandBuffer::RequireTextureState(ImageResource* pImage, ResourceState before, ResourceState after, nvrhi::TextureSubresourceSet subResources, bool vkOptional)
 {
+	if (vkOptional && RendererContext::get_api() == Render::RendererAPI::VULKAN)
+		return;
 	if (!mTrackedResources.contains((uintptr_t)pImage->Handle.Get()))
 	{
 		mTrackedResources.insert((uintptr_t)pImage->Handle.Get());
@@ -246,8 +249,10 @@ void Render::ComputeCommandBuffer::RequireTextureState(ImageResource* pImage, Re
 	mCommitedAnyConstantBuffer = true;
 }
 
-void Render::ComputeCommandBuffer::RequireBufferState(Buffer* pBuffer, ResourceState before, ResourceState after)
+void Render::ComputeCommandBuffer::RequireBufferState(Buffer* pBuffer, ResourceState before, ResourceState after, bool vkOptional)
 {
+	if (vkOptional && RendererContext::get_api() == Render::RendererAPI::VULKAN)
+		return;
 	if (!mTrackedResources.contains((uintptr_t)pBuffer->Handle.Get()))
 	{
 		mTrackedResources.insert((uintptr_t)pBuffer->Handle.Get());

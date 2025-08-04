@@ -3,15 +3,17 @@
 
 #define LOCAL_SIZE 16
 
-VK_PUSH_CONSTANT cbuffer Params : register(b0)
+struct PushConstants
 {
     uint2 SourceSize;
-	uint2 TargetSize;
+    uint2 TargetSize;
 };
 
-Texture2D s_source_mip : register(t0);
+VK_PUSH_CONSTANT ConstantBuffer<PushConstants> Params : register(b0);
+
+Texture2D s_source_mip : register(t0, space0);
 //Texture2D s_lum : register(t1);
-RWTexture2D<float3> s_target : register(u0);
+RWTexture2D<float3> s_target : register(u1, space0);
 
 [numthreads(LOCAL_SIZE, LOCAL_SIZE, 1)]
 void main(uint3 dispatchID : SV_DispatchThreadID) {

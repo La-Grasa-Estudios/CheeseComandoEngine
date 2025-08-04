@@ -1,9 +1,11 @@
 #include "common_shaders.hlsli"
 
+#ifdef PERMUTATION_COMPILER
 #permutationbase LUMINANCE
 
 #permutationcond @ALL
 #permutationadd BLOOM
+#endif
 
 struct v2f
 {
@@ -11,11 +13,13 @@ struct v2f
     float2 TexCoord : TEXCOORD0;
 };
 
-VK_PUSH_CONSTANT cbuffer ToneMapParams : register(b0)
+struct TonamapParameters
 {
     uint ChromaticAberrationEnabled;
     float ChromaticAberrationIntensity;
-}
+};
+
+VK_PUSH_CONSTANT ConstantBuffer<TonamapParameters> ToneMapParams : register(b0);
 
 #ifdef STAGE_VERTEX
 
@@ -108,12 +112,12 @@ void main(v2f input, out float4 mainColor : SV_Target)
 
     float3 color = 0.0f.xxx;
     
-    if (ChromaticAberrationEnabled == 1)
+    if (ToneMapParams.ChromaticAberrationEnabled == 1)
     {
         float2 caDirection = input.TexCoord - 0.5f.xx;
-        float redOffset = 0.009 * ChromaticAberrationIntensity;
-        float greenOffset = 0.006 * ChromaticAberrationIntensity;
-        float blueOffset = -0.006 * ChromaticAberrationIntensity;
+        float redOffset = 0.009 * ToneMapParams.ChromaticAberrationIntensity;
+        float greenOffset = 0.006 * ToneMapParams.ChromaticAberrationIntensity;
+        float blueOffset = -0.006 * ToneMapParams.ChromaticAberrationIntensity;
         
         color.r = sHdrImage.Sample(sBilinearSampler, input.TexCoord + caDirection * redOffset).r;
         color.g = sHdrImage.Sample(sBilinearSampler, input.TexCoord + caDirection * greenOffset).g;

@@ -14,6 +14,7 @@ using namespace ENGINE_NAMESPACE;
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_syswm.h>
 #include <nvrhi/d3d12.h>
+#include <nvrhi/validation.h>
 
 #include "Thirdparty/imgui/imgui_impl_dx12.h"
 
@@ -258,6 +259,9 @@ void Render::BackendInitializerD3D12::InitializeBackend(Internal::Window* pWindo
     deviceDesc.enableHeapDirectlyIndexed = true;
 
     pContext->pDevice = nvrhi::d3d12::createDevice(deviceDesc);
+#ifdef _DEBUG
+    pContext->pDevice = nvrhi::validation::createValidationLayer(pContext->pDevice);
+#endif
 
     ComPtr<IDXGISwapChain4> dxgiSwapChain4;
 
@@ -336,7 +340,10 @@ void Render::BackendInitializerD3D12::InitializeBackend(Internal::Window* pWindo
     dxSharedData->Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, dxSharedData->CommandAllocators[DX12::s_MaxInFlightFrames - 1].Get(), NULL, IID_PPV_ARGS(&dxSharedData->CommandList));
     dxSharedData->CommandList->Close();
 
-    mCommandList = pContext->pDevice->createCommandList();
+    nvrhi::CommandListParameters params{};
+    params.enableImmediateExecution = false;
+
+    mCommandList = pContext->pDevice->createCommandList(params);
 
     {
         D3D12_DESCRIPTOR_HEAP_DESC desc = {};

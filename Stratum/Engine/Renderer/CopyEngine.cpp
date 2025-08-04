@@ -130,6 +130,7 @@ nvrhi::CommandListHandle CopyEngine::GetAllocatorCommandList()
 	{
 		nvrhi::CommandListParameters params{};
 		params.setQueueType(s_CommandQueue);
+		params.enableImmediateExecution = false;
 		commandList = Render::RendererContext::GetDevice()->createCommandList(params);
 	}
 	else

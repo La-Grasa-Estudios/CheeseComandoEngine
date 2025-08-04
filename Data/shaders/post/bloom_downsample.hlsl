@@ -2,8 +2,8 @@
 
 struct v2f
 {
-	float4 ClipPos : SV_Position;
-	float2 TexCoord : TEXCOORD0;
+    float4 ClipPos : SV_Position;
+    float2 TexCoord : TEXCOORD0;
 };
 
 #ifdef STAGE_VERTEX
@@ -31,14 +31,16 @@ v2f main(in uint vertexID : SV_VertexID)
 Texture2D srcTexture : register(t0);
 SamplerState bloomSampler : register(s0);
 
-VK_PUSH_CONSTANT cbuffer BloomParams : register(b0)
+struct BloomParameters
 {
-	int2 ScreenSize;
+    int2 ScreenSize;
 };
+
+VK_PUSH_CONSTANT ConstantBuffer<BloomParameters> BloomParams : register(b0);
 
 float4 main(v2f input) : SV_Target
 {
-	float2 srcTexelSize = 1.0 / ScreenSize;
+	float2 srcTexelSize = 1.0 / BloomParams.ScreenSize;
     float x = srcTexelSize.x;
     float y = srcTexelSize.y;
 

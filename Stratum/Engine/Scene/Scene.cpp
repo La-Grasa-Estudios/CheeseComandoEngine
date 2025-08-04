@@ -533,7 +533,9 @@ void Scene::UpdateVideoPlayers()
 
 				JobManager::Wait();
 
+				mVideoCopyCommandBuffer->RequireTextureState(pSurface, Render::ResourceState::ShaderResource, Render::ResourceState::CopyDest);
 				cmd->writeTexture(pSurface->Handle, 0, 0, data, surface.VideoResolution.x * 4);
+				mVideoCopyCommandBuffer->RequireTextureState(pSurface, Render::ResourceState::CopyDest, Render::ResourceState::ShaderResource);
 				// mVideoCopyCommandBuffer->RequireTextureState(pSurface, Render::ResourceState::CopyDest, Render::ResourceState::ShaderResource);
 				// mVideoCopyCommandBuffer->CommitBarriers();
 				decode->PushFrame(frame);

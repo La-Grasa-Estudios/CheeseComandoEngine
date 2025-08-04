@@ -170,8 +170,8 @@ namespace Render {
 		nvrhi::ICommandList* GetNativeCommandList();
 
 		void RequireFramebufferState(Framebuffer* framebuffer, ResourceState before, ResourceState after = ResourceState::Present);
-		void RequireTextureState(ImageResource* pImage, ResourceState before, ResourceState after, nvrhi::TextureSubresourceSet subResources = nvrhi::AllSubresources);
-		void RequireBufferState(Buffer* pBuffer, ResourceState before, ResourceState after);
+		void RequireTextureState(ImageResource* pImage, ResourceState before, ResourceState after, nvrhi::TextureSubresourceSet subResources = nvrhi::AllSubresources, bool vkOptional = false);
+		void RequireBufferState(Buffer* pBuffer, ResourceState before, ResourceState after, bool vkOptional = false);
 
 		/// <summary>
 		/// Sets automatic barrier and state traking status, still here for old code or for a bit easier coding with the api

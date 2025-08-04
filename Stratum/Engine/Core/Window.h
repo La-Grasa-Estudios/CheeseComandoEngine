@@ -24,6 +24,7 @@ namespace Internal {
 		WINDOW_START_MAXIMIZED,
 		WINDOW_FULLSCREEN,
 		WINDOW_IMGUI,
+		WINDOW_VULKAN,
 	};
 
 	class Window;
@@ -89,6 +90,7 @@ namespace Internal {
 		bool m_IsImGuiEnabled = false;
 		bool m_ShouldClose = false;
 		bool m_IsWindowFullScreen = false;
+		bool m_VulkanCapable = false;
 		SDL_Window* m_Window;
 		SDL_Surface* m_Surface;
 		Render::RendererContext* m_Context;

@@ -21,7 +21,6 @@ Window::Window(Render::RendererContext* pContext, const char* name)
 	this->m_Name = name;
 	this->m_Context = pContext;
 	this->m_Vsync = false;
-	
 }
 
 Internal::Window::~Window()
@@ -219,6 +218,9 @@ void Internal::Window::SetInfo(WindowEnum param, bool val)
 	case ENGINE_NAMESPACE::Internal::WindowEnum::WINDOW_IMGUI:
 		m_IsImGuiEnabled = val;
 		break;
+	case ENGINE_NAMESPACE::Internal::WindowEnum::WINDOW_VULKAN:
+		m_VulkanCapable = true;
+		return;
 	default:
 		break;
 	}

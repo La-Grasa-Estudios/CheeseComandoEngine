@@ -508,7 +508,10 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 			}
 
 			auto& animator = scene->SpriteAnimators.Get(noteButtons[sustainNote.NoteType]);
-			animator.SetState("press");
+			if (animator.AnimationMap[animator.CurrentAnimation].FrameIndex >= 5 || animator.CurrentAnimation.compare("press"))
+			{
+				animator.SetState("press");
+			}
 		}
 		else
 		{

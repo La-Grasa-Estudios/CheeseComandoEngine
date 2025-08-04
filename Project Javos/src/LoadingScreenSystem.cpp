@@ -109,6 +109,11 @@ void Funkin::LoadingScreenSystem::Init(Stratum::Scene* scene)
 
 			scene->RegisterCustomSystem(pIngameSystem, true);
 		});
+
+	if (Stratum::Render::RendererContext::get_api() == Stratum::Render::RendererAPI::VULKAN)
+	{
+		// loadingThread->join();
+	}
 }
 
 void Funkin::LoadingScreenSystem::Update(Stratum::Scene* scene)

@@ -11,6 +11,7 @@ RendererContext* RendererContext::s_Context = NULL;
 
 #include "GraphicsPipeline.h"
 #include "NVRHI_d3d12.h"
+#include "NVRHI_Vulkan.h"
 
 #include "Thirdparty/imgui/imgui_impl_sdl3.h"
 
@@ -46,6 +47,10 @@ void RendererContext::InitializeApi(RendererAPI api)
     if (api == RendererAPI::DX12)
     {
         pBackend = new BackendInitializerD3D12();
+    }
+    if (api == RendererAPI::VULKAN)
+    {
+        pBackend = new BackendInitializerVulkan();
     }
     if (api == RendererAPI::DX11)
     {
@@ -89,6 +94,16 @@ void RendererContext::initialize(ENGINE_NAMESPACE::Internal::Window* window)
         }
 
         NvDepthBuffers[i] = pDevice->createTexture(depthDesc);
+
+        auto cmdList = pDevice->createCommandList();
+
+        cmdList->open();
+		cmdList->setEnableAutomaticBarriers(false);
+		cmdList->beginTrackingTextureState(NvDepthBuffers[i], nvrhi::AllSubresources, nvrhi::ResourceStates::Unknown);
+		cmdList->setTextureState(NvDepthBuffers[i], nvrhi::AllSubresources, nvrhi::ResourceStates::Present);
+        cmdList->close();
+        pDevice->executeCommandList(cmdList);
+        pDevice->waitForIdle();
 
         auto rtvDescription = nvrhi::FramebufferDesc();
         rtvDescription.addColorAttachment(NvBackBuffers[i].Get());

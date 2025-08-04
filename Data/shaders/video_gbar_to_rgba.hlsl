@@ -2,7 +2,7 @@
 
 struct v2f
 {
-	float4 ClipPos : SV_Position;
+    float4 ClipPos : SV_Position;
     float2 TexCoord : TEXCOORD0;
 };
 
@@ -28,8 +28,8 @@ v2f main(in uint vertexID : SV_VertexID)
 
 #ifdef STAGE_PIXEL
 
-Texture2D<float4> videoSurface : register(t0);
-SamplerState videoSampler : register(s0);
+SamplerState videoSampler : REGISTER_SAMPLER(0, 0);
+Texture2D videoSurface : REGISTER_SRV(0, 0);
 
 float4 main(v2f input) : SV_Target {
 	return videoSurface.Sample(videoSampler, input.TexCoord).gbar;

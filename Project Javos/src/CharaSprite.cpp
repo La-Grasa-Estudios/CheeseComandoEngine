@@ -185,7 +185,7 @@ void Funkin::CharaSprite::PlayAnimation(const std::string& name)
 
 	if (animator.CurrentAnimation.compare(newName) == 0)
 	{
-		if (animator.AnimationMap[animator.CurrentAnimation].FrameIndex >= 2)
+		if (animator.AnimationMap[animator.CurrentAnimation].FrameIndex >= 6)
 		{
 			animator.SetState(newName);
 		}

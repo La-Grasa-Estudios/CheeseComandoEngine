@@ -22,6 +22,9 @@ Render::ConstantBuffer::ConstantBuffer(size_t size, void* defaultData)
 		.setInitialState(isStatic ? nvrhi::ResourceStates::ConstantBuffer : nvrhi::ResourceStates::Common)
 		.setDebugName("Constant Buffer");
 
+	if (RendererContext::get_api() == RendererAPI::VULKAN)
+		bufferDesc.setInitialState(nvrhi::ResourceStates::ConstantBuffer);
+
 	for (int i = 0; i < MaxInFlightFrames; i++)
 		mHandle[i] = RendererContext::GetDevice()->createBuffer(bufferDesc);
 

@@ -17,6 +17,7 @@ Render::GraphicsCommandBuffer::GraphicsCommandBuffer()
 {
 	nvrhi::CommandListParameters params{};
 	params.queueType = nvrhi::CommandQueue::Graphics;
+	params.enableImmediateExecution = false;
 	mCommandList = RendererContext::GetDevice()->createCommandList(params);
 	mTimerQuery = RendererContext::GetDevice()->createTimerQuery();
 }
@@ -422,7 +423,6 @@ nvrhi::ICommandList* Render::GraphicsCommandBuffer::GetNativeCommandList()
 
 void Render::GraphicsCommandBuffer::RequireFramebufferState(Framebuffer* framebuffer, ResourceState before, ResourceState after)
 {
-
 	nvrhi::IFramebuffer* handle = nullptr;
 
 	mCommitedAnyConstantBuffer = true;
@@ -433,6 +433,11 @@ void Render::GraphicsCommandBuffer::RequireFramebufferState(Framebuffer* framebu
 	else
 	{
 		handle = framebuffer->Handle;
+
+		if (after == ResourceState::Present)
+		{
+			after = ResourceState::CopyDest;
+		}
 	}
 
 	auto& desc = handle->getDesc();
@@ -461,8 +466,10 @@ void Render::GraphicsCommandBuffer::RequireFramebufferState(Framebuffer* framebu
 	}
 }
 
-void Render::GraphicsCommandBuffer::RequireTextureState(ImageResource* pImage, ResourceState before, ResourceState after, nvrhi::TextureSubresourceSet subResources)
+void Render::GraphicsCommandBuffer::RequireTextureState(ImageResource* pImage, ResourceState before, ResourceState after, nvrhi::TextureSubresourceSet subResources, bool vkOptional)
 {
+	if (vkOptional && RendererContext::get_api() != Render::RendererAPI::VULKAN)
+		return;
 	if (!mTrackedResources.contains((uintptr_t)pImage->Handle.Get()))
 	{
 		mTrackedResources.insert((uintptr_t)pImage->Handle.Get());
@@ -472,8 +479,10 @@ void Render::GraphicsCommandBuffer::RequireTextureState(ImageResource* pImage, R
 	mCommitedAnyConstantBuffer = true;
 }
 
-void Render::GraphicsCommandBuffer::RequireBufferState(Buffer* pBuffer, ResourceState before, ResourceState after)
+void Render::GraphicsCommandBuffer::RequireBufferState(Buffer* pBuffer, ResourceState before, ResourceState after, bool vkOptional)
 {
+	if (vkOptional && RendererContext::get_api() != Render::RendererAPI::VULKAN)
+		return;
 	if (!mTrackedResources.contains((uintptr_t)pBuffer->Handle.Get()))
 	{
 		mTrackedResources.insert((uintptr_t)pBuffer->Handle.Get());
@@ -514,6 +523,7 @@ void Render::GraphicsCommandBuffer::UpdateGraphicsState()
 	}
 
 	bool updateBindingState = false;
+	bool isVulkan = RendererContext::get_api() == RendererAPI::VULKAN;
 
 	if (mBindingStateDirty && !mCurrentPipeline->ShaderDesc.UseStaticBinding)
 	{

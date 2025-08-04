@@ -715,7 +715,7 @@ int __cdecl main(int argc, char* argv[])
 		return 0;
 	}
 
-	if (file.ends_with(".zpk") || file.ends_with(".spv")) {
+	if (file.ends_with(".zpk") || file.ends_with(".cso")) {
 		extract = true;
 	}
 
@@ -723,7 +723,7 @@ int __cdecl main(int argc, char* argv[])
 
 		
 
-		if (file.ends_with(".spv"))
+		if (file.ends_with(".cso"))
 		{
 
 			ZVFS::Init();

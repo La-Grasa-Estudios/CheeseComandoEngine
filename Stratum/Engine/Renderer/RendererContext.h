@@ -42,6 +42,7 @@ namespace Render {
 	};
 
 	class GraphicsPipeline;
+	class BackendInitializerVulkan;
 	class BackendInitializerD3D12;
 	class BackendInitializerD3D11;
 
@@ -78,6 +79,7 @@ namespace Render {
 	class RendererContext {
 
 		friend BackendInitializer;
+		friend BackendInitializerVulkan;
 		friend BackendInitializerD3D12;
 		friend BackendInitializerD3D11;
 
