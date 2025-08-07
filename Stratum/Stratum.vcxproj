@@ -185,6 +185,7 @@
     <ClInclude Include="Engine\Entity\Components.h" />
     <ClInclude Include="Engine\Entity\ECS.h" />
     <ClInclude Include="Engine\Entity\EntityManager.h" />
+    <ClInclude Include="Engine\Entity\ClassMetadata.h" />
     <ClInclude Include="Engine\EntryPoint.h" />
     <ClInclude Include="Engine\Event\EventBus.h" />
     <ClInclude Include="Engine\Event\Events.h" />
@@ -393,6 +394,7 @@
     <ClCompile Include="Engine\DevTools\md5.cpp" />
     <ClCompile Include="Engine\DevTools\ShaderCompiler.cpp" />
     <ClCompile Include="Engine\DevTools\ShaderCompiler\ShaderPreprocessor.cpp" />
+    <ClCompile Include="Engine\Entity\ClassMetadata.cpp" />
     <ClCompile Include="Engine\Entity\Components.cpp" />
     <ClCompile Include="Engine\Entity\EntityManager.cpp" />
     <ClCompile Include="Engine\Event\EventBus.cpp" />

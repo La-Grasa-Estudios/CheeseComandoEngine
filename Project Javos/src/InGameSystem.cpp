@@ -648,10 +648,12 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 			if (voicesSource)
 			{
 				voicesSource->Resume();
-				voicesSource->Seek(voicesSource->PositionF());
+				voicesSource->Seek(instSource->PositionF());
 			}
 			if (instSource)
 				instSource->Resume();
+
+			mConductor->SongTime = instSource->PositionF();
 		}
 	}
 

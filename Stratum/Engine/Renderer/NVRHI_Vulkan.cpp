@@ -27,6 +27,9 @@ struct VkContextData
 
 	VkPhysicalDevice physicalDevice;
 	VkPhysicalDeviceProperties physicalDeviceProperties;
+	VkPhysicalDeviceMemoryProperties physicalMemoryProperties;
+
+	Render::GraphicsDeviceProperties gdProperties;
 
 	VkDevice device;
 	VkSwapchainKHR swapChain;
@@ -48,6 +51,12 @@ PFN_vkCreateDebugUtilsMessengerEXT  vkCreateDebugUtilsMessenger = NULL;
 PFN_vkCreateWin32SurfaceKHR vkCreateWin32Surface = NULL;
 
 void checkVulkanResult(VkResult result, const char* msg) {
+#ifndef _DEBUG
+	if (result != VK_SUCCESS)
+	{
+		Z_ERROR("Vulkan validation error: {}", msg);
+	}
+#endif
 	assert(result == VK_SUCCESS, msg);
 }
 
@@ -57,6 +66,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL MyDebugReportCallback(VkDebugUtilsMessageSeverity
 	OutputDebugStringA(": ");
 	OutputDebugStringA(pData->pMessage);
 	OutputDebugStringA("\n");
+
+	Z_ERROR("{}: {}", pData->pMessageIdName, pData->pMessage);
 
 	if (severityFlags >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
 	{
@@ -135,7 +146,14 @@ void Render::BackendInitializerVulkan::InitializeBackend(Internal::Window* pWind
 		}
 	}
 
-	assert(foundExtensions == numberRequiredExtensions, "Could not find required extensions");
+	if (foundExtensions != numberRequiredExtensions)
+	{
+		Z_INFO("Could not find required extensions");
+		for (auto s : requestedExtensions)
+		{
+			Z_INFO(s);
+		}
+	}
 
 	instanceInfo.enabledExtensionCount = (uint32_t)requestedExtensions.size();
 	instanceInfo.ppEnabledExtensionNames = requestedExtensions.data();
@@ -153,16 +171,6 @@ void Render::BackendInitializerVulkan::InitializeBackend(Internal::Window* pWind
 	surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 	surfaceCreateInfo.hinstance = wmInfo.info.win.hinstance;
 	surfaceCreateInfo.hwnd = hWnd;
-
-	auto instanceInfoVk = vk::InstanceCreateInfo()
-		.setPApplicationInfo(&vk::ApplicationInfo()
-			.setPApplicationName("Stratum Engine")
-			.setPEngineName("Stratum Engine")
-			.setApiVersion(VK_API_VERSION_1_2))
-		.setEnabledLayerCount(instanceInfo.enabledLayerCount)
-		.setPpEnabledLayerNames(instanceInfo.ppEnabledLayerNames)
-		.setEnabledExtensionCount(instanceInfo.enabledExtensionCount)
-		.setPpEnabledExtensionNames(instanceInfo.ppEnabledExtensionNames);
 
 	checkVulkanResult(vkCreateInstance(&instanceInfo, NULL, &context.instance), "Failed to create vulkan instance.");
 
@@ -188,6 +196,9 @@ void Render::BackendInitializerVulkan::InitializeBackend(Internal::Window* pWind
 	VkPhysicalDevice* physicalDevices = new VkPhysicalDevice[physicalDeviceCount];
 	vkEnumeratePhysicalDevices(context.instance, &physicalDeviceCount, physicalDevices);
 
+	std::vector<std::tuple<uint32_t, uint32_t, uint32_t>> dedicatedDevices;
+	std::vector<std::tuple<uint32_t, uint32_t, uint32_t>> integratedDevices;
+
 	for (uint32_t i = 0; i < physicalDeviceCount; ++i) {
 
 		VkPhysicalDeviceProperties deviceProperties = {};
@@ -200,6 +211,10 @@ void Render::BackendInitializerVulkan::InitializeBackend(Internal::Window* pWind
 			&queueFamilyCount,
 			queueFamilyProperties);
 
+		uint32_t queuesSupported = 0;
+		uint32_t presentIdx = 0;
+		uint32_t transferIdx = 0;
+
 		for (uint32_t j = 0; j < queueFamilyCount; ++j) {
 
 			VkBool32 supportsPresent;
@@ -207,28 +222,71 @@ void Render::BackendInitializerVulkan::InitializeBackend(Internal::Window* pWind
 				&supportsPresent);
 
 			if (supportsPresent && (queueFamilyProperties[j].queueFlags & VK_QUEUE_GRAPHICS_BIT) && !context.physicalDevice) {
-				context.physicalDevice = physicalDevices[i];
-				context.physicalDeviceProperties = deviceProperties;
-				context.presentQueueIdx = j;
+				queuesSupported++;
+				presentIdx = j;
 			}
 
-			if (queueFamilyProperties[j].queueFlags & VK_QUEUE_TRANSFER_BIT && !(queueFamilyProperties[j].queueFlags & VK_QUEUE_GRAPHICS_BIT && queueFamilyProperties[j].queueFlags & VK_QUEUE_COMPUTE_BIT) && context.physicalDevice == physicalDevices[i])
+			if (queueFamilyProperties[j].queueFlags & VK_QUEUE_TRANSFER_BIT && !(queueFamilyProperties[j].queueFlags & VK_QUEUE_GRAPHICS_BIT && queueFamilyProperties[j].queueFlags & VK_QUEUE_COMPUTE_BIT))
 			{
-				context.transferQueueIdx = j;
+				queuesSupported++;
+				transferIdx = j;
 			}
 		}
-		delete[] queueFamilyProperties;
 
-		if (context.physicalDevice) {
-			break;
+		if (queuesSupported >= 2)
+		{
+			if (deviceProperties.deviceType == VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+			{
+				dedicatedDevices.push_back({ i, presentIdx, transferIdx });
+			}
+			if (deviceProperties.deviceType == VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
+			{
+				integratedDevices.push_back({ i, presentIdx, transferIdx });
+			}
 		}
+
+		delete[] queueFamilyProperties;
 	}
+
+	if (!dedicatedDevices.empty())
+	{
+		auto device = dedicatedDevices[0];
+		VkPhysicalDeviceProperties deviceProperties = {};
+		vkGetPhysicalDeviceProperties(physicalDevices[std::get<0>(device)], &deviceProperties);
+		context.physicalDevice = physicalDevices[std::get<0>(device)];
+		context.physicalDeviceProperties = deviceProperties;
+		context.presentQueueIdx = std::get<1>(device);
+		context.transferQueueIdx = std::get<2>(device);
+	}
+
+	if (!context.physicalDevice && !integratedDevices.empty())
+	{
+		auto device = integratedDevices[0];
+		VkPhysicalDeviceProperties deviceProperties = {};
+		vkGetPhysicalDeviceProperties(physicalDevices[std::get<0>(device)], &deviceProperties);
+		context.physicalDevice = physicalDevices[std::get<0>(device)];
+		context.physicalDeviceProperties = deviceProperties;
+		context.presentQueueIdx = std::get<1>(device);
+		context.transferQueueIdx = std::get<2>(device);
+	}
+
 	delete[] physicalDevices;
 
 	if (!context.physicalDevice) {
 		Z_ERROR("Could not find a suitable physical device for Vulkan.");
-		MessageBoxW(NULL, L"A graphics card with Vulkan 1.2 is required!", L"Incompatible graphics hardware!", MB_OK);
+		MessageBoxW(NULL, L"A graphics card with Vulkan 1.3 is required!", L"Incompatible graphics hardware!", MB_OK);
 		return;
+	}
+
+	vkGetPhysicalDeviceMemoryProperties(context.physicalDevice, &context.physicalMemoryProperties);
+
+	for (int i = 0; i < context.physicalMemoryProperties.memoryHeapCount; i++)
+	{
+		auto& heap = context.physicalMemoryProperties.memoryHeaps[i];
+		if (heap.flags & VkMemoryHeapFlagBits::VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+		{
+			context.gdProperties.DedicatedVideoMemory = glm::max(context.gdProperties.DedicatedVideoMemory, heap.size);
+		}
 	}
 
 	deviceExtensions.push_back("VK_KHR_swapchain");
@@ -260,10 +318,6 @@ void Render::BackendInitializerVulkan::InitializeBackend(Internal::Window* pWind
 	deviceInfo.enabledExtensionCount = deviceExtensions.size();
 	deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-	VkPhysicalDevicePerStageDescriptorSetFeaturesNV perStageDescriptorSetFeatures = {};
-	perStageDescriptorSetFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PER_STAGE_DESCRIPTOR_SET_FEATURES_NV;
-	perStageDescriptorSetFeatures.perStageDescriptorSet = true;
-
 	VkPhysicalDeviceFeatures features = {};
 	features.shaderClipDistance = VK_TRUE;
 	features.samplerAnisotropy = true;
@@ -280,10 +334,16 @@ void Render::BackendInitializerVulkan::InitializeBackend(Internal::Window* pWind
 	features12.descriptorBindingPartiallyBound = VK_TRUE;
 	features12.pNext = &features13;
 
-	perStageDescriptorSetFeatures.pNext = &features12;
-	deviceInfo.pNext = &perStageDescriptorSetFeatures;
+	deviceInfo.pNext = &features12;
 
 	checkVulkanResult(vkCreateDevice(context.physicalDevice, &deviceInfo, NULL, &context.device), "Failed to create logical device!");
+
+	if (!context.device) {
+		Z_ERROR("Could not create the logical device for Vulkan.");
+		Z_ERROR("Trying to use {}", context.physicalDeviceProperties.deviceName);
+		MessageBoxW(NULL, L"Error: Task completed succesfully", L"Incompatible graphics hardware!", MB_OK);
+		return;
+	}
 
 	uint32_t formatCount = 0;
 	vkGetPhysicalDeviceSurfaceFormatsKHR(context.physicalDevice, context.surface,
@@ -344,8 +404,8 @@ void Render::BackendInitializerVulkan::InitializeBackend(Internal::Window* pWind
 
 	VkPresentModeKHR presentationMode = VK_PRESENT_MODE_FIFO_KHR;   // always supported.
 	for (uint32_t i = 0; i < presentModeCount; ++i) {
-		if (presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR) {
-			presentationMode = VK_PRESENT_MODE_MAILBOX_KHR;
+		if (presentModes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR) {
+			presentationMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
 			break;
 		}
 	}
@@ -553,7 +613,7 @@ namespace nvrhi
 
 void Render::BackendInitializerVulkan::Present(Internal::Window* pWindow, RendererContext* pContext)
 {
-	std::scoped_lock lock(nvrhi::vulkan::g_QueueLock);
+	nvrhi::vulkan::g_QueueLock.lock();
 
 	VkFence renderFence;
 	VkFenceCreateInfo fenceCreateInfo = {};
@@ -585,14 +645,245 @@ void Render::BackendInitializerVulkan::Present(Internal::Window* pWindow, Render
 	presentInfo.pResults = NULL;
 	vkQueuePresentKHR(context.presentQueue, &presentInfo);
 
+	if (RequiresResize(pWindow))
+	{
+		context.WindowSize = pWindow->GetFramebuffer()->GetSize();
+
+		vkDeviceWaitIdle(context.device);
+		vkQueueWaitIdle(context.presentQueue);
+		vkQueueWaitIdle(context.copyQueue);
+
+		pContext->pDevice->waitForIdle();
+		pContext->pDevice->runGarbageCollection();
+
+		for (int i = 0; i < Render::MaxInFlightFrames; i++)
+		{
+			pContext->NvFramebufferRtvs[i] = nullptr;
+			pContext->NvBackBuffers[i] = nullptr;
+		}
+
+		pContext->pDevice->waitForIdle();
+		pContext->pDevice->runGarbageCollection();
+
+		vkDestroySwapchainKHR(context.device, context.swapChain, nullptr);
+
+		uint32_t formatCount = 0;
+		vkGetPhysicalDeviceSurfaceFormatsKHR(context.physicalDevice, context.surface,
+			&formatCount, NULL);
+		VkSurfaceFormatKHR* surfaceFormats = new VkSurfaceFormatKHR[formatCount];
+		vkGetPhysicalDeviceSurfaceFormatsKHR(context.physicalDevice, context.surface,
+			&formatCount, surfaceFormats);
+
+		// If the format list includes just one entry of VK_FORMAT_UNDEFINED, the surface has
+		// no preferred format. Otherwise, at least one supported format will be returned.
+		VkFormat colorFormat;
+		if (formatCount == 1 && surfaceFormats[0].format == VK_FORMAT_UNDEFINED) {
+			colorFormat = VK_FORMAT_B8G8R8_UNORM;
+		}
+		else {
+			colorFormat = surfaceFormats[0].format;
+		}
+		VkColorSpaceKHR colorSpace;
+		colorSpace = surfaceFormats[0].colorSpace;
+		delete[] surfaceFormats;
+
+		VkSurfaceCapabilitiesKHR surfaceCapabilities = {};
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.physicalDevice, context.surface,
+			&surfaceCapabilities);
+
+		// we are effectively looking for double-buffering:
+		// if surfaceCapabilities.maxImageCount == 0 there is actually no limit on the number of images! 
+		uint32_t desiredImageCount = Render::MaxInFlightFrames;
+		if (desiredImageCount < surfaceCapabilities.minImageCount) {
+			desiredImageCount = surfaceCapabilities.minImageCount;
+		}
+		else if (surfaceCapabilities.maxImageCount != 0 &&
+			desiredImageCount > surfaceCapabilities.maxImageCount) {
+			desiredImageCount = surfaceCapabilities.maxImageCount;
+		}
+
+		VkExtent2D surfaceResolution = surfaceCapabilities.currentExtent;
+		surfaceResolution.width = context.WindowSize.x;
+		surfaceResolution.height = context.WindowSize.y;
+
+		VkSurfaceTransformFlagBitsKHR preTransform = surfaceCapabilities.currentTransform;
+		if (surfaceCapabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) {
+			preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+		}
+
+		uint32_t presentModeCount = 0;
+		vkGetPhysicalDeviceSurfacePresentModesKHR(context.physicalDevice, context.surface,
+			&presentModeCount, NULL);
+		VkPresentModeKHR* presentModes = new VkPresentModeKHR[presentModeCount];
+		vkGetPhysicalDeviceSurfacePresentModesKHR(context.physicalDevice, context.surface,
+			&presentModeCount, presentModes);
+
+		VkPresentModeKHR presentationMode = VK_PRESENT_MODE_FIFO_KHR;   // always supported.
+		for (uint32_t i = 0; i < presentModeCount; ++i) {
+			if (presentModes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR) {
+				presentationMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+				break;
+			}
+		}
+		delete[] presentModes;
+
+		VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
+		swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		swapChainCreateInfo.surface = context.surface;
+		swapChainCreateInfo.minImageCount = desiredImageCount;
+		swapChainCreateInfo.imageFormat = colorFormat;
+		swapChainCreateInfo.imageColorSpace = colorSpace;
+		swapChainCreateInfo.imageExtent = surfaceResolution;
+		swapChainCreateInfo.imageArrayLayers = 1;
+		swapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		swapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;   // <--
+		swapChainCreateInfo.preTransform = preTransform;
+		swapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		swapChainCreateInfo.presentMode = presentationMode;
+		swapChainCreateInfo.clipped = true;     // If we want clipping outside the extents
+		// (remember our device features?)
+
+		checkVulkanResult(vkCreateSwapchainKHR(context.device, &swapChainCreateInfo, NULL, &context.swapChain), "Failed to create swapchain.");
+
+		VkImageViewCreateInfo presentImagesViewCreateInfo = {};
+		presentImagesViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		presentImagesViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		presentImagesViewCreateInfo.format = colorFormat;
+		presentImagesViewCreateInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
+		presentImagesViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		presentImagesViewCreateInfo.subresourceRange.baseMipLevel = 0;
+		presentImagesViewCreateInfo.subresourceRange.levelCount = 1;
+		presentImagesViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+		presentImagesViewCreateInfo.subresourceRange.layerCount = 1;
+
+		VkCommandBufferBeginInfo beginInfo = {};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		VkFenceCreateInfo fenceCreateInfo = {};
+		fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		VkFence submitFence;
+		vkCreateFence(context.device, &fenceCreateInfo, NULL, &submitFence);
+
+		uint32_t imageCount = 0;
+		vkGetSwapchainImagesKHR(context.device, context.swapChain, &imageCount, NULL);
+		vkGetSwapchainImagesKHR(context.device, context.swapChain, &imageCount, context.presentImages);
+
+		bool* transitioned = new bool[imageCount];
+		memset(transitioned, 0, sizeof(bool) * imageCount);
+		uint32_t doneCount = 0;
+		while (doneCount != imageCount) {
+
+			VkSemaphore presentCompleteSemaphore;
+			VkSemaphoreCreateInfo semaphoreCreateInfo = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, 0, 0 };
+			vkCreateSemaphore(context.device, &semaphoreCreateInfo, NULL, &presentCompleteSemaphore);
+
+			uint32_t nextImageIdx;
+			vkAcquireNextImageKHR(context.device, context.swapChain, UINT64_MAX,
+				presentCompleteSemaphore, VK_NULL_HANDLE, &nextImageIdx);
+
+			if (!transitioned[nextImageIdx]) {
+
+				// start recording out image layout change barrier on our setup command buffer:
+				vkBeginCommandBuffer(context.setupCmdBuffer, &beginInfo);
+
+				VkImageMemoryBarrier layoutTransitionBarrier = {};
+				layoutTransitionBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+				layoutTransitionBarrier.srcAccessMask = 0;
+				layoutTransitionBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+				layoutTransitionBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+				layoutTransitionBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+				layoutTransitionBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				layoutTransitionBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+				layoutTransitionBarrier.image = context.presentImages[nextImageIdx];
+				VkImageSubresourceRange resourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+				layoutTransitionBarrier.subresourceRange = resourceRange;
+
+				vkCmdPipelineBarrier(context.setupCmdBuffer,
+					VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+					VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+					0,
+					0, NULL,
+					0, NULL,
+					1, &layoutTransitionBarrier);
+
+				vkEndCommandBuffer(context.setupCmdBuffer);
+
+				VkPipelineStageFlags waitStageMash[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+				VkSubmitInfo submitInfo = {};
+				submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+				submitInfo.waitSemaphoreCount = 1;
+				submitInfo.pWaitSemaphores = &presentCompleteSemaphore;
+				submitInfo.pWaitDstStageMask = waitStageMash;
+				submitInfo.commandBufferCount = 1;
+				submitInfo.pCommandBuffers = &context.setupCmdBuffer;
+				submitInfo.signalSemaphoreCount = 0;
+				submitInfo.pSignalSemaphores = NULL;
+				vkQueueSubmit(context.presentQueue, 1, &submitInfo, submitFence);
+
+				vkWaitForFences(context.device, 1, &submitFence, VK_TRUE, UINT64_MAX);
+				vkResetFences(context.device, 1, &submitFence);
+
+				vkDestroySemaphore(context.device, presentCompleteSemaphore, NULL);
+
+				vkResetCommandBuffer(context.setupCmdBuffer, 0);
+
+				transitioned[nextImageIdx] = true;
+				doneCount++;
+				pContext->pDevice->waitForIdle();
+			}
+
+			VkPresentInfoKHR presentInfo = {};
+			presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+			presentInfo.waitSemaphoreCount = 0;
+			presentInfo.pWaitSemaphores = NULL;
+			presentInfo.swapchainCount = 1;
+			presentInfo.pSwapchains = &context.swapChain;
+			presentInfo.pImageIndices = &nextImageIdx;
+			vkQueuePresentKHR(context.presentQueue, &presentInfo);
+		}
+		delete[] transitioned;
+
+		pContext->pDevice->waitForIdle();
+
+		for (int i = 0; i < desiredImageCount; ++i)
+		{
+			auto textureDesc = nvrhi::TextureDesc()
+				.setDimension(nvrhi::TextureDimension::Texture2D)
+				.setFormat(nvrhi::Format::BGRA8_UNORM)
+				.setWidth(context.WindowSize.x)
+				.setHeight(context.WindowSize.y)
+				.setIsRenderTarget(true)
+				.setInitialState(nvrhi::ResourceStates::Present)
+				.setKeepInitialState(false)
+				.setDebugName("Swap Chain Image");
+
+			pContext->NvBackBuffers[i] = pContext->pDevice->createHandleForNativeTexture(nvrhi::ObjectTypes::VK_Image, context.presentImages[i], textureDesc);
+			nvrhi::vulkan::g_QueueLock.unlock();
+			mCommandList->open();
+			mCommandList->setEnableAutomaticBarriers(false);
+			mCommandList->beginTrackingTextureState(pContext->NvBackBuffers[i], nvrhi::AllSubresources, nvrhi::ResourceStates::Unknown);
+			mCommandList->setTextureState(pContext->NvBackBuffers[i], nvrhi::AllSubresources, nvrhi::ResourceStates::Present);
+			mCommandList->close();
+			pContext->pDevice->executeCommandList(mCommandList);
+			pContext->pDevice->waitForIdle();
+			nvrhi::vulkan::g_QueueLock.lock();
+		}
+
+		frameIndex = Render::MaxInFlightFrames - 1;
+	}
+
 	frameIndex = (frameIndex + 1) % Render::MaxInFlightFrames;
 	pContext->FrameIndex = frameIndex;
+
+	nvrhi::vulkan::g_QueueLock.unlock();
 
 }
 
 bool Render::BackendInitializerVulkan::RequiresResize(Internal::Window* pWindow)
 {
-	return false;
+	glm::ivec2 size = pWindow->GetFramebuffer()->GetSize();
+	return size != context.WindowSize;
 }
 
 void Render::BackendInitializerVulkan::ImGuiInit(Internal::Window* window)
@@ -615,6 +906,6 @@ Render::GraphicsDeviceProperties Render::BackendInitializerVulkan::GetGraphicsDe
 {
 	GraphicsDeviceProperties device{};
 	device.Description = context.physicalDeviceProperties.deviceName;
-	device.DedicatedVideoMemory = 0; // Vulkan does not provide a way to query this
+	device.DedicatedVideoMemory = context.gdProperties.DedicatedVideoMemory;
 	return device;
 }

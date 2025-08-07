@@ -96,7 +96,7 @@ public:
 	{
 		if (!mCustomComponents.contains(name))
 			return NULL;
-		return reinterpret_cast<ECS::ComponentManager<T>*>(mCustomComponents[name]);
+		return reinterpret_cast<ECS::ComponentManager<T>*>(std::get<1>(mCustomComponents[name]));
 	}
 
 	glm::vec2 VirtualScreenSize = {};
@@ -116,7 +116,7 @@ private:
 	void UpdateGuiAnchors();
 	void UpdateVideoPlayers();
 
-	std::unordered_map<std::string, ECS::ComponentManager_Interface*> mCustomComponents;
+	std::unordered_map<std::string, std::tuple<bool, ECS::ComponentManager_Interface*>> mCustomComponents;
 	std::vector<ISceneSystem*> mSystems;
 
 	Render::CopyCommandBuffer* mVideoCopyCommandBuffer;

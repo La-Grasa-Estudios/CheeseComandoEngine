@@ -9,6 +9,8 @@
 #include "Scene/Renderer3D.h"
 #include "Scene/Renderer2D.h"
 
+#include <Entity/ClassMetadata.h>
+
 #include "VFS/ZVFS.h"
 #include "Input/Input.h"
 #include "Media/VideoDecode.h"
@@ -251,6 +253,8 @@ void Application::Run(std::vector<std::string> args)
 
 	Input::Init(m_Window->GetHandle());
 	EventBus::InvokeEvent(EngineModuleInitEvent(EngineModuleInitEvent::ENGINE_MODULE_INPUT));
+
+	ComponentMetadata::Init();
 
 	// Remove this on retail builds?
 	ShaderCompiler::build_object("shaders/video_gbar_to_rgba.hlsl", "Data/shaders/video_gbar_to_rgba.cso", ShaderCompiler::shader_type::vertex, 1);

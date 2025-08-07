@@ -101,6 +101,14 @@ namespace ECS
 			return mEntities;
 		}
 
+		const char* GetTypeName()
+		{
+			std::string_view typeName = typeid(Component).name();
+			size_t pos = typeName.find_last_of(':');
+			std::string_view structName = typeName.substr(pos + 1);
+			return structName.data();
+		}
+
 	private:
 
 		std::vector<edict_t> mEntities;

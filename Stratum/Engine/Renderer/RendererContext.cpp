@@ -184,6 +184,16 @@ void RendererContext::present(Internal::Window* window)
             rtvDescription.addColorAttachment(NvBackBuffers[i].Get());
             rtvDescription.setDepthAttachment(NvDepthBuffers[i].Get());
 
+            auto cmdList = pDevice->createCommandList();
+
+            cmdList->open();
+            cmdList->setEnableAutomaticBarriers(false);
+            cmdList->beginTrackingTextureState(NvDepthBuffers[i], nvrhi::AllSubresources, nvrhi::ResourceStates::Unknown);
+            cmdList->setTextureState(NvDepthBuffers[i], nvrhi::AllSubresources, nvrhi::ResourceStates::Present);
+            cmdList->close();
+            pDevice->executeCommandList(cmdList);
+            pDevice->waitForIdle();
+
             NvFramebufferRtvs[i] = pDevice->createFramebuffer(rtvDescription);
         }
     }

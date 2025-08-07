@@ -666,6 +666,9 @@
     <ClInclude Include="Engine\Thirdparty\vk_video\vulkan_video_codecs_common.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Entity\ClassMetadata.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\Asset\ShaderPermutationFile.cpp">
@@ -1014,6 +1017,9 @@
       <Filter>Archivos de origen</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Thirdparty\imgui\implot_items.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Entity\ClassMetadata.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>

@@ -5,6 +5,7 @@
 #include "glm/ext.hpp"
 
 #include "ComponentManager.h"
+
 #include "Renderer/BindlessDescriptorIndex.h"
 
 BEGIN_ENGINE
@@ -61,6 +62,13 @@ struct MeshRendererComponent
 
 	int32_t VertexBufferDescriptorIndex = -1;
 	int32_t IndexBufferDescriptorIndex = -1;
+
+	bool CastShadows = true;
+};
+
+struct DynamicMeshLoaderComponent
+{
+	std::string Path;
 };
 
 struct SpriteRendererComponent
@@ -89,6 +97,13 @@ struct SpriteRendererComponent
 
 	Render::GraphicsPipeline* pCustomShader = nullptr; // Leave null to use the default sprite shader
 
+};
+
+struct SpriteRendererLoaderComponent
+{
+	glm::ivec2 RectSize;
+	glm::ivec2 RectPosition;
+	std::string SpritePath;
 };
 
 struct SpriteAnimator

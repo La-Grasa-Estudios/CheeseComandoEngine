@@ -23,15 +23,19 @@
 
 using namespace ENGINE_NAMESPACE;
 
+#define INIT_COMPONENT_MANAGER(manager) mCustomComponents[manager.GetTypeName()] = { false, &manager }; manager.Init(&EntityManager);
+
 Scene::Scene()
 {
-	Names.Init(&EntityManager);
-	Transforms.Init(&EntityManager);
-	Renderers.Init(&EntityManager);
-	SpriteRenderers.Init(&EntityManager);
-	SpriteAnimators.Init(&EntityManager);
-	GuiAnchors.Init(&EntityManager);
-	VideoSurfaces.Init(&EntityManager);
+	INIT_COMPONENT_MANAGER(Names);
+	INIT_COMPONENT_MANAGER(Transforms);
+	INIT_COMPONENT_MANAGER(Renderers);
+	INIT_COMPONENT_MANAGER(SpriteRenderers);
+	INIT_COMPONENT_MANAGER(SpriteAnimators);
+	INIT_COMPONENT_MANAGER(GuiAnchors);
+	INIT_COMPONENT_MANAGER(VideoSurfaces);
+	INIT_COMPONENT_MANAGER(TextComponents);
+	INIT_COMPONENT_MANAGER(TextRenderers);
 
 	mVideoCopyCommandBuffer = new Render::CopyCommandBuffer();
 
@@ -45,9 +49,6 @@ Scene::~Scene()
 		if (VideoSurfaces.mAllocatedArray[i] && VideoSurfaces.mComponentArray[i].mDecoder)
 		{
 			VideoDecode* decode = reinterpret_cast<VideoDecode*>(VideoSurfaces.mComponentArray[i].mDecoder);
-			// This is hot shit.
-			// But for some reason without this the whole engine stutters to hell.
-			// TO DO: Make our own abstraction of the libav library
 			delete decode;
 
 			VideoSurfaces.mComponentArray[i].mDecoder = 0;
@@ -58,12 +59,15 @@ Scene::~Scene()
 
 	for (auto p : mCustomComponents)
 	{
-		delete p.second;
+		if (std::get<0>(p.second))
+			delete std::get<1>(p.second);
 	}
 	for (auto p : mSystems)
 	{
 		delete p;
 	}
+
+	delete mVideoCopyCommandBuffer;
 }
 
 void Scene::InitBindlessTable(nvrhi::IBindingLayout* bindingLayout)
@@ -286,7 +290,7 @@ void Scene::LoadModel(const std::string& path, const ECS::edict_t edict)
 void Scene::RegisterCustomComponent(ECS::ComponentManager_Interface* pInterface, const std::string& name)
 {
 	pInterface->Init(&EntityManager);
-	mCustomComponents[name] = pInterface;
+	mCustomComponents[name] = { true, pInterface };
 }
 
 void Scene::RegisterCustomSystem(ISceneSystem* pSystem, bool initImmediately)
