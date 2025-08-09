@@ -1,2 +1,0 @@
-﻿MSVCRT.lib(exe_main.obj) : error LNK2001: símbolo externo main sin resolver
-C:\Users\Pedro\Documents\GitHub\CheeseComandoEngine\x64\Release\Stratum-Shaders.exe : fatal error LNK1120: 1 externos sin resolver

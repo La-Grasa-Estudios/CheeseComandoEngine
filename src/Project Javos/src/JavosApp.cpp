@@ -1,0 +1,52 @@
+#include "JavosApp.h"
+
+#include "LoadingScreenSystem.h"
+#include "Cursed/BalatroSystem.h"
+#include "Song/BiteFernanSong.h"
+#include "Song/ErectDadBattleSong.h"
+
+#include <DevTools/ShaderCompiler.h>
+
+#undef min
+#undef max
+
+Funkin::JavosApp::JavosApp(Stratum::ApplicationInfo appInfo) : Stratum::Application(appInfo)
+{
+}
+
+void Funkin::JavosApp::OnInit()
+{
+	srand(static_cast<unsigned int>(time(nullptr)));
+
+	using namespace Stratum;
+	ShaderCompiler::build_object("shaders/2d/balatro_bg.hlsl", "Data/shaders/2d/balatro_bg.cso", ShaderCompiler::shader_type::vertex);
+	ShaderCompiler::build_object("shaders/2d/balatro_dissolve.hlsl", "Data/shaders/2d/balatro_dissolve.cso", ShaderCompiler::shader_type::vertex);
+
+	LoadChartParams params;
+	params.ChartPath = "fnf/data/bite/bite-fernan.json";
+	params.ChartPath = "fnf/data/dad-battle/dad-battle-hard.json";
+	params.ChartPath = "fnf/data/erect-dadbattle/erect-dadbattle-erect.json";
+	// params.SongScript = CreateRef<BiteFernanSong>();
+	params.SongScript = CreateRef<ErectDadBattleSong>();
+
+	auto scene = new Stratum::Scene();
+	SetScene(scene);
+
+	//scene->RegisterCustomSystem(new BalatroSystem());
+	scene->RegisterCustomSystem(new LoadingScreenSystem(params));
+}
+
+void Funkin::JavosApp::OnFrameUpdate()
+{
+
+}
+
+void Funkin::JavosApp::OnFrameRenderImGui()
+{
+	Application::OnFrameRenderImGui();
+}
+
+void Funkin::JavosApp::Cleanup()
+{
+	
+}

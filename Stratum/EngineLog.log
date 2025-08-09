@@ -1,9 +1,0 @@
-[ERROR] Failed to mount directory Pak
-[WARNING] No listeners found for event: init_window
-[WARNING] No listeners found for event: init_modules
-[INFO] Radeon RX 580 Series, VRAM: 8135 MB, SHARED: 8125 MB, USED: 0 MB
-[WARNING] No listeners found for event: init_media
-[WARNING] No listeners found for event: late_init
-[WARNING] Failed to open Data/config/startup.cfg
-[WARNING] Failed to open Data/config/autoexec.cfg
-[WARNING] No listeners found for event: post_init

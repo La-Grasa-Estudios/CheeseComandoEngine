@@ -1,0 +1,1 @@
+Build\Tools\premake5 --file=src/premake.lua vs2022
