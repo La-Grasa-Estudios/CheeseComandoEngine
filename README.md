@@ -8,9 +8,20 @@ Goals:
 + Clustered Deferred rendering
 + Async Compute
 
+## Building
+
+### Windows
+
+Just run generate-vs2022.bat, premake should generate project files in the "projects/" directory and the solution file in the root directory
+
+### Linux
+
+¯\\_(ツ)__/¯
+
 ## Run
 
-Requires atleast a GPU with DirectX 12 drivers, feature level 11.0, shader model 6.5 and resource binding tier 2.
+Requires atleast a GPU with DirectX 12 drivers, feature level 11.0, shader model 6.5 and resource binding tier 2.  
+Requires atleast a GPU with Vulkan 1.3, VK_KHR_surface, (Windows) VK_KHR_win32_surface, VK_KHR_swapchain & VK_KHR_synchronization2
 
 ## Dependencies
 
