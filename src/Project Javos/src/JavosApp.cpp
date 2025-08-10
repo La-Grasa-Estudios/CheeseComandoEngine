@@ -25,9 +25,9 @@ void Funkin::JavosApp::OnInit()
 	LoadChartParams params;
 	params.ChartPath = "fnf/data/bite/bite-fernan.json";
 	//params.ChartPath = "fnf/data/dad-battle/dad-battle-hard.json";
-	//params.ChartPath = "fnf/data/erect-dadbattle/erect-dadbattle-erect.json";
-	params.SongScript = CreateRef<BiteFernanSong>();
-	//params.SongScript = CreateRef<ErectDadBattleSong>();
+	params.ChartPath = "fnf/data/erect-dadbattle/erect-dadbattle-erect.json";
+	//params.SongScript = CreateRef<BiteFernanSong>();
+	params.SongScript = CreateRef<ErectDadBattleSong>();
 
 	auto scene = new Stratum::Scene();
 	SetScene(scene);

@@ -118,9 +118,9 @@ struct AssetPackerEntry {
 
 static bool IsSupportedCompressableImageFile(std::filesystem::path path) {
     // Image compression is broken for some reason
-    // std::string ex = path.extension().string();
-    // return (strncmp(ex.c_str(), ".png", 4) == 0 || strncmp(ex.c_str(), ".tga", 4) == 0 || strncmp(ex.c_str(), ".jpg", 4) == 0 ||
-    //     strncmp(ex.c_str(), ".bmp", 4) == 0 || strncmp(ex.c_str(), ".hdr", 4) == 0);
+     std::string ex = path.extension().string();
+     return (strncmp(ex.c_str(), ".png", 4) == 0 || strncmp(ex.c_str(), ".tga", 4) == 0 || strncmp(ex.c_str(), ".jpg", 4) == 0 ||
+         strncmp(ex.c_str(), ".bmp", 4) == 0 || strncmp(ex.c_str(), ".hdr", 4) == 0);
     return false;
 }
 
@@ -353,6 +353,8 @@ static uint8_t* CompressImageFile(uint8_t* buffer, uint32_t size, uint32_t* pNew
     if (!(width % 4 == 0 && height % 4 == 0) || (nrChannels <= 2)) {
         // Non power of 4 or is less than 3 channels, so leave it uncompressed
 
+        return NULL;
+
         Z_INFO("Skipping {} by {} image since bc7 does not support non power of 4 textures", width, height);
 
         header[5] = 0;
@@ -439,9 +441,12 @@ void AssetPacker::Pack(std::string directory, std::string out, bool dirIsRoot, c
 
                     if (IsSupportedCompressableImageFile(path)) {
                         char* image = reinterpret_cast<char*>(CompressImageFile(reinterpret_cast<uint8_t*>(data), size, &size));
-                        delete[] data;
-                        data = image;
-                        path.replace_extension(".bc7");
+                        if (image)
+                        {
+                            delete[] data;
+                            data = image;
+                            path.replace_extension(".bc7");
+                        }
                     }
 
                     bool supportsCompression = true;
