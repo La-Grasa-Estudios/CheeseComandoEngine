@@ -22,7 +22,7 @@ extern Funkin::GameState gGameState;
 
 void Funkin::BiteFernanSong::Init(Conductor* pConductor, InGameSystem* pIngameSystem, Stratum::Scene* pScene)
 {
-	//pIngameSystem->CameraZoomModifier = 0.4f;
+	// pIngameSystem->CameraZoomModifier = 0.4f;
 
 	startupVideo = 0;
 	mConductor = pConductor;

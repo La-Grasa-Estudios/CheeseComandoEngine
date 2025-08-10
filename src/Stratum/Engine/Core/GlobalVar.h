@@ -3,6 +3,8 @@
 #include "znmsp.h"
 
 #include <functional>
+#include <string>
+#include <string_view>
 
 BEGIN_ENGINE
 
@@ -21,10 +23,10 @@ public:
 	VarType type;
 	char* data = 0;
 
-	inline int32_t asInt();
-	inline float_t asFloat();
-	inline bool asBool();
-	inline std::string str();
+	int32_t asInt();
+	float_t asFloat();
+	bool asBool();
+	std::string str();
 
 	void setOnModifyCallback(std::function<void(ConsoleVar&)> callback);
 
