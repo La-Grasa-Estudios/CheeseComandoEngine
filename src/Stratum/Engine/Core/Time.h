@@ -24,6 +24,8 @@ public:
 	inline static std::atomic<float> GPUTime = 0.0F;
 	inline static float UpdateTime = 0.0F;
 
+	inline static bool SkipFrame = false;
+
 	static long nanoTime();
 
 	static void BeginProfile();

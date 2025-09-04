@@ -441,7 +441,7 @@ void Funkin::StageEditorSystem::EditCharacter()
 		cameraPosition = glm::mix(cameraPosition, glm::vec2(0.0f), 3.0f * Stratum::gpGlobals->deltaTime);
 	}
 
-	mScene->RenderPath3D->RenderPath2D->SetCameraPosition(cameraPosition);
+	// mScene->RenderPath2D->SetCameraPosition(cameraPosition);
 
 	ImGui::End();
 }

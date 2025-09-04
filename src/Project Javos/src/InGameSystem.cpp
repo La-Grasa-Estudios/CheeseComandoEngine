@@ -25,7 +25,7 @@
 #include <Thirdparty/imgui/imgui.h>
 #include <json/json.hpp>
 
-#include "Song/BiteFernanSong.h"
+#include "MainMenuSystem.h"
 
 Funkin::GameState gGameState;
 
@@ -33,6 +33,9 @@ Funkin::GameState gGameState;
 #undef max
 
 float gMissTimer = 0.0f;
+
+Stratum::ECS::edict_t MainCameraEntity = 0;
+Stratum::ECS::edict_t GuiCameraEntity = 0;
 
 Funkin::InGameSystem::InGameSystem(const LoadChartParams& params) : mLoadParams(params)
 {
@@ -47,6 +50,7 @@ Funkin::InGameSystem::~InGameSystem()
 		voicesSource->Stop();
 	instSource = NULL;
 	voicesSource = NULL;
+	pauseSource->Stop();
 }
 
 void Funkin::InGameSystem::Init(Stratum::Scene* scene)
@@ -56,6 +60,32 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 
 	StageRegistry::Init(mScene);
 	CharaRegistry::Init(mScene);
+
+	{
+		auto entity = MainCameraEntity = scene->EntityManager.CreateEntity();
+		auto& camera = scene->Cameras.Create(entity);
+		auto& transform = scene->Transforms.Create(entity);
+		camera.RendersToGui = true;
+		camera.Orthographic = true;
+	}
+
+	{
+		auto entity = GuiCameraEntity = scene->EntityManager.CreateEntity();
+		auto& camera = scene->Cameras.Create(entity);
+		auto& transform = scene->Transforms.Create(entity);
+		camera.RendersToGui = true;
+		camera.Orthographic = true;
+		camera.RenderLayer = 4;
+	}
+
+	{
+		auto entity = scene->EntityManager.CreateEntity();
+		auto& camera = scene->Cameras.Create(entity);
+		auto& transform = scene->Transforms.Create(entity);
+		camera.RendersToGui = true;
+		camera.Orthographic = true;
+		camera.RenderLayer = 5;
+	}
 
 	scrollSource = Stratum::CreateRef<Stratum::MP3AudioSource>("fnf/sounds/scrollMenu.mp3", mScene->AudioEngine->GetEngine());
 	pauseSource = Stratum::CreateRef<Stratum::MP3AudioSource>("fnf/music/breakfast.mp3", mScene->AudioEngine->GetEngine());
@@ -175,7 +205,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 
 	auto& sprite = mScene->SpriteRenderers.Create(mWhiteSprite);
 	sprite.Rect = { glm::ivec2(0, 0), glm::ivec2(10000, 10000) };
-	sprite.IsGui = true;
+	sprite.CameraLayer = 4;
 	sprite.RenderLayer = 100;
 	sprite.SpriteColor.a = 0.0f;
 
@@ -218,7 +248,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		scene->TextComponents.Get(entity).Font = "Funkin";
 		scene->TextRenderers.Create(entity).Alignment = 0.0f;
 		scene->TextRenderers.Get(entity).RenderLayer = 10000;
-		scene->TextRenderers.Get(entity).IsGui = true;
+		scene->TextRenderers.Get(entity).CameraLayer = 5;
 		scene->Transforms.Create(entity);
 		scene->GuiAnchors.Create(entity).AnchorPoint = Stratum::GuiAnchorPoint::LEFT;
 		scene->GuiAnchors.Get(entity).Position.y += 70.0f;
@@ -233,7 +263,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		scene->TextComponents.Get(entity).Font = "Funkin";
 		scene->TextRenderers.Create(entity).Alignment = 0.0f;
 		scene->TextRenderers.Get(entity).RenderLayer = 10000;
-		scene->TextRenderers.Get(entity).IsGui = true;
+		scene->TextRenderers.Get(entity).CameraLayer = 5;
 		scene->Transforms.Create(entity);
 		scene->GuiAnchors.Create(entity).AnchorPoint = Stratum::GuiAnchorPoint::LEFT;
 		scene->GuiAnchors.Get(entity).Position.y += 0.0f;
@@ -248,7 +278,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		scene->TextComponents.Get(entity).Font = "Funkin";
 		scene->TextRenderers.Create(entity).Alignment = 0.0f;
 		scene->TextRenderers.Get(entity).RenderLayer = 10000;
-		scene->TextRenderers.Get(entity).IsGui = true;
+		scene->TextRenderers.Get(entity).CameraLayer = 5;
 		scene->Transforms.Create(entity);
 		scene->GuiAnchors.Create(entity).AnchorPoint = Stratum::GuiAnchorPoint::LEFT;
 		scene->GuiAnchors.Get(entity).Position.y += -70.0f;
@@ -263,7 +293,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		scene->TextComponents.Get(entity).Font = "Funkin";
 		scene->TextRenderers.Create(entity).Alignment = 0.0f;
 		scene->TextRenderers.Get(entity).RenderLayer = 10000;
-		scene->TextRenderers.Get(entity).IsGui = true;
+		scene->TextRenderers.Get(entity).CameraLayer = 5;
 		scene->Transforms.Create(entity);
 		scene->GuiAnchors.Create(entity).AnchorPoint = Stratum::GuiAnchorPoint::LEFT;
 		scene->GuiAnchors.Get(entity).Position.y += -70.0f;
@@ -278,7 +308,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		scene->TextComponents.Get(entity).Font = "Funkin";
 		scene->TextRenderers.Create(entity).Alignment = 0.0f;
 		scene->TextRenderers.Get(entity).RenderLayer = 10000;
-		scene->TextRenderers.Get(entity).IsGui = true;
+		scene->TextRenderers.Get(entity).CameraLayer = 5;
 		scene->Transforms.Create(entity);
 		scene->GuiAnchors.Create(entity).AnchorPoint = Stratum::GuiAnchorPoint::LEFT;
 		scene->GuiAnchors.Get(entity).Position.y += -70.0f;
@@ -292,7 +322,7 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 		scene->TextComponents.Get(entity).Text = L">";
 		scene->TextRenderers.Create(entity).Alignment = 0.0f;
 		scene->TextRenderers.Get(entity).RenderLayer = 10000;
-		scene->TextRenderers.Get(entity).IsGui = true;
+		scene->TextRenderers.Get(entity).CameraLayer = 5;
 		scene->Transforms.Create(entity);
 		scene->GuiAnchors.Create(entity).AnchorPoint = Stratum::GuiAnchorPoint::LEFT;
 		scene->GuiAnchors.Get(entity).Position.y += -70.0f;
@@ -308,6 +338,7 @@ void Funkin::InGameSystem::OnActivate(Stratum::Scene* scene)
 				return;
 			if (voicesSource)
 				voicesSource->SetVolume(0.2f);
+			Stratum::Input::SetGamepadRumble(1.0f, 1.0f, 200);
 			missSources[rand() % 3]->Play();
 			gMissTimer = 0.4f;
 		};
@@ -369,7 +400,7 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 
 	}
 
-	if (Stratum::Input::GetKeyDown(KeyCode::F11))
+	if (Stratum::Input::GetKeyDown(KeyCode::F11) || Stratum::Input::GetGamepadButtonDown(GamepadButton::BACK))
 	{
 		static bool fs = false;
 		scene->Window->SetFullScreen(fs = !fs);
@@ -476,8 +507,13 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 	GuiZoomLevel = glm::mix(GuiZoomLevel, 1.0f, 5.0f * Stratum::gpGlobals->deltaTime);
 	GuiZoomModifier = glm::mix(GuiZoomModifier, 0.0f, 2.5f * Stratum::gpGlobals->deltaTime);
 
-	scene->RenderPath3D->RenderPath2D->SetGuiCameraZoom({ GuiZoomLevel + GuiZoomModifier, GuiZoomLevel + GuiZoomModifier });
-	scene->RenderPath3D->RenderPath2D->SetCameraZoom({ ZoomLevel, ZoomLevel });
+	auto& mainCameraTransform = scene->Transforms.Get(MainCameraEntity);
+	auto& mainCamera = scene->Cameras.Get(MainCameraEntity);
+	auto& guiCameraTransform = scene->Transforms.Get(GuiCameraEntity);
+	auto& guiCamera = scene->Cameras.Get(GuiCameraEntity);
+
+	mainCamera.OrthographicZoom = 1.0f / ZoomLevel;
+	guiCamera.OrthographicZoom = 1.0f / (GuiZoomLevel + GuiZoomModifier);
 
 	if (TrackPlayersEnabled)
 	{
@@ -517,10 +553,10 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 				target.y += 60.0f;
 		}
 
-		gGameState.CameraPosition = glm::mix(gGameState.CameraPosition, target * ZoomLevel, 3.0f * Stratum::gpGlobals->deltaTime);
+		gGameState.CameraPosition = glm::mix(gGameState.CameraPosition, target, 3.0f * Stratum::gpGlobals->deltaTime);
 	}
 
-	scene->RenderPath3D->RenderPath2D->SetCameraPosition(gGameState.CameraPosition);
+	mainCameraTransform.SetPosition(glm::vec3(gGameState.CameraPosition, 0.0f));
 
 	UpdateStage();
 }
@@ -530,7 +566,7 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 	CharaRegistry::Update();
 	bool before = mIsPaused;
 
-	if (Stratum::Input::GetKeyDown(KeyCode::ESCAPE))
+	if (Stratum::Input::GetKeyDown(KeyCode::ESCAPE) || Stratum::Input::GetGamepadButtonDown(GamepadButton::START))
 	{
 		mIsPaused = !mIsPaused;
 	}
@@ -548,12 +584,12 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 
 	if (mIsPaused)
 	{
-		if (Stratum::Input::GetKeyDown(KeyCode::DOWN))
+		if (Stratum::Input::GetKeyDown(KeyCode::DOWN) || Stratum::Input::GetGamepadButtonDown(GamepadButton::DPAD_DOWN))
 		{
 			mPauseUiButtonIndex += 1;
 			scrollSource->Play();
 		}
-		if (Stratum::Input::GetKeyDown(KeyCode::UP))
+		if (Stratum::Input::GetKeyDown(KeyCode::UP) || Stratum::Input::GetGamepadButtonDown(GamepadButton::DPAD_UP))
 		{
 			mPauseUiButtonIndex -= 1;
 			scrollSource->Play();
@@ -584,7 +620,7 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 
 		mScene->GuiAnchors.Get(mSelectText).Position.y = mScene->GuiAnchors.Get(entity).Position.y;
 
-		if (Stratum::Input::GetKeyDown(KeyCode::RETURN))
+		if (Stratum::Input::GetKeyDown(KeyCode::RETURN) || Stratum::Input::GetGamepadButtonDown(GamepadButton::A))
 		{
 			if (mPauseUiButtonIndex == 0)
 			{
@@ -592,7 +628,10 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 			}
 			if (mPauseUiButtonIndex == 4)
 			{
-				Stratum::EventBus::InvokeEvent(Stratum::ApplicationEvent{ Stratum::ApplicationEvent::APP_EVENT_SHUTDOWN });
+				auto scene = new Stratum::Scene();
+				mScene->SwapScene(scene);
+				scene->RegisterCustomSystem(new MainMenuSystem());
+				//Stratum::EventBus::InvokeEvent(Stratum::ApplicationEvent{ Stratum::ApplicationEvent::APP_EVENT_SHUTDOWN });
 			}
 			if (mPauseUiButtonIndex == 2)
 			{
@@ -609,12 +648,14 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 
 		if (mPauseUiButtonIndex == 1)
 		{
-			if (Stratum::Input::GetKeyDown(KeyCode::LEFT))
+			if (Stratum::Input::GetKeyDown(KeyCode::LEFT) || 
+				Stratum::Input::GetGamepadButtonDown(GamepadButton::DPAD_LEFT))
 			{
 				mVolume -= 0.05f;
 				scrollSource->Play();
 			}
-			if (Stratum::Input::GetKeyDown(KeyCode::RIGHT))
+			if (Stratum::Input::GetKeyDown(KeyCode::RIGHT) || 
+				Stratum::Input::GetGamepadButtonDown(GamepadButton::DPAD_RIGHT))
 			{
 				mVolume += 0.05f;
 				scrollSource->Play();
@@ -696,20 +737,9 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 		mWaitTimer += Stratum::Time::DeltaTime;
 		if (mWaitTimer > 1.0f)
 		{
-			/*
-			auto scene = new Stratum::Scene();
-			scene->RegisterCustomSystem(new BalatroSystem());
-			mScene->SwapScene(scene);
-			*/
-			LoadChartParams params;
-			params.ChartPath = "fnf/data/bite/bite-fernan.json";
-			params.SongScript = Stratum::CreateRef<BiteFernanSong>();
-
 			auto scene = new Stratum::Scene();
 			mScene->SwapScene(scene);
-
-			//scene->RegisterCustomSystem(new BalatroSystem());
-			scene->RegisterCustomSystem(new InGameSystem(params));
+			scene->RegisterCustomSystem(new MainMenuSystem());
 		}
 	}
 }
@@ -737,7 +767,7 @@ void Funkin::InGameSystem::SetPlayerCharacter(CharaSprite* chara)
 
 		auto& sprite = mScene->SpriteRenderers.Get(chara->CharaEntity);
 		sprite.RenderLayer = stage->Player.zIndex;
-		sprite.IsGui = false;
+		sprite.CameraLayer = 0;
 		sprite.FlipX = chara->FlippedHorizontally();
 		sprite.SpriteColor = glm::vec4(1.0f);
 		sprite.Rotation = {};
@@ -768,7 +798,7 @@ void Funkin::InGameSystem::SetOpponentCharacter(CharaSprite* chara)
 
 		auto& sprite = mScene->SpriteRenderers.Get(chara->CharaEntity);
 		sprite.RenderLayer = stage->Oponent.zIndex;
-		sprite.IsGui = false;
+		sprite.CameraLayer = 0;
 		sprite.FlipX = !chara->FlippedHorizontally();
 		sprite.SpriteColor = glm::vec4(1.0f);
 		sprite.Rotation = {};
@@ -795,7 +825,7 @@ bool Funkin::InGameSystem::IsLoadingDone()
 	return mLoadingDone.load();
 }
 
-Stratum::ECS::edict_t Funkin::InGameSystem::CreateTextEntity(const std::wstring& defaultText, const glm::vec2& pos, float fontSize, bool isGui, uint32_t renderLayer, float align)
+Stratum::ECS::edict_t Funkin::InGameSystem::CreateTextEntity(const std::wstring& defaultText, const glm::vec2& pos, float fontSize, uint8_t cameraLayer, uint32_t renderLayer, float align)
 {
 	auto entity = mScene->EntityManager.CreateEntity();
 	mScene->TextComponents.Create(entity);
@@ -803,13 +833,13 @@ Stratum::ECS::edict_t Funkin::InGameSystem::CreateTextEntity(const std::wstring&
 	mScene->TextComponents.Get(entity).Text = defaultText;
 	mScene->TextRenderers.Create(entity).Alignment = align;
 	mScene->TextRenderers.Get(entity).RenderLayer = renderLayer;
-	mScene->TextRenderers.Get(entity).IsGui = isGui;
+	mScene->TextRenderers.Get(entity).CameraLayer = cameraLayer;
 	mScene->Transforms.Create(entity);
 	mScene->Transforms.Get(entity).SetPosition(glm::vec3(pos, 0.0f));
 	return entity;
 }
 
-Stratum::ECS::edict_t Funkin::InGameSystem::CreateSpriteEntity(const::std::string& spritePath, const glm::vec2& pos, const glm::vec2& scale, bool isGui, uint32_t renderLayer, bool flipX)
+Stratum::ECS::edict_t Funkin::InGameSystem::CreateSpriteEntity(const::std::string& spritePath, const glm::vec2& pos, const glm::vec2& scale, uint8_t cameraLayer, uint32_t renderLayer, bool flipX)
 {
 	auto entity = mScene->EntityManager.CreateEntity();
 	auto& sprite = mScene->SpriteRenderers.Create(entity);
@@ -819,7 +849,7 @@ Stratum::ECS::edict_t Funkin::InGameSystem::CreateSpriteEntity(const::std::strin
 	sprite.Rect.size = mScene->Resources.GetImageHandle(sprite.TextureHandle)->GetSize();
 	sprite.UseNearestTextureFilter = false;
 	sprite.RenderLayer = renderLayer;
-	sprite.IsGui = isGui;
+	sprite.CameraLayer = cameraLayer;
 	sprite.FlipX = flipX;
 	sprite.Center = { 0.0f, 0.0f };
 	
@@ -829,7 +859,7 @@ Stratum::ECS::edict_t Funkin::InGameSystem::CreateSpriteEntity(const::std::strin
 	return entity;
 }
 
-Stratum::ECS::edict_t Funkin::InGameSystem::CreateRectEntity(const glm::vec2& pos, const glm::ivec2& rectSize, const glm::vec2& center, bool isGui, uint32_t renderLayer)
+Stratum::ECS::edict_t Funkin::InGameSystem::CreateRectEntity(const glm::vec2& pos, const glm::ivec2& rectSize, const glm::vec2& center, uint8_t cameraLayer, uint32_t renderLayer)
 {
 	auto entity = mScene->EntityManager.CreateEntity();
 	auto& sprite = mScene->SpriteRenderers.Create(entity);
@@ -838,7 +868,7 @@ Stratum::ECS::edict_t Funkin::InGameSystem::CreateRectEntity(const glm::vec2& po
 	sprite.Rect.size = rectSize;
 	sprite.UseNearestTextureFilter = false;
 	sprite.RenderLayer = renderLayer;
-	sprite.IsGui = isGui;
+	sprite.CameraLayer = cameraLayer;
 	sprite.Center = center;
 
 	transform.SetPosition(glm::vec3(pos, 1.0f));

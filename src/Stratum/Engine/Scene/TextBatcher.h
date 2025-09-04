@@ -32,7 +32,7 @@ public:
 
 	void SetParameters(const TextBatcherParameters& parameters);
 
-	void DrawText(const std::wstring& text, const glm::vec2& position, const glm::mat4& model, glm::vec4 color = glm::vec4(1.0f), bool gui = false);
+	void DrawText(const std::wstring& text, const glm::vec2& position, const glm::mat4& model, glm::vec4 color = glm::vec4(1.0f), uint8_t cameraLayer = 0);
 	glm::vec3 GetStringSize(const std::wstring& text) const;
 
 private:

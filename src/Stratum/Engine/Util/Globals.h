@@ -12,6 +12,7 @@ struct GlobalVars
 	uint64_t gametic;
 	uint64_t tickRate;
 	float deltaTime;
+	float elapsedTime;
 };
 
 extern GlobalVars* gpGlobals; // Stole the name straight from Source SDK lol

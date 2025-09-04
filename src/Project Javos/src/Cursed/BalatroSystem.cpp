@@ -89,7 +89,7 @@ void Funkin::BalatroSystem::Init(Stratum::Scene* scene)
 	sprite.Rect.size = {};
 	sprite.UseNearestTextureFilter = false;
 	sprite.RenderLayer = 0;
-	sprite.IsGui = false;
+	sprite.CameraLayer = 0;
 	sprite.Center = {};
 	sprite.pCustomShader = mBalatroBgShader.get();
 
@@ -102,7 +102,7 @@ void Funkin::BalatroSystem::Init(Stratum::Scene* scene)
 		sprite.Rect.size = mScene->Resources.GetImageHandle(sprite.TextureHandle)->GetSize();
 		sprite.UseNearestTextureFilter = false;
 		sprite.RenderLayer = 0;
-		sprite.IsGui = false;
+		sprite.CameraLayer = 0;
 		sprite.FlipX = false;
 		sprite.Center = { 0.0f, 0.0f };
 		sprite.pCustomShader = mBalatroDissolveShader.get();
@@ -218,7 +218,7 @@ void Funkin::BalatroSystem::Update(Stratum::Scene* scene)
 			});
 	}
 
-	mScene->RenderPath3D->RenderPath2D->SetConstantBuffer(mPerFrameData.get(), 2);
+	mScene->RenderPath2D->SetConstantBuffer(mPerFrameData.get(), 2);
 
 	auto& sprite = mScene->SpriteRenderers.Get(mBgEntity);
 	sprite.Rect.size = scene->VirtualScreenSize;
@@ -336,7 +336,7 @@ void Funkin::BalatroSystem::Update(Stratum::Scene* scene)
 
 	if (cardAABB.PointInside(mScene->VirtualMousePosition))
 	{
-		if (Stratum::Input::GetMouseButttonDown(0))
+		if (Stratum::Input::GetMouseButtonDown(0))
 			Stratum::EventBus::InvokeEvent(Stratum::ApplicationEvent{Stratum::ApplicationEvent::APP_EVENT_SHUTDOWN});
 
 		if (!enter)
@@ -432,10 +432,10 @@ void Funkin::BalatroSystem::Update(Stratum::Scene* scene)
 
 void Funkin::BalatroSystem::PostUpdate(Stratum::Scene* scene)
 {
-	if (mBalatroBgShader->ShaderDesc.RenderTarget != mScene->RenderPath3D->RenderPath2D->GetRenderTarget())
+	if (mBalatroBgShader->ShaderDesc.RenderTarget != mScene->RenderPath2D->GetRenderTarget())
 	{
-		mBalatroBgShader->SetRenderTarget(mScene->RenderPath3D->RenderPath2D->GetRenderTarget());
-		mBalatroDissolveShader->SetRenderTarget(mScene->RenderPath3D->RenderPath2D->GetRenderTarget());
+		mBalatroBgShader->SetRenderTarget(mScene->RenderPath2D->GetRenderTarget());
+		mBalatroDissolveShader->SetRenderTarget(mScene->RenderPath2D->GetRenderTarget());
 	}
 
 	mCmdBuffer->Begin();
@@ -569,7 +569,7 @@ void Funkin::BalatroSystem::UpdateCards()
 		auto& transform1 = mScene->Transforms.Get(entity);
 		auto& sprite1 = mScene->SpriteRenderers.Get(entity);
 
-		if (Stratum::Input::GetMouseButttonDown(0))
+		if (Stratum::Input::GetMouseButtonDown(0))
 		{
 			grabOffset = transform1.Position - glm::vec3(mScene->VirtualMousePosition, 0.0f);
 			grabPosition = transform1.Position;
@@ -1104,7 +1104,7 @@ Stratum::ECS::edict_t Funkin::BalatroSystem::CreateCard(CardType type, CardSuit 
 		sprite.Rect.position = { 142 * enhancementX, 190 * enhancementY };
 		sprite.UseNearestTextureFilter = false;
 		sprite.RenderLayer = 1;
-		sprite.IsGui = false;
+		sprite.CameraLayer = 0;
 		sprite.FlipX = false;
 		sprite.Center = { 0.0f, 0.0f };
 		sprite.pCustomShader = mBalatroDissolveShader.get();
@@ -1121,7 +1121,7 @@ Stratum::ECS::edict_t Funkin::BalatroSystem::CreateCard(CardType type, CardSuit 
 		sprite.Rect.position = { 142 * enhancementX, 190 * enhancementY };
 		sprite.UseNearestTextureFilter = false;
 		sprite.RenderLayer = 0;
-		sprite.IsGui = false;
+		sprite.CameraLayer = 0;
 		sprite.FlipX = false;
 		sprite.Center = { 0.0f, 0.0f };
 		sprite.SpriteColor = { 0.0f, 0.0f, 0.0f, 0.5f };
@@ -1139,7 +1139,7 @@ Stratum::ECS::edict_t Funkin::BalatroSystem::CreateCard(CardType type, CardSuit 
 		sprite.Rect.position = { 142 * cardX, 190 * cardY };
 		sprite.UseNearestTextureFilter = false;
 		sprite.RenderLayer = 1;
-		sprite.IsGui = false;
+		sprite.CameraLayer = 0;
 		sprite.FlipX = false;
 		sprite.Center = { 0.0f, 0.0f };
 		sprite.pCustomShader = mBalatroDissolveShader.get();
@@ -1165,7 +1165,7 @@ Stratum::ECS::edict_t Funkin::BalatroSystem::CreatePlayingCard(CardType type, Ca
 	return entity;
 }
 
-Stratum::ECS::edict_t Funkin::BalatroSystem::CreateTextEntity(const std::wstring& defaultText, const glm::vec2& pos, float fontSize, bool isGui, uint32_t renderLayer, float align)
+Stratum::ECS::edict_t Funkin::BalatroSystem::CreateTextEntity(const std::wstring& defaultText, const glm::vec2& pos, float fontSize, uint8_t cameraLayer, uint32_t renderLayer, float align)
 {
 	auto entity = mScene->EntityManager.CreateEntity();
 	auto textManager = mScene->GetComponentManager<TextTiltComponent>(C_TILT_COMPONENT);
@@ -1175,15 +1175,15 @@ Stratum::ECS::edict_t Funkin::BalatroSystem::CreateTextEntity(const std::wstring
 	mScene->TextComponents.Get(entity).Font = "balatro";
 	mScene->TextRenderers.Create(entity).Alignment = align;
 	mScene->TextRenderers.Get(entity).RenderLayer = renderLayer;
-	mScene->TextRenderers.Get(entity).IsGui = isGui;
+	mScene->TextRenderers.Get(entity).CameraLayer = cameraLayer;
 	mScene->Transforms.Create(entity);
 	mScene->Transforms.Get(entity).SetPosition(glm::vec3(pos, 0.0f));
 	textManager->Create(entity).seed = rand();
-	textManager->Get(entity).credits = !isGui;
+	textManager->Get(entity).credits = cameraLayer == 0;
 	return entity;
 }
 
-Stratum::ECS::edict_t Funkin::BalatroSystem::CreateRectEntity(const glm::vec2& pos, const glm::ivec2& rectSize, const glm::vec2& center, bool isGui, uint32_t renderLayer)
+Stratum::ECS::edict_t Funkin::BalatroSystem::CreateRectEntity(const glm::vec2& pos, const glm::ivec2& rectSize, const glm::vec2& center, uint8_t cameraLayer, uint32_t renderLayer)
 {
 	auto entity = mScene->EntityManager.CreateEntity();
 	auto& sprite = mScene->SpriteRenderers.Create(entity);
@@ -1192,7 +1192,7 @@ Stratum::ECS::edict_t Funkin::BalatroSystem::CreateRectEntity(const glm::vec2& p
 	sprite.Rect.size = rectSize;
 	sprite.UseNearestTextureFilter = false;
 	sprite.RenderLayer = renderLayer;
-	sprite.IsGui = isGui;
+	sprite.CameraLayer = cameraLayer;
 	sprite.Center = center;
 
 	transform.SetPosition(glm::vec3(pos, 1.0f));

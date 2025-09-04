@@ -95,9 +95,36 @@ void Funkin::CharaSprite::Update()
 
 	uint32_t doDanceEvery = glm::max(gGameState.DoBeatEveryNthBeat, 2U);
 
+	if (DoDanceBeatOverride != 0)
+	{
+		doDanceEvery = glm::max(DoDanceBeatOverride, 2U);
+	}
+
+	uint32_t doDance = doDanceEvery;
+
+	if (mLostBeats > 0)
+	{
+		doDanceEvery = 2;
+	}
+
+	mLostBeats = glm::min(mLostBeats, 4U);
+
 	if ((gGameState.pConductor->BeatCount + gGameState.BeatOffset) % doDanceEvery == 0)
 	{
 		mDoBeat = true;
+
+		if (mLostBeats > 0 && mApplyIdleAnimation)
+		{
+			mLostBeats--;
+		}
+	}
+
+	if ((gGameState.pConductor->BeatCount + gGameState.BeatOffset) % doDance == 0)
+	{
+		if (!mApplyIdleAnimation && doDance > 2)
+		{
+			mLostBeats++;
+		}
 	}
 
 	size_t frameCount = animator.AnimationMap["idle"].rects.size();

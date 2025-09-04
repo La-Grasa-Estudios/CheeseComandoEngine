@@ -386,3 +386,45 @@ enum class KeyCode {
     NUM_SCANCODES = 512 /**< not a key, just marks the number of scancodes
                                  for array bounds */
 };
+
+// From SDL_gamepad.h
+
+enum class GamepadButton
+{
+    INVALID = -1,
+    A,
+    B,
+    X,
+    Y,
+    BACK,
+    GUIDE,
+    START,
+    LEFT_STICK,
+    RIGHT_STICK,
+    LEFT_SHOULDER,
+    RIGHT_SHOULDER,
+    DPAD_UP,
+    DPAD_DOWN,
+    DPAD_LEFT,
+    DPAD_RIGHT,
+    MISC1,    /* Additional button (e.g. Xbox Series X share button, PS5 microphone button, Nintendo Switch Pro capture button, Amazon Luna microphone button) */
+    RIGHT_PADDLE1,  /* Upper or primary paddle, under your right hand (e.g. Xbox Elite paddle P1) */
+    LEFT_PADDLE1,   /* Upper or primary paddle, under your left hand (e.g. Xbox Elite paddle P3) */
+    RIGHT_PADDLE2,  /* Lower or secondary paddle, under your right hand (e.g. Xbox Elite paddle P2) */
+    LEFT_PADDLE2,   /* Lower or secondary paddle, under your left hand (e.g. Xbox Elite paddle P4) */
+    TOUCHPAD, /* PS4/PS5 touchpad button */
+    MAX,
+    DPAD = 15
+};
+
+enum class GamepadAxis
+{
+    INVALID = -1,
+    LEFTX,
+    LEFTY,
+    RIGHTX,
+    RIGHTY,
+    LEFT_TRIGGER,
+    RIGHT_TRIGGER,
+    MAX
+};

@@ -10,7 +10,7 @@ Application* AppMain(std::vector<std::string> args)
 	info.IsImGuiEnabled = false;
 	info.VSyncEnabled = true;
 	info.ShouldWindowStartMaximized = true;
-	info.ShouldWindowNotResize = true;
+	info.ShouldWindowNotResize = false;
 	info.WindowName = "Javos Mod";
 	info.WindowedResolutionX = 1280;
 	info.WindowedResolutionY = 720;

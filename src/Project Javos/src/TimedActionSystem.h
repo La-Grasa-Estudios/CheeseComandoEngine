@@ -26,9 +26,11 @@ namespace Funkin
 	{
 		float duration;
 		float amplitude = 1.0f;
+		float offset = 0.0f;
 		ActionParameters() = default;
 		ActionParameters(const float dur);
 		ActionParameters(const float dur, const float amp);
+		ActionParameters(const float dur, const float amp, const float offset);
 	};
 
 	class TimedActionSystem : public Stratum::ISceneSystem

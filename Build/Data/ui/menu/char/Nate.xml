@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="Nonsense10.png">
+	<!-- Created with Adobe Animate version 22.0.2.168 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="Nate0000" x="2" y="2" width="1228" height="1517" frameX="-7" frameY="-32" frameWidth="1243" frameHeight="1549"/>
+	<SubTexture name="Nate0001" x="1232" y="2" width="1228" height="1517" frameX="-7" frameY="-32" frameWidth="1243" frameHeight="1549"/>
+	<SubTexture name="Nate0002" x="2462" y="2" width="1224" height="1528" frameX="-9" frameY="-21" frameWidth="1243" frameHeight="1549"/>
+	<SubTexture name="Nate0003" x="3688" y="2" width="1224" height="1528" frameX="-9" frameY="-21" frameWidth="1243" frameHeight="1549"/>
+	<SubTexture name="Nate0004" x="4914" y="2" width="1224" height="1549" frameX="-9" frameY="0" frameWidth="1243" frameHeight="1549"/>
+	<SubTexture name="Nate0005" x="6140" y="2" width="1224" height="1549" frameX="-9" frameY="0" frameWidth="1243" frameHeight="1549"/>
+	<SubTexture name="Nate0006" x="2" y="1553" width="1243" height="1510" frameX="0" frameY="-39" frameWidth="1243" frameHeight="1549"/>
+	<SubTexture name="Nate0007" x="1247" y="1553" width="1243" height="1510" frameX="0" frameY="-39" frameWidth="1243" frameHeight="1549"/>
+</TextureAtlas>

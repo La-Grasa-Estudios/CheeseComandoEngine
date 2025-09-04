@@ -35,8 +35,11 @@ namespace Funkin
 
 		int32_t CharaEntity;
 		float FpsMultiplier = 1.0f;
+		uint32_t DoDanceBeatOverride = 0; // Set to 0 to get default behaviour again
 
 	private:
+
+		uint32_t mLostBeats = 0;
 
 		glm::vec2 mOriginalScale = {};
 

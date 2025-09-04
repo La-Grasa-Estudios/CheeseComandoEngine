@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="Devs.png">
+	<!-- Created with Adobe Animate version 22.0.6.202 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="Devs0000" x="2" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0001" x="2" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0002" x="708" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0003" x="708" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0004" x="1414" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0005" x="1414" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0006" x="2120" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0007" x="2120" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0008" x="2826" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0009" x="2826" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0010" x="2120" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0011" x="2120" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0012" x="2826" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0013" x="2826" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0014" x="2" y="760" width="704" height="756"/>
+	<SubTexture name="Devs0015" x="2" y="760" width="704" height="756"/>
+	<SubTexture name="Devs0016" x="708" y="760" width="704" height="756"/>
+	<SubTexture name="Devs0017" x="708" y="760" width="704" height="756"/>
+	<SubTexture name="Devs0018" x="1414" y="760" width="704" height="756"/>
+	<SubTexture name="Devs0019" x="1414" y="760" width="704" height="756"/>
+	<SubTexture name="Devs0020" x="2826" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0021" x="2826" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0022" x="2120" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0023" x="2120" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0024" x="2826" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0025" x="2826" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0026" x="2120" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0027" x="2120" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0028" x="2826" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0029" x="2826" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0030" x="2120" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0031" x="2120" y="2" width="704" height="756"/>
+	<SubTexture name="Devs0032" x="2120" y="760" width="704" height="756"/>
+	<SubTexture name="Devs0033" x="2120" y="760" width="704" height="756"/>
+	<SubTexture name="Devs0034" x="2826" y="760" width="704" height="756"/>
+	<SubTexture name="Devs0035" x="2826" y="760" width="704" height="756"/>
+	<SubTexture name="Devs0036" x="2" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0037" x="2" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0038" x="708" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0039" x="708" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0040" x="1414" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0041" x="1414" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0042" x="708" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0043" x="708" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0044" x="1414" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0045" x="1414" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0046" x="708" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0047" x="708" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0048" x="1414" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0049" x="1414" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0050" x="708" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0051" x="708" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0052" x="1414" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0053" x="1414" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0054" x="708" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0055" x="708" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0056" x="1414" y="1518" width="704" height="756"/>
+	<SubTexture name="Devs0057" x="1414" y="1518" width="704" height="756"/>
+</TextureAtlas>

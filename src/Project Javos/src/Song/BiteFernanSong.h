@@ -4,6 +4,7 @@
 
 namespace Funkin
 {
+	class TimedActionSystem;
 	class BiteFernanSong : public SongBase
 	{
 	public:

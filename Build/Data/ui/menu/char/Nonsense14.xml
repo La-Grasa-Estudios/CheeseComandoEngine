@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="Nonsense14.png">
+	<!-- Created with Adobe Animate version 19.0.0.326 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="Nonsense Bop0000" x="5" y="619" width="326" height="602" frameX="0" frameY="-22" frameWidth="331" frameHeight="624"/>
+	<SubTexture name="Nonsense Bop0001" x="5" y="619" width="326" height="602" frameX="0" frameY="-22" frameWidth="331" frameHeight="624"/>
+	<SubTexture name="Nonsense Bop0002" x="5" y="5" width="326" height="609" frameX="-5" frameY="-15" frameWidth="331" frameHeight="624"/>
+	<SubTexture name="Nonsense Bop0003" x="5" y="5" width="326" height="609" frameX="-5" frameY="-15" frameWidth="331" frameHeight="624"/>
+	<SubTexture name="Nonsense Bop0004" x="336" y="5" width="318" height="615" frameX="-6" frameY="-9" frameWidth="331" frameHeight="624"/>
+	<SubTexture name="Nonsense Bop0005" x="336" y="5" width="318" height="615" frameX="-6" frameY="-9" frameWidth="331" frameHeight="624"/>
+	<SubTexture name="Nonsense Bop0006" x="653" y="634" width="313" height="620" frameX="-10" frameY="-4" frameWidth="331" frameHeight="624"/>
+	<SubTexture name="Nonsense Bop0007" x="653" y="634" width="313" height="620" frameX="-10" frameY="-4" frameWidth="331" frameHeight="624"/>
+	<SubTexture name="Nonsense Bop0008" x="336" y="625" width="312" height="623" frameX="-10" frameY="-1" frameWidth="331" frameHeight="624"/>
+	<SubTexture name="Nonsense Bop0009" x="336" y="625" width="312" height="623" frameX="-10" frameY="-1" frameWidth="331" frameHeight="624"/>
+	<SubTexture name="Nonsense Bop0010" x="336" y="625" width="312" height="623" frameX="-10" frameY="-1" frameWidth="331" frameHeight="624"/>
+	<SubTexture name="Nonsense Bop0011" x="659" y="5" width="313" height="624" frameX="-10" frameY="0" frameWidth="331" frameHeight="624"/>
+	<SubTexture name="Nonsense Bop0012" x="659" y="5" width="313" height="624" frameX="-10" frameY="0" frameWidth="331" frameHeight="624"/>
+	<SubTexture name="Nonsense Bop0013" x="659" y="5" width="313" height="624" frameX="-10" frameY="0" frameWidth="331" frameHeight="624"/>
+	<SubTexture name="Nonsense Bop0014" x="659" y="5" width="313" height="624" frameX="-10" frameY="0" frameWidth="331" frameHeight="624"/>
+</TextureAtlas>

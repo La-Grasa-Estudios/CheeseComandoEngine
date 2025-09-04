@@ -81,6 +81,7 @@ struct SpriteRendererComponent
 	};
 
 	int32_t RenderLayer = 0;
+	uint8_t CameraLayer = 0;
 	SpriteRect Rect;
 
 	glm::vec2 Center = glm::vec2(0.0f);
@@ -90,7 +91,6 @@ struct SpriteRendererComponent
 
 	int32_t TextureHandle = -1;
 	bool Enabled = true;
-	bool IsGui = false; // Makes the sprite render to a second view
 	bool FlipX = false;
 	bool FlipY = false;
 	bool UseNearestTextureFilter = false;
@@ -266,10 +266,25 @@ struct TextComponent
 struct TextRendererComponent
 {
 	bool Enabled = true;
-	bool IsGui = false;
+	uint8_t CameraLayer = 0;
 	float Alignment = 0.0f; // 0 means left aligned, 0.5 means center aligned, 1 means right aligned
 	uint32_t RenderLayer = 0;
 	glm::vec4 Color = glm::vec4(1.0f);
+};
+
+struct CameraComponent
+{
+	union
+	{
+		glm::vec2 OrthographicSize;
+		float FOV = 60.0f;
+	};
+	float OrthographicZoom = 1.0f; // Multipler for size
+	float NearPlane = 0.1f;
+	float FarPlane = 1000.0f;
+	bool Orthographic = false;
+	bool RendersToGui = false;
+	uint8_t RenderLayer = 0; // Only 16 layers allowed (0-15)
 };
 
 END_ENGINE

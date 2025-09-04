@@ -19,7 +19,7 @@ void TextBatcher::SetParameters(const TextBatcherParameters& parameters)
 	mParameters = parameters;
 }
 
-void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, const glm::mat4& model, glm::vec4 color, bool gui)
+void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, const glm::mat4& model, glm::vec4 color, uint8_t cameraLayer)
 {
 	if (!mParameters.font || !mBatch || text.empty())
 		return;
@@ -103,7 +103,7 @@ void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, 
 				instance.RenderSize = glm::vec2(instance.rect.size) * scale;
 				instance.color = color;
 				instance.transform = glm::translate(model, pos);
-				instance.UserData = (2 << 1) | (int)(gui);
+				instance.UserData = (2 << 4) | (int)(cameraLayer);
 				instance.scaleWithRenderSize = false;
 
 				SpriteBatch::SpriteInstance instance2 = instance;
@@ -140,7 +140,7 @@ void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, 
 
 glm::vec3 TextBatcher::GetStringSize(const std::wstring& text) const
 {
-	if (!mParameters.font || !mBatch || text.empty())
+	if (!mParameters.font || text.empty())
 		return glm::vec3(0.0f);
 
 	static int frameIndex = 0;

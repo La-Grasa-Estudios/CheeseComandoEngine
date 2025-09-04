@@ -36,10 +36,13 @@ Scene::Scene()
 	INIT_COMPONENT_MANAGER(VideoSurfaces);
 	INIT_COMPONENT_MANAGER(TextComponents);
 	INIT_COMPONENT_MANAGER(TextRenderers);
+	INIT_COMPONENT_MANAGER(Cameras);
 
 	mVideoCopyCommandBuffer = new Render::CopyCommandBuffer();
 
 	FontRegistry.LoadFont("Roboto", "fonts/Roboto-Regular.ttf");
+
+	UI = CreateScope<SceneUI>(this);
 }
 
 Scene::~Scene()
@@ -80,12 +83,17 @@ void Scene::UpdateSystems()
 {
 	UpdateTransforms();
 	UpdateAnimators();
+	UI->Update();
+
+
+
 	for (int i = 0; i < mSystems.size(); i++)
 	{
 		if (!mSystems[i]->mInitialized)
 		{
 			mSystems[i]->Init(this);
 			mSystems[i]->mInitialized = true;
+			Time::SkipFrame = true;
 		}
 	}
 	for (int i = 0; i < mSystems.size(); i++)
@@ -94,6 +102,7 @@ void Scene::UpdateSystems()
 		{
 			mSystems[i]->OnActivate(this);
 			mSystems[i]->mHasBeenActivated = true;
+			Time::SkipFrame = true;
 		}
 		mSystems[i]->Update(this);
 	}

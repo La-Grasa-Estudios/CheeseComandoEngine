@@ -33,7 +33,6 @@ public:
 
 	struct SpriteInstance
 	{
-		glm::mat4 transform;
 		SpriteRendererComponent::SpriteRect rect;
 		glm::ivec2 RenderSize;
 		glm::vec2 center;
@@ -44,6 +43,7 @@ public:
 		bool scaleWithRenderSize = true;
 		uint32_t UserData;
 		Render::GraphicsPipeline* pCustomShader;
+		glm::mat4 transform;
 	};
 
 	SpriteBatch(SceneResources* pResources);

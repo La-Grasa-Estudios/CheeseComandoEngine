@@ -55,6 +55,7 @@ void Funkin::BiteFernanSong::Init(Conductor* pConductor, InGameSystem* pIngameSy
 	CharaRegistry::GetCharacter("Fernan")->AddAnimation("llorapues1", "Fernan Cry1", "", 8, false, true);
 	CharaRegistry::GetCharacter("Fernan")->AddAnimation("llorapues2", "Fernan Cry2", "", 8, false, true);
 	CharaRegistry::GetCharacter("Fernan")->AddAnimation("WTF", "Fernan Left Alt", "", 8, false, true);
+	CharaRegistry::GetCharacter("Fernan")->DoDanceBeatOverride = 4;
 
 	CharaRegistry::GetCharacter("FernanJumpeado")->AddAnimation("no", "Fernan Empieza", "", 8, false, true);
 	CharaRegistry::GetCharacter("FernanJumpeado")->AddAnimation("nO", "Fernan No0", "", 8, false, true);
@@ -156,17 +157,17 @@ void Funkin::BiteFernanSong::Init(Conductor* pConductor, InGameSystem* pIngameSy
 	static Stratum::ECS::edict_t x64entity;
 	static Stratum::ECS::edict_t x64blackentity;
 
-	youtubeDuration = pIngameSystem->CreateTextEntity(L"0:00", { 0.0f, 0.0f }, 50.0f, true, 901, 0.0f);
+	youtubeDuration = pIngameSystem->CreateTextEntity(L"0:00", { 0.0f, 0.0f }, 50.0f, 5, 901, 0.0f);
 	auto& youtubeAnchor = mScene->GuiAnchors.Create(youtubeDuration);
 	youtubeAnchor.AnchorPoint = Stratum::GuiAnchorPoint::BOTTOM_LEFT;
 	youtubeAnchor.Position = { 500, 67.0f };
 
-	youtubeHud = pIngameSystem->CreateSpriteEntity("fnf/SyobonNoAction/videohud.png", { 0.0f, 0.0f }, { 1.0f, 1.0f }, true, 900);
-	youtubeFade = pIngameSystem->CreateSpriteEntity("fnf/SyobonNoAction/black.png", { 0.0f, 0.0f }, { 1.0f, 1.0f }, true, 899);
-	youtubeBar = pIngameSystem->CreateRectEntity({ 0.0f, 0.0f }, { 100.0f, 10.0f }, { -1.0f, 1.0f }, true, 902);
-	youtubeBarBg = pIngameSystem->CreateRectEntity({ 0.0f, 0.0f }, { 100.0f, 10.0f }, { -1.0f, 1.0f }, true, 901);
+	youtubeHud = pIngameSystem->CreateSpriteEntity("fnf/SyobonNoAction/videohud.png", { 0.0f, 0.0f }, { 1.0f, 1.0f }, 5, 900);
+	youtubeFade = pIngameSystem->CreateSpriteEntity("fnf/SyobonNoAction/black.png", { 0.0f, 0.0f }, { 1.0f, 1.0f }, 5, 899);
+	youtubeBar = pIngameSystem->CreateRectEntity({ 0.0f, 0.0f }, { 100.0f, 10.0f }, { -1.0f, 1.0f }, 5, 902);
+	youtubeBarBg = pIngameSystem->CreateRectEntity({ 0.0f, 0.0f }, { 100.0f, 10.0f }, { -1.0f, 1.0f }, 5, 901);
 
-	auto youtubeTitle = pIngameSystem->CreateTextEntity(L"Gato Bros (Syobon Action) en español por fernanfloo", { 0.0f, 0.0f }, 70.0f, true, 900, 0.0f);
+	auto youtubeTitle = pIngameSystem->CreateTextEntity(L"Gato Bros (Syobon Action) en español por fernanfloo", { 0.0f, 0.0f }, 70.0f, 5, 900, 0.0f);
 	auto& youtubeTitleAnchor = mScene->GuiAnchors.Create(youtubeTitle);
 	youtubeTitleAnchor.AnchorPoint = Stratum::GuiAnchorPoint::TOP_LEFT;
 	youtubeTitleAnchor.Position = { 35.0f, 100.0f };
@@ -216,7 +217,7 @@ void Funkin::BiteFernanSong::Init(Conductor* pConductor, InGameSystem* pIngameSy
 
 			sprite.Rect.position = {};
 			sprite.Rect.size = surface.VideoResolution;
-			sprite.IsGui = true;
+			sprite.CameraLayer = 4;
 			sprite.RenderLayer = 101;
 			sprite.TextureHandle = surface.TextureHandle;
 			sprite.SpriteColor.r = 0.0f;
@@ -264,13 +265,13 @@ void Funkin::BiteFernanSong::Init(Conductor* pConductor, InGameSystem* pIngameSy
 
 		sprite1.SpriteColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 		sprite1.Rect.size = { 100000, 100000 };
-		sprite1.IsGui = true;
+		sprite1.CameraLayer = 4;
 		sprite1.RenderLayer = 101;
 		sprite.TextureHandle = mScene->Resources.LoadTextureImage("fnf/SyobonNoAction/screen1.png");
 		sprite.Rect.size = mScene->Resources.GetImageHandle(sprite.TextureHandle)->GetSize();
 		sprite.UseNearestTextureFilter = true;
 		sprite.RenderLayer = 102;
-		sprite.IsGui = true;
+		sprite.CameraLayer = 4;
 		transform.SetScale(glm::vec3(1.25f));
 
 		});
@@ -292,7 +293,7 @@ void Funkin::BiteFernanSong::Init(Conductor* pConductor, InGameSystem* pIngameSy
 		mIngameSystem->SetPlayerCharacter(sprite = CharaRegistry::GetCharacter("syobon"));
 		sprite->CharaPosition = {};
 		mScene->SpriteRenderers.Get(sprite->CharaEntity).RenderLayer = 10000;
-		mScene->SpriteRenderers.Get(sprite->CharaEntity).IsGui = true;
+		mScene->SpriteRenderers.Get(sprite->CharaEntity).CameraLayer = 4;
 		});
 	mConductor->AddScriptedEvent(1550, [this]() {
 		mConductor->EnableBot = true;
@@ -398,7 +399,7 @@ void Funkin::BiteFernanSong::Init(Conductor* pConductor, InGameSystem* pIngameSy
 	mConductor->AddScriptedEvent(1536, [this]() {
 		mIngameSystem->SetOpponentCharacter(CharaRegistry::GetCharacter("Fernan"));
 		mScene->SpriteRenderers.Get(mIngameSystem->GetOpponentCharacter()->CharaEntity).RenderLayer = 10000;
-		mScene->SpriteRenderers.Get(mIngameSystem->GetOpponentCharacter()->CharaEntity).IsGui = true;
+		mScene->SpriteRenderers.Get(mIngameSystem->GetOpponentCharacter()->CharaEntity).CameraLayer = 4;
 		auto& sprite = mScene->SpriteRenderers.Get(mIngameSystem->GetOpponentCharacter()->CharaEntity);
 		sprite.Center = { 0.0f, 1.0f };
 
@@ -424,7 +425,7 @@ void Funkin::BiteFernanSong::Init(Conductor* pConductor, InGameSystem* pIngameSy
 		});
 	mConductor->AddScriptedEvent(1551, [this]() {
 		mScene->SpriteRenderers.Get(mIngameSystem->GetOpponentCharacter()->CharaEntity).RenderLayer = 10000;
-		mScene->SpriteRenderers.Get(mIngameSystem->GetOpponentCharacter()->CharaEntity).IsGui = false;
+		mScene->SpriteRenderers.Get(mIngameSystem->GetOpponentCharacter()->CharaEntity).CameraLayer = 0;
 		});
 	mConductor->AddScriptedEvent(2089, [this]() {
 		CharaSprite* chara;
@@ -495,13 +496,13 @@ void Funkin::BiteFernanSong::Init(Conductor* pConductor, InGameSystem* pIngameSy
 
 		sprite1.SpriteColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 		sprite1.Rect.size = { 100000, 100000 };
-		sprite1.IsGui = true;
+		sprite1.CameraLayer = 4;
 		sprite1.RenderLayer = 101;
 		sprite.TextureHandle = mScene->Resources.LoadTextureImage("fnf/SyobonNoAction/screen2.png");
 		sprite.Rect.size = mScene->Resources.GetImageHandle(sprite.TextureHandle)->GetSize();
 		sprite.UseNearestTextureFilter = true;
 		sprite.RenderLayer = 102;
-		sprite.IsGui = true;
+		sprite.CameraLayer = 4;
 		transform.SetScale(glm::vec3(0.25f));
 		});
 	mConductor->AddScriptedEvent(2727, [this]() {

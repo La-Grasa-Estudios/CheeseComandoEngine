@@ -284,6 +284,7 @@ void Application::Run(std::vector<std::string> args)
 	EventBus::InvokeEvent(EngineModuleInitEvent(EngineModuleInitEvent::ENGINE_MODULE_LATE_INIT));
 
 	m_RenderPath3D = CreateRef<Renderer3D>();
+	m_RenderPath2D = CreateRef<Renderer2D>();
 
 	if (!m_Window->CloseRequested())
 	{
@@ -370,7 +371,10 @@ void Application::MainLoop()
 		JobManager::ExecuteMainJobs();
 
 		gpGlobals->deltaTime = Time::DeltaTime;
+		gpGlobals->elapsedTime = Time::GlobalTime;
 		InternalUpdate();
+
+		m_RenderPath2D->UpdateScreenSize(m_Window->GetFramebuffer()->GetSize());
 
 		if (mCurrentScene)
 		{
@@ -382,7 +386,7 @@ void Application::MainLoop()
 				SetScene(mCurrentScene->NextScenePtr);
 			}
 
-			mCurrentScene->VirtualScreenSize = m_RenderPath3D->RenderPath2D->VirtualScreenSize;
+			mCurrentScene->VirtualScreenSize = m_RenderPath2D->VirtualScreenSize;
 			mCurrentScene->UpdateSystems();
 		}
 
@@ -411,7 +415,13 @@ void Application::MainLoop()
 		if (mCurrentScene)
 		{
 			m_RenderPath3D->PreRender(mCurrentScene, m_Window->GetFramebuffer().get());
+			m_RenderPath2D->PreRender(mCurrentScene, m_Window->GetFramebuffer().get());
+
+
 			m_RenderPath3D->Render(mCurrentScene, m_Window->GetFramebuffer().get());
+			m_RenderPath2D->Render(mCurrentScene, m_Window->GetFramebuffer().get());
+
+			m_RenderPath2D->Submit();
 		}
 
 		if (m_AppInfo.IsImGuiEnabled)
@@ -479,6 +489,7 @@ void Application::MainLoop()
 	SetScene(NULL);
 
 	m_RenderPath3D = NULL;
+	m_RenderPath2D = NULL;
 }
 
 void Application::RenderStartupMedia()
@@ -677,7 +688,7 @@ void Application::SetScene(Scene* scene)
 		InitSceneResources(scene);
 
 	if (scene)
-		m_RenderPath3D->RenderPath2D->UpdateScreenSize(m_Window->GetFramebuffer()->GetSize());
+		m_RenderPath2D->UpdateScreenSize(m_Window->GetFramebuffer()->GetSize());
 
 	Time::TimeScale = 1.0f;
 }
@@ -690,6 +701,7 @@ void Application::InitSceneResources(Scene* scene)
 		scene->AudioEngine = m_AudioEngine.get();
 		scene->Window = m_Window.get();
 		scene->RenderPath3D = m_RenderPath3D.get();
+		scene->RenderPath2D = m_RenderPath2D.get();
 	}
 }
 

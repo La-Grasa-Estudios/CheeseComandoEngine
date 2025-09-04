@@ -97,6 +97,9 @@ std::vector<Stratum::SpriteAnimator::AnimationFrame> Funkin::SparrowReader::read
 				}
 			}
 
+			if (frame.Rect.size.x == 0 || frame.Rect.size.y == 0)
+				continue;
+
 			frames.push_back(frame);
 		}
 	}

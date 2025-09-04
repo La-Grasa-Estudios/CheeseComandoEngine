@@ -1,0 +1,77 @@
+{
+	"pad-default": "ok-button",
+	"components": [
+	{
+		"type": "rect",
+		"name": "menu-container",
+		"width": "40%",
+		"height": "30%",
+		"transform-x": "30%",
+		"transform-y": "35%",
+		"background-color": [1.0, 1.0, 1.0, 1.0],
+		"camera-layer": 0,
+		"render-layer": 20000,
+		"transition-in": "scale-bounce",
+		"transition-out": "scale",
+		"transition-len": 0.4,
+		"font": "vcr",
+		"components": [
+		{
+			"type": "rect",
+			"width": "98%",
+			"height": "95.5%",
+			"padding-top": "2%",
+			"padding-left": "1%",
+			"is-background": true,
+			"background-color": [0.0, 0.7, 1.0, 1.0]
+		},
+		{
+			"type": "label",
+			"padding-top": "35%",
+			"transform-x": "50.0%",
+			"text": "Not implemented",
+			"text-align": "50%",
+			"is-background": true
+		},
+		{
+			"type": "label",
+			"padding-top": "45%",
+			"transform-x": "50.0%",
+			"text": "Just freeplay",
+			"text-align": "50%",
+			"is-background": true
+		},
+		{
+			"type": "rect",
+			"width": "31%",
+			"height": "22%",
+			"transform-x": "34.5%",
+			"transform-y": "69%",
+			"is-background": true,
+			"background-color": [0.0, 0.2, 0.5, 1.0]
+		},
+		{
+			"name": "ok-button",
+			"type": "button",
+			"width": "30%",
+			"height": "20%",
+			"transform-x": "35%",
+			"transform-y": "70%",
+			"unhovered-color": [0.5, 0.5, 0.5, 1.0],
+			"hovered-color": [0.70, 0.70, 0.70, 1.0],
+			"onClick": "close-imp",
+			"components": [
+			{
+				"type": "label",
+				"padding-top": "25%",
+				"transform-x": "50.0%",
+				"text": "Ok",
+				"text-align": "50%"
+			}
+			]
+		}
+		]
+	}
+	]
+}
+

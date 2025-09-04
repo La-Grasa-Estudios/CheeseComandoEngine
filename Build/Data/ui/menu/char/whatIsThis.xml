@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="whatIsThis.png">
+	<!-- Created with Adobe Animate version 19.0.0.326 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="that0000" x="5" y="5" width="642" height="360" frameX="-1" frameY="0" frameWidth="643" frameHeight="360"/>
+	<SubTexture name="that0001" x="5" y="370" width="642" height="360" frameX="-1" frameY="0" frameWidth="643" frameHeight="360"/>
+	<SubTexture name="that0002" x="5" y="370" width="642" height="360" frameX="-1" frameY="0" frameWidth="643" frameHeight="360"/>
+	<SubTexture name="that0003" x="5" y="735" width="642" height="360" frameX="-1" frameY="0" frameWidth="643" frameHeight="360"/>
+	<SubTexture name="that0004" x="5" y="735" width="642" height="360" frameX="-1" frameY="0" frameWidth="643" frameHeight="360"/>
+	<SubTexture name="that0005" x="652" y="5" width="642" height="360" frameX="-1" frameY="0" frameWidth="643" frameHeight="360"/>
+	<SubTexture name="that0006" x="652" y="5" width="642" height="360" frameX="-1" frameY="0" frameWidth="643" frameHeight="360"/>
+	<SubTexture name="that0007" x="1299" y="5" width="642" height="360" frameX="-1" frameY="0" frameWidth="643" frameHeight="360"/>
+	<SubTexture name="that0008" x="1299" y="5" width="642" height="360" frameX="-1" frameY="0" frameWidth="643" frameHeight="360"/>
+	<SubTexture name="that0009" x="1299" y="5" width="642" height="360" frameX="-1" frameY="0" frameWidth="643" frameHeight="360"/>
+	<SubTexture name="that0010" x="652" y="370" width="642" height="360" frameX="-1" frameY="0" frameWidth="643" frameHeight="360"/>
+	<SubTexture name="that0011" x="652" y="370" width="642" height="360" frameX="-1" frameY="0" frameWidth="643" frameHeight="360"/>
+	<SubTexture name="that0012" x="1299" y="370" width="642" height="360" frameX="-1" frameY="0" frameWidth="643" frameHeight="360"/>
+	<SubTexture name="that0013" x="1299" y="370" width="642" height="360" frameX="-1" frameY="0" frameWidth="643" frameHeight="360"/>
+	<SubTexture name="that0014" x="652" y="735" width="642" height="360" frameX="-1" frameY="0" frameWidth="643" frameHeight="360"/>
+	<SubTexture name="that0015" x="652" y="735" width="642" height="360" frameX="-1" frameY="0" frameWidth="643" frameHeight="360"/>
+	<SubTexture name="that0016" x="1299" y="735" width="642" height="360" frameX="0" frameY="0" frameWidth="643" frameHeight="360"/>
+</TextureAtlas>

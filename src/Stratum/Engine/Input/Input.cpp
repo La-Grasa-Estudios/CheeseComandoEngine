@@ -17,6 +17,7 @@ bool g_IsMouseGrabbed = false;
 // There is a reason the engine is called Stratum lol
 
 std::unordered_map<SDL_JoystickID, SDL_Gamepad*> g_Gamepads;
+SDL_JoystickID gLastGamepadInput = 0;
 
 bool BaseInputLayer::SetKey(int key, bool press)
 {
@@ -36,10 +37,6 @@ bool BaseInputLayer::SetMouse(int click, bool press)
 bool BaseInputLayer::SetGamepad(int button, bool press)
 {
 	Input::m_GamePadButtons[button] = press;
-	if (press)
-	{
-		Z_INFO("Gpad button {} last {}", Input::m_GamePadButtons[button], Input::m_LastGamePadButtons[button]);
-	}
 	return true;
 }
 
@@ -58,6 +55,10 @@ void Input::Init(SDL_Window* window)
 	memset(m_GamePadButtons, 0, sizeof(m_GamePadButtons));
 	memset(m_GamepadAxis, 0, sizeof(m_GamepadAxis));
 
+	SDL_LockJoysticks();
+	SDL_AddGamepadMappingsFromFile("Engine/gamecontrollerdb.txt");
+	SDL_UnlockJoysticks();
+
 	EventBus::RegisterListener<ApplicationSDLEvent>([&](const ApplicationSDLEvent& event) {
 		SDL_Event& e = *reinterpret_cast<SDL_Event*>(event.pEventData);
 		
@@ -65,6 +66,7 @@ void Input::Init(SDL_Window* window)
 		{
 			m_GamepadCount++;
 			g_Gamepads[e.gdevice.which] = SDL_OpenGamepad(e.gdevice.which);
+			gLastGamepadInput = e.gdevice.which;
 			Z_INFO("Gamepad found! id: {}-{}", e.gdevice.which, SDL_GetGamepadName(g_Gamepads[e.gdevice.which]))
 		}
 
@@ -84,6 +86,7 @@ void Input::Init(SDL_Window* window)
 		case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
 		case SDL_EVENT_GAMEPAD_BUTTON_UP:
 			SetGamepad(e.gbutton.button, e.gbutton.state);
+			gLastGamepadInput = e.gbutton.which;
 			break;
 		case SDL_EVENT_GAMEPAD_AXIS_MOTION:
 			SetGamepadAxis(e.gaxis.axis, e.gaxis.value);
@@ -147,6 +150,17 @@ void Input::SetGamepadAxis(int axis, int16_t value)
 	}
 }
 
+void Input::SetGamepadRumble(float left_intensity, float right_intensity, uint32_t duration)
+{
+	for (auto gpad : g_Gamepads)
+	{
+		if (SDL_GamepadHasRumble(gpad.second))
+		{
+			SDL_RumbleGamepad(gpad.second, (uint16_t)(glm::clamp(left_intensity, 0.0f, 1.0f) * 0xFFFF), (uint16_t)(glm::clamp(right_intensity, 0.0f, 1.0f) * 0xFFFF), duration);
+		}
+	}
+}
+
 void Input::SetInputMode(MouseInputMode mode)
 {
 	int input = 0;
@@ -186,27 +200,129 @@ bool Input::GetMouseButton(int button)
 	return m_Mouse[button];
 }
 
-bool Input::GetMouseButttonDown(int button)
+bool Input::GetMouseButtonDown(int button)
 {
 	return m_Mouse[button] && !m_LastMouse[button];;
 }
 
-bool Input::GetGamepadButton(int button)
+bool Input::GetGamepadButton(GamepadButton button)
 {
-	return m_GamePadButtons[button];
+	return m_GamePadButtons[(int32_t)button];
 }
 
-bool Input::GetGamepadButtonDown(int button)
+bool Input::GetGamepadButtonDown(GamepadButton button)
 {
-	return m_GamePadButtons[button] && !m_LastGamePadButtons[button];
+	return m_GamePadButtons[(int32_t)button] && !m_LastGamePadButtons[(int32_t)button];
 }
 
-float Input::GetGamepadAxis(int axis)
+float Input::GetGamepadAxis(GamepadAxis axis)
 {
-	float a = m_GamepadAxis[axis] / (float)(INT16_MAX);
+	float a = m_GamepadAxis[(int32_t)axis] / (float)(SDL_JOYSTICK_AXIS_MAX);
 	bool s = a < 0.0f;
 	a = glm::max(glm::abs(a) - 0.1f, 0.0f) / 0.9f;
 	return a * (s ? -1.0f : 1.0f);
+}
+
+int32_t Input::GetGamepadType()
+{
+	if (gLastGamepadInput)
+	{
+		if (g_Gamepads.contains(gLastGamepadInput))
+		{
+			return SDL_GetGamepadType(g_Gamepads[gLastGamepadInput]);
+		}
+	}
+
+	return SDL_GAMEPAD_TYPE_UNKNOWN;
+}
+
+void Input::BindAlias(const char* alias, KeyCode keyCode)
+{
+	auto ptr = GetInputAlias(alias);
+	ptr->keyCodes.insert(keyCode);
+}
+
+void Input::BindAlias(const char* alias, MouseButton button)
+{
+	auto ptr = GetInputAlias(alias);
+	ptr->mouseButtons.insert(button);
+}
+
+void Input::BindAlias(const char* alias, GamepadButton gamepadButton)
+{
+	auto ptr = GetInputAlias(alias);
+	ptr->gamepadButtons.insert((int32_t)gamepadButton);
+}
+
+void Input::BindAxisToAlias(const char* alias, GamepadAxis axis, float activation)
+{
+	auto ptr = GetInputAlias(alias);
+	ptr->gpadAxis.insert((int32_t)axis);
+}
+
+bool Input::GetInput(const char* alias)
+{
+	auto ptr = GetInputAlias(alias);
+
+	for (auto keycode : ptr->keyCodes)
+	{
+		if (GetKey(keycode))
+			return true;
+	}
+	for (auto button : ptr->mouseButtons)
+	{
+		if (GetMouseButton(static_cast<int>(button)))
+			return true;
+	}
+	for (auto gpad : ptr->gamepadButtons)
+	{
+		if (GetGamepadButton((GamepadButton)gpad))
+			return true;
+	}
+	for (auto gpad : ptr->gpadAxis)
+	{
+		if (GetGamepadAxis((GamepadAxis)gpad) > 0.5f)
+			return true;
+	}
+
+	return false;
+}
+
+bool Input::GetInputDown(const char* alias)
+{
+	auto ptr = GetInputAlias(alias);
+
+	for (auto keycode : ptr->keyCodes)
+	{
+		if (GetKeyDown(keycode))
+			return true;
+	}
+	for (auto button : ptr->mouseButtons)
+	{
+		if (GetMouseButtonDown(static_cast<int>(button)))
+			return true;
+	}
+	for (auto gpad : ptr->gamepadButtons)
+	{
+		if (GetGamepadButtonDown((GamepadButton)gpad))
+			return true;
+	}
+	for (auto gpad : ptr->gpadAxis)
+	{
+		if (GetGamepadAxis((GamepadAxis)gpad) > 0.5f)
+		{
+			if (ptr->active)
+			{
+				return false;
+			}
+			ptr->active = true;
+			return true;
+		}
+	}
+
+	ptr->active = false;
+
+	return false;
 }
 
 bool Input::AnyKeyDown()
@@ -293,4 +409,13 @@ void Input::Update()
 
 	SDL_UpdateGamepads();
 
+}
+
+Input::InputAlias* Input::GetInputAlias(const char* name)
+{
+	if (!sAliases.contains(name))
+	{
+		sAliases[name] = {};
+	}
+	return &sAliases[name];
 }
