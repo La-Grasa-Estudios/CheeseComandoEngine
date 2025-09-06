@@ -41,4 +41,5 @@ Requires atleast a GPU with Vulkan 1.3, VK_KHR_surface, (Windows) VK_KHR_win32_s
 
 ### Authors of the original mod
 https://www.youtube.com/watch?v=-TZ2dkwWjTc
+[The mod from where the UI textures are](https://gamebanana.com/mods/456005)
 
