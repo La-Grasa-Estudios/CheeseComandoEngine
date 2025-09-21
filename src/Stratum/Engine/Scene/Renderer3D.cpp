@@ -56,6 +56,16 @@ void Renderer3D::SetViewPose(const ViewPose& pose)
 
 void Renderer3D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 {
+	auto& cameras = scene->Cameras.GetEntities();
+
+	for (auto entity : cameras)
+	{
+		auto& camera = scene->Cameras.Get(entity);
+		ViewPose vp = { RenderUtil::GetProjectionMatrix(entity, scene), RenderUtil::GetViewMatrix(entity, scene) };
+		camera.ProjectionViewMatrix = vp.ProjectionViewMatrix;
+		camera.InverseProjectionViewMatrix = vp.InverseProjectionViewMatrix;
+	}
+
 	Render::Frustum frustum(mViewPose.ProjectionViewMatrix);
 
 	mainVisRenderQueue.Clear();

@@ -73,7 +73,7 @@ private:
 	{
 		BatchType Type;
 		Render::GraphicsPipeline* Pipeline;
-		std::vector<SpriteRenderable> RenderQueue;
+		uint32_t RenderCount = 0;
 
 		Batch() = default;
 		Batch(const Batch& other);
@@ -98,6 +98,7 @@ private:
 	SceneResources* mResources;
 
 	Batch mCurrentBatch;
+	std::vector<SpriteRenderable> mRenderQueue;
 	Render::GraphicsPipeline* mShaderBefore;
 
 

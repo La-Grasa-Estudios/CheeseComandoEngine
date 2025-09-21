@@ -4,6 +4,7 @@
 #include <Scene/SceneUI.h>
 #include <Input/Input.h>
 #include <Util/Globals.h>
+#include <Util/StrUtil.h>
 #include <Event/EventBus.h>
 #include <Core/Window.h>
 
@@ -11,6 +12,10 @@
 #include "Song/ErectDadBattleSong.h"
 #include "LoadingScreenSystem.h"
 #include "TimedActionSystem.h"
+#include "Settings.h"
+
+#undef max
+#undef min
 
 static Funkin::TimedActionSystem* pTimedActionSystem;
 static Stratum::ECS::edict_t camera;
@@ -60,9 +65,13 @@ struct ControllerPrompt
 
 std::vector<ControllerPrompt> gControllerPrompts;
 
+static MenuPanelType gLastPanel = MP_INVALID;
+static MenuPanelType gCurrPanelId = MP_INVALID;
 static MenuPanelType gNextPanel = MP_INVALID;
 static void SetPanel(MenuPanelType type)
 {
+	gLastPanel = gCurrPanelId;
+	gCurrPanelId = type;
 	gNextPanel = type;
 }
 
@@ -181,6 +190,8 @@ public:
 			{
 				doSwap = true;
 			});
+		aliveTime = 0.0f;
+
 	}
 	void Destroy(Stratum::Scene* scene) override
 	{
@@ -188,7 +199,7 @@ public:
 	}
 	bool CanSwap(Stratum::Scene* scene) override
 	{
-		return doSwap;
+		return doSwap && aliveTime > 2;
 	}
 };
 
@@ -448,7 +459,33 @@ public:
 class FreeplayMenuPanel : public MenuPanel
 {
 public:
+
+	struct FreeplaySong
+	{
+		std::string DisplayName;
+		std::string ChartPath;
+		Stratum::Ref<Funkin::SongBase> SongScript;
+	};
+
 	Funkin::MainMenuSystem* pMainSystem;
+	bool transitionOut = false;
+	bool transitionPlay = false;
+	float time = 0.0f;
+	float time1 = 0.0f;
+
+	std::vector<FreeplaySong> songs =
+	{
+		{ "Bite Fernan", "fnf/data/bite/bite-fernan.json", Stratum::CreateRef<Funkin::BiteFernanSong>() },
+		{ "Dad Battle", "fnf/data/dad-battle/dad-battle-hard.json", Stratum::CreateRef<Funkin::ErectDadBattleSong>() },
+		{ "Erect Dad Battle", "fnf/data/erect-dadbattle/erect-dadbattle-erect.json", Stratum::CreateRef<Funkin::ErectDadBattleSong>() },
+	};
+
+	std::vector<Stratum::ECS::edict_t> songEntries;
+	Stratum::ECS::edict_t whiteFlash;
+	Stratum::ECS::edict_t xmbWaves;
+
+	int index = 0;
+
 	FreeplayMenuPanel(Funkin::MainMenuSystem* pSystem)
 	{
 		pMainSystem = pSystem;
@@ -459,23 +496,195 @@ public:
 	}
 	void Update(Stratum::Scene* scene)
 	{
+		if (index < 0) index = songs.size() - 1;
+		if (index > songs.size() - 1) index = 0;
 
+		if (transitionOut)
+			time += Stratum::gpGlobals->deltaTime;
+
+		time = glm::min(time, 1.0f);
+		float p = time;
+		p = glm::pow(p, 3);
+
+		{
+			auto& transform = scene->Transforms.Get(xmbWaves);
+			auto& sprite = scene->SpriteRenderers.Get(xmbWaves);
+			glm::vec2 scaleFactor = glm::vec2(scene->VirtualScreenSize) / glm::vec2(sprite.Rect.size);
+			transform.SetScale(glm::vec3(scaleFactor, 0.0f));
+		}
+		
+		for (int i = 0; i < songEntries.size(); i++)
+		{
+			auto entity = songEntries[i];
+			auto& anchor = scene->GuiAnchors.Get(entity);
+			auto& transform = scene->Transforms.Get(entity);
+			auto& renderer = scene->TextRenderers.Get(entity);
+
+			anchor.Position.y = glm::mix(anchor.Position.y, (i - index + (p * songs.size() * 2.0f)) * -250.0f, Stratum::gpGlobals->deltaTime * 8.0f);
+
+			float dist = glm::abs(anchor.Position.y);
+			float maxDistance = 1000.0f;     // beyond this, scale hits minimum
+			float minScale = 0.0f;          // lowest allowed scale
+			float scale = glm::max(1.0f - (dist / maxDistance), minScale);
+
+			float radius = 2000.0f;
+			float distance = glm::clamp(dist, 0.0f, radius * glm::pi<float>());
+			float theta = distance / radius;
+
+			float x = radius * cos(theta); // this gives you the x-position
+
+			anchor.Position.x = x - 1500.0f;
+
+			transform.SetScale(glm::vec3(scale * 1.3f));
+			renderer.Color.a = scale;
+		}
+
+		if (transitionPlay)
+		{
+			if (time > 0.99f)
+			{
+				if (time1 == 0.0f)
+				{
+					auto entity = whiteFlash = scene->EntityManager.CreateEntity();
+					auto& transform = scene->Transforms.Create(entity);
+					auto& sprite = scene->SpriteRenderers.Create(entity);
+
+					sprite.Rect.size = { 10000, 10000 };
+					sprite.SpriteColor = glm::vec4(0.0f);
+					sprite.RenderLayer = 90000000+1;
+					sprite.CameraLayer = 1;
+
+					pTimedActionSystem->PushAction(&sprite.SpriteColor.a, 1.0f, 1.0f, Funkin::Easing::Linear);
+				}
+				time1 += Stratum::gpGlobals->deltaTime;
+				float p = glm::min(time1, 1.0f);
+				pMainSystem->MusicSource->SetVolume(0.3f - p * 0.3f);
+				auto& surface = scene->VideoSurfaces.Get(xmbWaves);
+				surface.PlaybackSpeed = 1.0f + p * 5.0f;
+
+				if (time1 > 1.5f)
+				{
+					Funkin::LoadChartParams params;
+					params.ChartPath = songs[index].ChartPath;
+					params.SongScript = songs[index].SongScript;
+
+					auto scene1 = new Stratum::Scene();
+					scene->SwapScene(scene1);
+					scene1->RegisterCustomSystem(new Funkin::LoadingScreenSystem(params));
+				}
+			}
+		}
+
+		if (!transitionOut && !transitionPlay)
+		{
+			if (Stratum::Input::GetInputDown("menu_back"))
+			{
+				SetPanel(gLastPanel);
+				pMainSystem->CancelFxSource->Play();
+			}
+
+			if (Stratum::Input::GetInputDown("menu_up"))
+			{
+				index--;
+				scene->AudioEngine->PlayOneShot("fnf/sounds/scrollMenu.mp3", 0.5f);
+			}
+
+			if (Stratum::Input::GetInputDown("menu_down"))
+			{
+				index++;
+				scene->AudioEngine->PlayOneShot("fnf/sounds/scrollMenu.mp3", 0.5f);
+			}
+			if (Stratum::Input::GetInputDown("menu_accept"))
+			{
+				transitionOut = true;
+				transitionPlay = true;
+			}
+		}
 	}
 	void Show(Stratum::Scene* scene)
 	{
+		pMainSystem->CreateControllerPrompt(GamepadButton::DPAD_UP, L"Navigate Up");
+		pMainSystem->CreateControllerPrompt(GamepadButton::DPAD_DOWN, L"Navigate Down");
+		pMainSystem->CreateControllerPrompt(GamepadButton::A, L"Select");
+		pMainSystem->CreateControllerPrompt(GamepadButton::B, L"Back");
+		pMainSystem->CreateControllerPrompt(GamepadButton::BACK, L"Fullscreen");
 
+		transitionOut = false;
+		transitionPlay = false;
+		time = 0.0f;
+		time1 = 0.0f;
+
+		index = 0;
+
+		for (auto& song : songs)
+		{
+			auto entity = scene->EntityManager.CreateEntity();
+			auto& transform = scene->Transforms.Create(entity);
+			auto& text = scene->TextComponents.Create(entity);
+			auto& textRenderer = scene->TextRenderers.Create(entity);
+			auto& anchor = scene->GuiAnchors.Create(entity);
+
+			anchor.AnchorPoint = Stratum::GuiAnchorPoint::LEFT;
+
+			text.Text = Stratum::Utils::ToWideString(song.DisplayName);
+			text.Font = "vcr";
+			text.FontSize = 96.0f;
+			textRenderer.RenderLayer = 10;
+
+			anchor.Position = { 200.0f, -2000.0f + index * -250.0f };
+			index++;
+
+			songEntries.push_back(entity);
+		}
+
+		{
+			xmbWaves = scene->EntityManager.CreateEntity();
+			auto& transform = scene->Transforms.Create(xmbWaves);
+			auto& surface = scene->VideoSurfaces.Create(xmbWaves);
+			auto& sprite = scene->SpriteRenderers.Create(xmbWaves);
+			surface.Path = "ui/xmb.mp4";
+			scene->InitVideo(surface);
+
+			surface.SetPlayState(true);
+			surface.SetLoop(true);
+
+			sprite.Rect.position = {};
+			sprite.Rect.size = surface.VideoResolution;
+			sprite.CameraLayer = 0;
+			sprite.RenderLayer = 1;
+			sprite.TextureHandle = surface.TextureHandle;
+			sprite.SpriteColor.a = 0.0f;
+
+			pTimedActionSystem->PushAction(&sprite.SpriteColor.a, 1.0f, 1.0f, Funkin::Easing::Linear);
+			pTimedActionSystem->PushAction(&surface.PlaybackSpeed, 3.0f, 0.1f, Funkin::Easing::BackIn, [&]() {
+				pTimedActionSystem->PushAction(&surface.PlaybackSpeed, 1.0f, 1.8f, Funkin::Easing::BackOut);
+				});
+		}
+
+		index = 0;
 	}
 	void Hide(Stratum::Scene* scene)
 	{
-
+		pMainSystem->ClearControllerPrompts();
+		transitionOut = true;
+		time = 0.0f;
+		auto& sprite = scene->SpriteRenderers.Get(xmbWaves);
+		auto& surface = scene->VideoSurfaces.Get(xmbWaves);
+		pTimedActionSystem->PushAction(&sprite.SpriteColor.a, 0.0f, 1.0f, Funkin::Easing::Linear);
+		pTimedActionSystem->PushAction(&surface.PlaybackSpeed, 4.5f, 1.0f, Funkin::Easing::BackOut);
 	}
 	void Destroy(Stratum::Scene* scene)
 	{
-
+		for (auto entity : songEntries)
+		{
+			scene->EntityManager.DestroyEntity(entity);
+		}
+		songEntries.clear();
+		scene->EntityManager.DestroyEntity(xmbWaves);
 	}
 	bool CanSwap(Stratum::Scene* scene)
 	{
-
+		return time > 0.99f;
 	}
 };
 
@@ -489,6 +698,7 @@ static const std::string ButtonTexturesPS[] =
 	"ui/prompts/ps/PS3_Square.png",
 	"ui/prompts/ps/PS3_Triangle.png",
 	"ui/prompts/ps/PS3_Select.png",
+	"ui/prompts/ps/PS3_Select.png",
 	"ui/prompts/ps/PS3_Start.png",
 	"ui/prompts/ps/PS3_Left_Stick_Click.png",
 	"ui/prompts/ps/PS3_Right_Stick_Click.png",
@@ -498,7 +708,6 @@ static const std::string ButtonTexturesPS[] =
 	"ui/prompts/ps/PS3_Dpad_Down.png",
 	"ui/prompts/ps/PS3_Dpad_Left.png",
 	"ui/prompts/ps/PS3_Dpad_Right.png",
-	"ui/prompts/ps/PS3_Dpad.png",
 	"ui/prompts/ps/PS3_Dpad.png"
 };
 
@@ -509,6 +718,7 @@ static const std::string ButtonTexturesXbox[] =
 	"ui/prompts/xbox/360_X.png",
 	"ui/prompts/xbox/360_Y.png",
 	"ui/prompts/xbox/360_Back_Alt.png",
+	"ui/prompts/xbox/360_Back_Alt.png",
 	"ui/prompts/xbox/360_Start_Alt.png",
 	"ui/prompts/xbox/360_Left_Stick_Click.png",
 	"ui/prompts/xbox/360_Right_Stick_Click.png",
@@ -518,12 +728,13 @@ static const std::string ButtonTexturesXbox[] =
 	"ui/prompts/xbox/360_Dpad_Down.png",
 	"ui/prompts/xbox/360_Dpad_Left.png",
 	"ui/prompts/xbox/360_Dpad_Right.png",
-	"ui/prompts/xbox/360_Dpad.png",
 	"ui/prompts/xbox/360_Dpad.png"
 };
 
 Funkin::MainMenuSystem::MainMenuSystem()
 {
+	Settings::Init();
+	Settings::s_Settings->LoadFromFile("settings.json");
 	mScene = NULL;
 	gNextPanel = MP_INVALID;
 }
@@ -532,6 +743,8 @@ Funkin::MainMenuSystem::~MainMenuSystem()
 {
 	MusicSource->Stop();
 	gControllerPrompts.clear();
+	gCurrentPanel = nullptr;
+	Settings::s_Settings->SaveToFile("settings.json");
 }
 
 void Funkin::MainMenuSystem::Init(Stratum::Scene* scene)
@@ -544,8 +757,15 @@ void Funkin::MainMenuSystem::Init(Stratum::Scene* scene)
 	Stratum::Input::BindAlias("menu_back", KeyCode::ESCAPE);
 	Stratum::Input::BindAlias("menu_back", GamepadButton::B);
 
+	Stratum::Input::BindAlias("menu_up", KeyCode::UP);
+	Stratum::Input::BindAlias("menu_up", GamepadButton::DPAD_UP);
+
+	Stratum::Input::BindAlias("menu_down", KeyCode::DOWN);
+	Stratum::Input::BindAlias("menu_down", GamepadButton::DPAD_DOWN);
+
 	gPanels[MP_TITLE] = Stratum::CreateRef<TitleMenuPanel>(this);
 	gPanels[MP_MAIN] = Stratum::CreateRef<MainMenuPanel>(this);
+	gPanels[MP_FREEPLAY] = Stratum::CreateRef<FreeplayMenuPanel>(this);
 
 	for (auto& panel : gPanels)
 	{
@@ -569,12 +789,10 @@ void Funkin::MainMenuSystem::Init(Stratum::Scene* scene)
 	scene->RegisterCustomSystem(pTimedActionSystem, true);
 	scene->FontRegistry.LoadFont("vcr", "fonts/vcr-org.ttf");
 
-	HoverFxSource = Stratum::CreateRef<Stratum::MP3AudioSource>("fnf/sounds/scrollMenu.mp3", mScene->AudioEngine->GetEngine());
 	ConfirmFxSource = Stratum::CreateRef<Stratum::MP3AudioSource>("fnf/sounds/confirmMenu.mp3", mScene->AudioEngine->GetEngine());
 	CancelFxSource = Stratum::CreateRef<Stratum::MP3AudioSource>("fnf/sounds/cancelMenu.mp3", mScene->AudioEngine->GetEngine());
 	MusicSource = Stratum::CreateRef<Stratum::MP3AudioSource>("fnf/music/freakyMenu.mp3", mScene->AudioEngine->GetEngine());
 
-	mScene->AudioEngine->AddSource(HoverFxSource);
 	mScene->AudioEngine->AddSource(ConfirmFxSource);
 	mScene->AudioEngine->AddSource(CancelFxSource);
 	mScene->AudioEngine->AddSource(MusicSource);
@@ -584,7 +802,6 @@ void Funkin::MainMenuSystem::Init(Stratum::Scene* scene)
 	MusicSource->SetLooping(true);
 
 	MusicSource->SetVolume(0.3f);
-	HoverFxSource->SetVolume(0.6f);
 
 	{
 		auto entity = bgEntity = scene->EntityManager.CreateEntity();
@@ -620,26 +837,16 @@ void Funkin::MainMenuSystem::Init(Stratum::Scene* scene)
 		{
 			if (e.EventName == "sfx-ui")
 			{
-				HoverFxSource->Play();
+				mScene->AudioEngine->PlayOneShot("fnf/sounds/scrollMenu.mp3", 0.5f);
 				Stratum::Input::SetGamepadRumble(0.1f, 0.1f, 50);
 				return;
 			}
 			if (e.EventName == "switch-freeplay-panel")
 			{
 				using namespace ENGINE_NAMESPACE;
-
-				LoadChartParams params;
-				params.ChartPath = "fnf/data/bite/bite-fernan.json";
-				//params.ChartPath = "fnf/data/dad-battle/dad-battle-hard.json";
-				//params.ChartPath = "fnf/data/erect-dadbattle/erect-dadbattle-erect.json";
-				params.SongScript = CreateRef<BiteFernanSong>();
-				//params.SongScript = CreateRef<ErectDadBattleSong>();
-
-				auto scene = new Stratum::Scene();
-				mScene->SwapScene(scene);
-
-				//scene->RegisterCustomSystem(new BalatroSystem());
-				scene->RegisterCustomSystem(new LoadingScreenSystem(params));
+				
+				SetPanel(MP_FREEPLAY);
+				ConfirmFxSource->Play();
 				return;
 			}
 			if (e.EventName == "close-imp")
@@ -729,8 +936,8 @@ void Funkin::MainMenuSystem::Update(Stratum::Scene* scene)
 				auto& buttonAnchor = mScene->GuiAnchors.Get(prompt.Button);
 				auto& textAnchor = mScene->GuiAnchors.Get(prompt.Text);
 
-				pTimedActionSystem->PushAction(&buttonAnchor.Position.x, 70.0f, { 0.5f, 1.0f, index * 0.2f }, Easing::BackOut);
-				pTimedActionSystem->PushAction(&textAnchor.Position.x, 120.0f, { 0.5f, 1.0f, index * 0.2f }, Easing::BackOut);
+				pTimedActionSystem->PushAction(&buttonAnchor.Position.x, 70.0f, { 0.35f, 1.0f, index * 0.15f }, Easing::BackOut);
+				pTimedActionSystem->PushAction(&textAnchor.Position.x, 120.0f, { 0.35f, 1.0f, index * 0.15f }, Easing::BackOut);
 
 				index++;
 			}
@@ -767,8 +974,8 @@ void Funkin::MainMenuSystem::Update(Stratum::Scene* scene)
 				auto& buttonAnchor = mScene->GuiAnchors.Get(prompt.Button);
 				auto& textAnchor = mScene->GuiAnchors.Get(prompt.Text);
 
-				pTimedActionSystem->PushAction(&buttonAnchor.Position.x, -700, { 0.5f, 1.0f, index * 0.2f }, Easing::BackIn);
-				pTimedActionSystem->PushAction(&textAnchor.Position.x, -700 + 70, { 0.5f, 1.0f, index * 0.2f }, Easing::BackIn);
+				pTimedActionSystem->PushAction(&buttonAnchor.Position.x, -700, { 0.35f, 1.0f, index * 0.15f }, Easing::BackIn);
+				pTimedActionSystem->PushAction(&textAnchor.Position.x, -700 + 70, { 0.35f, 1.0f, index * 0.15f }, Easing::BackIn);
 
 				index++;
 			}
@@ -833,8 +1040,8 @@ void Funkin::MainMenuSystem::ClearControllerPrompts()
 		auto& buttonAnchor = mScene->GuiAnchors.Get(prompt.Button);
 		auto& textAnchor = mScene->GuiAnchors.Get(prompt.Text);
 
-		pTimedActionSystem->PushAction(&buttonAnchor.Position.x, -700, { 0.5f, 1.0f, index * 0.2f }, Easing::BackIn);
-		pTimedActionSystem->PushAction(&textAnchor.Position.x, -700 + 70, { 0.5f, 1.0f, index * 0.2f }, Easing::BackIn, [this, prompt, index]
+		pTimedActionSystem->PushAction(&buttonAnchor.Position.x, -700, { 0.35f, 1.0f, index * 0.15f }, Easing::BackIn);
+		pTimedActionSystem->PushAction(&textAnchor.Position.x, -700 + 70, { 0.35f, 1.0f, index * 0.15f }, Easing::BackIn, [this, prompt, index]
 			{
 				mScene->EntityManager.DestroyEntity(prompt.Button);
 				mScene->EntityManager.DestroyEntity(prompt.Text);

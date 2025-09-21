@@ -47,13 +47,13 @@ if (x < 1 / d1) {
 	return n1 * x * x;
 }
  else if (x < 2 / d1) {
-  return n1 * (x -= 1.5 / d1) * x + 0.75;
+  return n1 * (x -= 1.5f / d1) * x + 0.75f;
 }
  else if (x < 2.5 / d1) {
-  return n1 * (x -= 2.25 / d1) * x + 0.9375;
+  return n1 * (x -= 2.25f / d1) * x + 0.9375f;
 }
  else {
-  return n1 * (x -= 2.625 / d1) * x + 0.984375;
+  return n1 * (x -= 2.625f / d1) * x + 0.984375f;
 }
 }
 
@@ -234,7 +234,7 @@ void SceneUI::ShowUIPanel(const std::string& panelName)
 
 	mFocusedPanels.push_back(panelName);
 
-	std::queue<UIComponent*> componentQueue;
+	static std::queue<UIComponent*> componentQueue;
 
 	for (auto& root : panel.Roots)
 	{
@@ -288,7 +288,7 @@ void SceneUI::HideUIPanel(const std::string& panelName)
 		}
 	}
 
-	std::queue<UIComponent*> componentQueue;
+	static std::queue<UIComponent*> componentQueue;
 
 	for (auto& root : panel.Roots)
 	{
@@ -324,17 +324,16 @@ void SceneUI::Update()
 	MousePosition /= mScene->VirtualScreenSize;
 	//MousePosition = MousePosition * 2.0f - 1.0f;
 
-	std::array<glm::mat4, 16> camMatrices;
+	std::array<ECS::edict_t, 16> cameras{};
 
-	auto& cameras = mScene->Cameras.GetEntities();
+	auto& sceneCameras = mScene->Cameras.GetEntities();
 
-	for (auto entity : cameras)
+	for (auto entity : sceneCameras)
 	{
 		auto& camera = mScene->Cameras.Get(entity);
 		if (camera.RenderLayer < 16)
 		{
-			ViewPose pose(RenderUtil::GetProjectionMatrix(entity, mScene), RenderUtil::GetViewMatrix(entity, mScene));
-			camMatrices[camera.RenderLayer] = pose.InverseProjectionViewMatrix;
+			cameras[camera.RenderLayer] = entity;
 		}
 	}
 
@@ -353,7 +352,9 @@ void SceneUI::Update()
 
 			AABB aabb = AABB(pos, hoveredComponent->BoundingBoxExtends);
 
-			glm::vec2 mousePosition = camMatrices[0] * glm::vec4(MousePosition, 0.0f, 1.0f);
+			auto& camera = mScene->Cameras.Get(cameras[hoveredComponent->CameraLayer]);
+
+			glm::vec2 mousePosition = camera.ScreenPointToWorld(glm::vec3(MousePosition, 0.0f));
 			mousePosition -= (mScene->VirtualScreenSize * glm::vec2(-1, 1));
 
 			if (!aabb.PointInside(mousePosition))
@@ -376,11 +377,11 @@ void SceneUI::Update()
 				panel.Active = true;
 			}
 
-			std::queue<Ref<UIComponent>> componentQueue;
+			static std::queue<UIComponent*> componentQueue;
 
 			for (auto& root : panel.Roots)
 			{
-				componentQueue.push(root);
+				componentQueue.push(root.get());
 
 				while (!componentQueue.empty())
 				{
@@ -391,20 +392,21 @@ void SceneUI::Update()
 
 					AABB aabb = AABB(pos, component->BoundingBoxExtends);
 
-					glm::vec2 mousePosition = camMatrices[0] * glm::vec4(MousePosition, 0.0f, 1.0f);
+					auto& camera = mScene->Cameras.Get(cameras[component->CameraLayer]);
+					glm::vec2 mousePosition = camera.ScreenPointToWorld(glm::vec3(MousePosition, 0.0f));
 					mousePosition -= (mScene->VirtualScreenSize * glm::vec2(-1, 1));
 
 					if (aabb.PointInside(mousePosition) && component->TransitionState == UIPanelTransitionState::IDLE)
 					{
 						if (!hoveredComponent || component->RenderLayer >= hoveredComponent->RenderLayer)
 						{
-							hoveredComponent = component.get();
+							hoveredComponent = component;
 						}
 					}
 
-					for (auto child : component->Components)
+					for (auto& child : component->Components)
 					{
-						componentQueue.push(child);
+						componentQueue.push(child.get());
 					}
 				}
 			}
@@ -415,25 +417,25 @@ void SceneUI::Update()
 	{
 		auto& panel = kv.second;
 
-		std::queue<Ref<UIComponent>> componentQueue;
+		static std::queue<UIComponent*> componentQueue;
 
 		for (auto& root : panel.Roots)
 		{
-			componentQueue.push(root);
+			componentQueue.push(root.get());
 
 			while (!componentQueue.empty())
 			{
 				auto component = componentQueue.front();
 				componentQueue.pop();
 
-				if (component.get() != hoveredComponent)
+				if (component != hoveredComponent)
 				{
 					component->Hovered = false;
 				}
 
-				for (auto child : component->Components)
+				for (auto& child : component->Components)
 				{
-					componentQueue.push(child);
+					componentQueue.push(child.get());
 				}
 			}
 		}
@@ -442,7 +444,10 @@ void SceneUI::Update()
 	bool usedController = false;
 
 	static std::string lastFocus = "";
-	std::string focus = "";
+	static std::string focus = "";
+
+	focus.clear();
+
 	if (!mFocusedPanels.empty())
 	{
 		focus = mFocusedPanels.back();
@@ -510,7 +515,7 @@ void SceneUI::Update()
 
 		hoveredComponent->Hovered = true;
 
-		std::array<std::string, 4> next = { hoveredComponent->PadUp, hoveredComponent->PadDown, hoveredComponent->PadLeft, hoveredComponent->PadRight };
+		std::array<std::string*, 4> next = { &hoveredComponent->PadUp, &hoveredComponent->PadDown, &hoveredComponent->PadLeft, &hoveredComponent->PadRight };
 		std::array<GamepadButton, 4> buttons = { GamepadButton::DPAD_UP, GamepadButton::DPAD_DOWN, GamepadButton::DPAD_LEFT, GamepadButton::DPAD_RIGHT };
 
 		for (int i = 0; i < 4; i++)
@@ -518,9 +523,9 @@ void SceneUI::Update()
 			if (Stratum::Input::GetGamepadButtonDown(buttons[i]))
 			{
 				usedController = true;
-				if (!next[i].empty())
+				if (!next[i]->empty())
 				{
-					auto nextComp = FindObject(hoveredComponent->PanelName, next[i]);
+					auto nextComp = FindObject(hoveredComponent->PanelName, *next[i]);
 					if (nextComp)
 					{
 						hoveredComponent = nextComp;
@@ -545,7 +550,7 @@ void SceneUI::PreRender(Render::CopyCommandBuffer* pCmd)
 
 void SceneUI::Render(RenderQueue2D* ppRenderQueues)
 {
-	std::queue<Ref<UIComponent>> componentQueue;
+	static std::queue<UIComponent*> componentQueue;
 
 	for (auto& kv : mPanels)
 	{
@@ -556,7 +561,7 @@ void SceneUI::Render(RenderQueue2D* ppRenderQueues)
 
 		for (auto& root : panel.Roots)
 		{
-			componentQueue.push(root);
+			componentQueue.push(root.get());
 		}
 
 		if (TransitionFinished(panel))
@@ -659,21 +664,6 @@ void SceneUI::Render(RenderQueue2D* ppRenderQueues)
 			instance.batch.color *= color;
 
 			ppRenderQueues[component.CameraLayer].Push(instance);
-			/*
-			instance.batch.texture = -1;
-			instance.batch.color = glm::vec4(rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, rand() / (float)RAND_MAX, 1.0f);
-			instance.batch.rect = { glm::ivec2(0), glm::ivec2(component.BoundingBoxExtends) };
-
-			if (component.Type == UIComponentType::BUTTON)
-			{
-				if (!component.Hovered)
-				{
-					instance.batch.color *= 0.75f;
-				}
-			}
-
-			ppRenderQueues[component.CameraLayer].Push(instance);
-			*/
 		}
 
 		if (component.Type == UIComponentType::LABEL)
@@ -690,29 +680,11 @@ void SceneUI::Render(RenderQueue2D* ppRenderQueues)
 			ppRenderQueues[component.CameraLayer].Push(instance);
 		}
 
-		for (auto child : component.Components)
+		for (auto& child : component.Components)
 		{
-			componentQueue.push(child);
+			componentQueue.push(child.get());
 		}
 	}
-	/*
-	Render2DInstance instance{};
-
-	glm::mat4 t(1.0f);
-
-	t = glm::translate(t, glm::vec3(mScene->VirtualMousePosition, 0.0f));
-
-	instance.batch.center = glm::vec2(-1.0f, 1.0f);
-	instance.batch.rect = { glm::ivec2(0), glm::ivec2(16, 16) };
-	instance.batch.RenderSize = instance.batch.rect.size;
-	instance.batch.transform = t;
-	instance.zIndex = 9999999;
-	instance.batch.color = glm::vec4(1.0f);
-	instance.batch.useNearestFilter = false;
-	instance.batch.texture = -1;
-	instance.batch.scaleWithRenderSize = false;
-	ppRenderQueues[0].Push(instance);
-	*/
 }
 
 void SceneUI::OnTextRender(Render2DInstance* pInstance)
@@ -727,7 +699,17 @@ void SceneUI::OnTextRender(Render2DInstance* pInstance)
 	if (component->Type != UIComponentType::LABEL)
 		return;
 
-	mScene->TextComponents.Get(mTextEntity).Text = component->Label.Text;
+	auto& target = mScene->TextComponents.Get(mTextEntity).Text;
+
+	if (target.capacity() < component->Label.Text.size())
+		target.reserve(component->Label.Text.size() + 1);
+
+	target.clear();
+	for (int i = 0; i < component->Label.Text.size(); i++)
+	{
+		target.push_back(component->Label.Text[i]);
+	}
+	
 	mScene->TextComponents.Get(mTextEntity).FontSize = component->FontSize;
 	mScene->TextComponents.Get(mTextEntity).Font = component->Font;
 	mScene->TextRenderers.Get(mTextEntity).Alignment = component->Label.TextAlignment;
@@ -738,13 +720,13 @@ void SceneUI::OnTextRender(Render2DInstance* pInstance)
 
 UIComponent* SceneUI::FindObject(const std::string& panelName, const std::string& name)
 {
-	std::queue<Ref<UIComponent>> componentQueue;
+	static std::queue<UIComponent*> componentQueue;
 
 	if (mPanels.contains(panelName))
 	{
 		for (auto& root : mPanels[panelName].Roots)
 		{
-			componentQueue.push(root);
+			componentQueue.push(root.get());
 
 			while (!componentQueue.empty())
 			{
@@ -753,12 +735,15 @@ UIComponent* SceneUI::FindObject(const std::string& panelName, const std::string
 
 				if (component->Name.compare(name) == 0)
 				{
-					return component.get();
+					while(!componentQueue.empty())
+						componentQueue.pop();
+
+					return component;
 				}
 
-				for (auto child : component->Components)
+				for (auto& child : component->Components)
 				{
-					componentQueue.push(child);
+					componentQueue.push(child.get());
 				}
 			}
 		}
@@ -864,11 +849,11 @@ void SceneUI::CalculateLayout(UIComponent* component)
 
 bool SceneUI::TransitionFinished(UIPanel& panel)
 {
-	std::queue<Ref<UIComponent>> componentQueue;
+	static std::queue<UIComponent*> componentQueue;
 
 	for (auto& root : panel.Roots)
 	{
-		componentQueue.push(root);
+		componentQueue.push(root.get());
 	}
 
 	// Bounding boxes
@@ -879,14 +864,22 @@ bool SceneUI::TransitionFinished(UIPanel& panel)
 		componentQueue.pop();
 
 		if (component->TransitionState != UIPanelTransitionState::HIDING)
+		{
+			while (!componentQueue.empty())
+				componentQueue.pop();
 			return false;
+		}
 
 		if (component->TransitionState == UIPanelTransitionState::HIDING && component->TransitionProgress > 0.0f)
-			return false;
-
-		for (auto child : component->Components)
 		{
-			componentQueue.push(child);
+			while (!componentQueue.empty())
+				componentQueue.pop();
+			return false;
+		}
+
+		for (auto& child : component->Components)
+		{
+			componentQueue.push(child.get());
 		}
 	}
 

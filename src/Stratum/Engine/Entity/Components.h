@@ -225,6 +225,7 @@ struct VideoSurfaceComponent
 	glm::ivec2 VideoResolution;
 	std::string Path;
 	bool PlayAudio = false;
+	float PlaybackSpeed = 1.0f;
 
 	VideoSurfaceComponent& SetPlayState(bool state)
 	{
@@ -285,6 +286,10 @@ struct CameraComponent
 	bool Orthographic = false;
 	bool RendersToGui = false;
 	uint8_t RenderLayer = 0; // Only 16 layers allowed (0-15)
+	glm::mat4 ProjectionViewMatrix;
+	glm::mat4 InverseProjectionViewMatrix;
+
+	glm::vec3 ScreenPointToWorld(const glm::vec3& point) const;
 };
 
 END_ENGINE

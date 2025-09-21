@@ -9,6 +9,7 @@
 #include <Core/Time.h>
 #include <Font/Font.h>
 #include <Util/StrUtil.h>
+#include <Util/Globals.h>
 #include <Input/Input.h>
 
 #include "SpriteBatch.h"
@@ -18,7 +19,12 @@
 
 #include <format>
 
-//#define DEBUG_RENDERER
+// #define DEBUG_RENDERER
+
+extern size_t totalAllocated;
+extern size_t totalAllocations;
+extern size_t freedAllocations;
+extern std::atomic_uint64_t gUsedMemory;
 
 using namespace ENGINE_NAMESPACE;
 
@@ -57,7 +63,7 @@ Renderer2D::Renderer2D()
 {
 	if (!debugLogAdded)
 	{
-		Logger::s_LogReceivers.push_back(new DebugLogReceiver());
+		//Logger::s_LogReceivers.push_back(new DebugLogReceiver());
 	}
 
 	pStack = new Render::PostProcessingStack();
@@ -187,7 +193,6 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 
 	for (auto entity : spriteRenderers)
 	{
-
 		if (!scene->Transforms.HasComponent(entity))
 			continue;
 
@@ -289,19 +294,21 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 
 	scene->UI->Render(mRenderQueues.data());
 
-	// Parallel sorting :D
+	for (int i = 0; i < mRenderQueues.size(); i++)
+		mRenderQueues[i].Sort();
+
+	/*
 	JobManager::Dispatch(16, 4, [this](JobDispatchArgs args)
 		{
 			mRenderQueues[args.jobIndex].Sort();
 		});
+	*/
 
 	for (int i = 0; i < mCameras.size(); i++)
 	{
 		if (mCameras[i] != ECS::C_INVALID_ENTITY)
 		{
-			auto proj = RenderUtil::GetProjectionMatrix(mCameras[i], scene);
-			auto view = RenderUtil::GetViewMatrix(mCameras[i], scene);
-			perFrameData.ProjView[i] = proj * view;
+			perFrameData.ProjView[i] = scene->Cameras.Get(mCameras[i]).ProjectionViewMatrix;
 		}
 	}
 
@@ -386,17 +393,24 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 
 	glm::vec2 scaling = scene->VirtualScreenSize / glm::vec2(pOutput->GetSize());
 
-	auto gd = Render::RendererContext::s_Context->GetGraphicsDeviceProperties();
-	auto baseString = std::wstring(L"Stratum Engine {}, {}\nFPS: {} CPU: {:.2f}ms GPU: {:.2f}ms\n{} - {}/{}MB\nEntities Alive: {}");
 
 	mSpriteBatch->SetBatch(nullptr, BatchType::TEXT);
 
-	if (scene->FontRegistry.NeedsUpload("Roboto"))
+	static std::string c_DefaultFont = "Roboto";
+
+	if (scene->FontRegistry.NeedsUpload(c_DefaultFont))
 	{
 		scene->Resources.CreateFontImage(scene->FontRegistry.GetFont("Roboto"));
 	}
 
 #ifdef DEBUG_RENDERER
+
+	auto before = totalAllocations;
+	auto beforeKb = totalAllocated;
+
+	static auto baseString = std::wstring(L"Stratum Engine {}, {}\nFPS: {} CPU: {:.2f}ms GPU: {:.2f}ms\n{} - {}/{}MB\nEntities Alive: {}\nAllocs: {} Count | {} Freed | {:.2f} Kb Total | Used (Aprox): {:.2f}Kb");
+	auto gd = Render::RendererContext::s_Context->GetGraphicsDeviceProperties();
+
 	parameters.font = scene->FontRegistry.GetFont("Roboto");
 	parameters.fontSize = 64.0f;
 	textRenderer.SetParameters(parameters);
@@ -406,8 +420,33 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 		Utils::ToWideString(gd.Description).c_str(),
 		(int)(gd.UsedVideoMemory / 1024.0f / 1024.0f),
 		gd.DedicatedVideoMemory / 1024 / 1024,
-		scene->EntityManager.LiveEntities),
+		scene->EntityManager.LiveEntities,
+		gpGlobals->totalAllocations, gpGlobals->freedAllocations, gpGlobals->totalAllocated / 1024.0f, gUsedMemory / 1024.0f),
 		glm::vec2(-VirtualScreenSize.x + 20, VirtualScreenSize.y - 64), glm::identity<glm::mat4>());
+	/*
+
+	static auto baseString = std::wstring(L"Stratum Engine {}, {}\nFPS: {}");
+	auto gd = Render::RendererContext::s_Context->GetGraphicsDeviceProperties();
+
+	parameters.font = scene->FontRegistry.GetFont("Roboto");
+	parameters.fontSize = 64.0f;
+	textRenderer.SetParameters(parameters);
+
+	textRenderer.DrawText(Utils::FormatString(baseString, L"" __DATE__, L"" __TIME__,
+		(int)(1.0f / Time::UnscaledDeltaTime)),
+		glm::vec2(-VirtualScreenSize.x + 20, VirtualScreenSize.y - 64), glm::identity<glm::mat4>());
+
+	auto times = EngineStats::GetTimes();
+
+	int index = 0;
+
+	for (auto& t : times)
+	{
+		textRenderer.DrawText(Utils::FormatString(L"{}: {:.2f}ms", Utils::ToWideString(t.name), t.time),
+			glm::vec2(-VirtualScreenSize.x + 20, VirtualScreenSize.y - 200 - (64 * index)), glm::identity<glm::mat4>());
+		index++;
+	}
+	*/
 
 	parameters.fontSize = 48;
 	parameters.maxWidth = VirtualScreenSize.x * 2;
@@ -443,6 +482,13 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 		offset += str.y * 1.2f;
 	}
 	g_DebugSync.release();
+
+	auto after = totalAllocations;
+	auto afterKb = totalAllocated;
+	auto total = after - before;
+	auto totalKb = afterKb - beforeKb;
+	totalAllocations -= total;
+	totalAllocated -= totalKb;
 #endif
 
 	mCopyCmdBuffer->Begin();

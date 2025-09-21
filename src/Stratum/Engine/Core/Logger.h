@@ -91,7 +91,8 @@ BEGIN_ENGINE
 		template<typename ... Args>
 		static void Log(std::string_view fmt, LogLevel level, Args&&... args) {
 			auto format = std::vformat(fmt, std::make_format_args(args...));
-			s_LogReceiver->Log(format, level);
+			if (s_LogReceiver)
+				s_LogReceiver->Log(format, level);
 			for (auto r : s_LogReceivers)
 			{
 				reinterpret_cast<LogReceiver*>(r)->Log(format, level);

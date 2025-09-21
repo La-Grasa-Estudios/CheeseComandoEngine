@@ -57,7 +57,11 @@ MP3AudioSource::MP3AudioSource(const char* file, ma_engine* pEngine)
 MP3AudioSource::~MP3AudioSource()
 {
     delete m_AudioBuffer;
-    if (p_Params.IsReady) ma_sound_uninit(&p_Sound);
+    mp3dec_ex_close(&m_Mp3DecCtx);
+    if (p_Params.IsReady)
+    {
+        ma_sound_uninit(&p_Sound);
+    }
     if (m_Stream->is_self_contained()) delete m_Stream;
 }
 

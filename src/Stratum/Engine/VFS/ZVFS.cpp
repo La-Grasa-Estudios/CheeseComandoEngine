@@ -489,7 +489,7 @@ size_t PakStreamImpl::read(void* buffer, size_t size)
 
     this->m_Pack->semaphore.release();
 
-    int ptr = gpointer;
+    auto ptr = gpointer;
     gpointer += size;
 
     for (int i = 0; i < size; i++) {

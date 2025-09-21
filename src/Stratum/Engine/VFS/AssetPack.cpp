@@ -244,7 +244,7 @@ static uint8_t* UnpackImage(uint8_t* buffer, uint32_t width, uint32_t height, ui
 
 static uint8_t* GenerateLODImage(uint8_t* brgaBuff, uint32_t width, uint32_t height, uint32_t nrChannels, uint32_t* pLodFactor) {
     
-    int lodReduction = 2;
+    uint32_t lodReduction = 2;
 
     while (width / lodReduction > lodReduction && height / lodReduction > lodReduction && lodReduction < 4) {
         lodReduction += 1;
@@ -260,8 +260,8 @@ static uint8_t* GenerateLODImage(uint8_t* brgaBuff, uint32_t width, uint32_t hei
     *pLodFactor = lodReduction;
 
     if (width > lodReduction && height > lodReduction) {
-        for (int x = 0; x < width / lodReduction; x++) {
-            for (int y = 0; y < height / lodReduction; y++) {
+        for (uint32_t x = 0; x < width / lodReduction; x++) {
+            for (uint32_t y = 0; y < height / lodReduction; y++) {
 
                 uint32_t avgr = 0;
                 uint32_t avgg = 0;

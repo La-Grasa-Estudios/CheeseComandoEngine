@@ -68,7 +68,7 @@ public:
 private:
 
 	bool m_eof = false;
-	int gpointer = 0;
+	size_t gpointer = 0;
 
 	AssetFileEntry m_Entry;
 	AssetPack* m_Pack = NULL;

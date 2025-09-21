@@ -10,6 +10,7 @@
 #include "StageRegistry.h"
 #include "CharaRegistry.h"
 #include "Cursed/BalatroSystem.h"
+#include "Settings.h"
 
 #include <Core/Time.h>
 #include <Core/Window.h>
@@ -33,6 +34,7 @@ Funkin::GameState gGameState;
 #undef max
 
 float gMissTimer = 0.0f;
+constexpr static float C_COUNTDOWN_DUR = 1.5f;
 
 Stratum::ECS::edict_t MainCameraEntity = 0;
 Stratum::ECS::edict_t GuiCameraEntity = 0;
@@ -41,6 +43,7 @@ Funkin::InGameSystem::InGameSystem(const LoadChartParams& params) : mLoadParams(
 {
 	mSong = params.SongScript;
 	mLoadingDone.store(false);
+	Settings::s_Settings->LoadFromFile("settings.json");
 }
 
 Funkin::InGameSystem::~InGameSystem()
@@ -51,12 +54,15 @@ Funkin::InGameSystem::~InGameSystem()
 	instSource = NULL;
 	voicesSource = NULL;
 	pauseSource->Stop();
+	Settings::s_Settings->SaveToFile("settings.json");
 }
 
 void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 {
 	gGameState = {};
 	mScene = scene;
+
+	this->mCountdownTimer = C_COUNTDOWN_DUR;
 
 	StageRegistry::Init(mScene);
 	CharaRegistry::Init(mScene);
@@ -219,6 +225,10 @@ void Funkin::InGameSystem::Init(Stratum::Scene* scene)
 	}
 
 	mLoadingStage.fetch_add(1);
+
+	mScene->Resources.LoadTextureImage("fnf/images/countdown/funkin/go.png");
+	mScene->Resources.LoadTextureImage("fnf/images/countdown/funkin/set.png");
+	mScene->Resources.LoadTextureImage("fnf/images/countdown/funkin/ready.png");
 
 	pEarlyUpdate = true;
 
@@ -384,12 +394,78 @@ void Funkin::InGameSystem::OnActivate(Stratum::Scene* scene)
 
 void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 {
-	if (!mHasSongStarted)
+	if (!mHasSongStarted && mCountdownTimer <= 0.0f)
 	{
 		mHasSongStarted = true;
 		instSource->Play();
 		if (voicesSource)
 			voicesSource->Play();
+		mConductor->SongStarted = true;
+	}
+
+	if (mCountdownTimer > 0.0f)
+	{
+		static bool playedThree = false;
+		static bool playedTwo = false;
+		static bool playedOne = false;
+		static bool playedGo = false;
+
+		if (mCountdownTimer == C_COUNTDOWN_DUR)
+		{
+			playedThree = false;
+			playedTwo = false;
+			playedOne = false;
+			playedGo = false;
+		}
+
+		mCountdownTimer -= Stratum::gpGlobals->deltaTime;
+
+		uint32_t dec = mCountdownTimer * 10.0f;
+		const uint32_t C_DEC = C_COUNTDOWN_DUR * 10.0f;
+		const uint32_t C_THREE = 11;
+		const uint32_t C_TWO = 8;
+		const uint32_t C_ONE = 5;
+		const uint32_t C_GO = 2;
+
+		if (dec == C_THREE && !playedThree)
+		{
+			mScene->AudioEngine->PlayOneShot("fnf/sounds/gameplay/countdown/funkin/introTHREE.mp3");
+			playedThree = true;
+		}
+		if (dec == C_TWO && !playedTwo)
+		{
+			mScene->AudioEngine->PlayOneShot("fnf/sounds/gameplay/countdown/funkin/introTWO.mp3");
+			playedTwo = true;
+			auto entity = this->CreateSpriteEntity("fnf/images/countdown/funkin/ready.png", {}, { 1.0f, 1.0f }, 5, 10000);
+			auto& sprite = mScene->SpriteRenderers.Get(entity);
+			pTimedActionSystem->PushAction(&sprite.SpriteColor.a, 0.0f, 0.3f, Easing::Linear, [entity, this]
+				{
+					mScene->EntityManager.DestroyEntity(entity);
+				});
+		}
+		if (dec == C_ONE && !playedOne)
+		{
+			mScene->AudioEngine->PlayOneShot("fnf/sounds/gameplay/countdown/funkin/introONE.mp3");
+			playedOne = true;
+			auto entity = this->CreateSpriteEntity("fnf/images/countdown/funkin/set.png", {}, { 1.0f, 1.0f }, 5, 10000);
+			auto& sprite = mScene->SpriteRenderers.Get(entity);
+			pTimedActionSystem->PushAction(&sprite.SpriteColor.a, 0.0f, 0.3f, Easing::Linear, [entity, this]
+				{
+					mScene->EntityManager.DestroyEntity(entity);
+				});
+		}
+		if (dec == C_GO && !playedGo)
+		{
+			mScene->AudioEngine->PlayOneShot("fnf/sounds/gameplay/countdown/funkin/introGO.mp3");
+			playedGo = true;
+			auto entity = this->CreateSpriteEntity("fnf/images/countdown/funkin/go.png", {}, { 1.0f, 1.0f }, 5, 10000);
+			auto& sprite = mScene->SpriteRenderers.Get(entity);
+			pTimedActionSystem->PushAction(&sprite.SpriteColor.a, 0.0f, 0.3f, Easing::Linear, [entity, this]
+				{
+					mScene->EntityManager.DestroyEntity(entity);
+				});
+		}
+
 	}
 
 	if (mConductor->BeatCountF < 3.0f)
@@ -454,6 +530,10 @@ void Funkin::InGameSystem::Update(Stratum::Scene* scene)
 		// Keeps smooth feeling on frame based time tracking without the risk of desync
 		float diff = (instSource->PositionF() - mConductor->SongTime);
 		mConductor->SongTime += diff * 0.05f;
+	}
+	else
+	{
+		mConductor->SongTime = -mCountdownTimer;
 	}
 
 	mFadeToWhiteBaseTime = glm::max(mFadeToWhiteBaseTime, 0.001f);
@@ -646,24 +726,26 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 			}
 		}
 
+		auto& volumeSetting = Settings::s_Settings->Get("volume", 1.0f);
+
 		if (mPauseUiButtonIndex == 1)
 		{
 			if (Stratum::Input::GetKeyDown(KeyCode::LEFT) || 
 				Stratum::Input::GetGamepadButtonDown(GamepadButton::DPAD_LEFT))
 			{
-				mVolume -= 0.05f;
+				volumeSetting.floatValue -= 0.05f;
 				scrollSource->Play();
 			}
 			if (Stratum::Input::GetKeyDown(KeyCode::RIGHT) || 
 				Stratum::Input::GetGamepadButtonDown(GamepadButton::DPAD_RIGHT))
 			{
-				mVolume += 0.05f;
+				volumeSetting.floatValue += 0.05f;
 				scrollSource->Play();
 			}
-			mVolume = glm::clamp(mVolume, 0.0f, 1.0f);
+			volumeSetting.floatValue = glm::clamp(volumeSetting.floatValue, 0.0f, 1.0f);
 		}
 
-		mScene->TextComponents.Get(mVolumeText).Text = std::format(L"volume: {:.0f}%", mVolume * 100.0f);
+		mScene->TextComponents.Get(mVolumeText).Text = std::format(L"volume: {:.0f}%", volumeSetting.floatValue * 100.0f);
 		mScene->TextComponents.Get(mBotplayText).Text = std::format(L"Botplay: {}", mConductor->BotPlay);
 
 		uint32_t index = 0;
@@ -726,13 +808,13 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 		}
 	}
 
-	ma_engine_set_volume(mScene->AudioEngine->GetEngine(), mVolume);
+	ma_engine_set_volume(mScene->AudioEngine->GetEngine(), Settings::s_Settings->Get("volume", 1.0f));
 
 	mConductor->IsPaused = this->IsPaused();
 
 	Stratum::Time::TimeScale = mIsPaused ? 0.0f : 1.0f;
 
-	if (!instSource->IsPlaying() && !mIsPaused)
+	if (!instSource->IsPlaying() && !mIsPaused && mHasSongStarted)
 	{
 		mWaitTimer += Stratum::Time::DeltaTime;
 		if (mWaitTimer > 1.0f)

@@ -86,7 +86,7 @@ namespace Funkin
 
 		int32_t mPauseUiButtonIndex = 0;
 
-		float mVolume = 1.0f;
 		float mWaitTimer = 0.0f;
+		float mCountdownTimer = 4.0f;
 	};
 }

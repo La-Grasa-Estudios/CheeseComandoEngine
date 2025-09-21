@@ -139,7 +139,7 @@ void Render::BackendInitializerVulkan::InitializeBackend(Internal::Window* pWind
 	uint32_t numberRequiredExtensions = requestedExtensions.size();
 	uint32_t foundExtensions = 0;
 	for (uint32_t i = 0; i < extensionCount; ++i) {
-		for (int j = 0; j < numberRequiredExtensions; ++j) {
+		for (uint32_t j = 0; j < numberRequiredExtensions; ++j) {
 			if (strcmp(extensionsAvailable[i].extensionName, requestedExtensions[j]) == 0) {
 				foundExtensions++;
 			}
@@ -280,7 +280,7 @@ void Render::BackendInitializerVulkan::InitializeBackend(Internal::Window* pWind
 
 	vkGetPhysicalDeviceMemoryProperties(context.physicalDevice, &context.physicalMemoryProperties);
 
-	for (int i = 0; i < context.physicalMemoryProperties.memoryHeapCount; i++)
+	for (uint32_t i = 0; i < context.physicalMemoryProperties.memoryHeapCount; i++)
 	{
 		auto& heap = context.physicalMemoryProperties.memoryHeaps[i];
 		if (heap.flags & VkMemoryHeapFlagBits::VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
@@ -315,7 +315,7 @@ void Render::BackendInitializerVulkan::InitializeBackend(Internal::Window* pWind
 	deviceInfo.enabledLayerCount = instanceInfo.enabledLayerCount;
 	deviceInfo.ppEnabledLayerNames = instanceInfo.ppEnabledLayerNames;
 
-	deviceInfo.enabledExtensionCount = deviceExtensions.size();
+	deviceInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 	deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
 	VkPhysicalDeviceFeatures features = {};
@@ -568,7 +568,7 @@ void Render::BackendInitializerVulkan::InitializeBackend(Internal::Window* pWind
 
 	mCommandList = pContext->pDevice->createCommandList();
 
-	for (int i = 0; i < desiredImageCount; ++i)
+	for (uint32_t i = 0; i < desiredImageCount; ++i)
 	{
 		auto textureDesc = nvrhi::TextureDesc()
 			.setDimension(nvrhi::TextureDimension::Texture2D)
@@ -846,7 +846,7 @@ void Render::BackendInitializerVulkan::Present(Internal::Window* pWindow, Render
 
 		pContext->pDevice->waitForIdle();
 
-		for (int i = 0; i < desiredImageCount; ++i)
+		for (uint32_t i = 0; i < desiredImageCount; ++i)
 		{
 			auto textureDesc = nvrhi::TextureDesc()
 				.setDimension(nvrhi::TextureDimension::Texture2D)

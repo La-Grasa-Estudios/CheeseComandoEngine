@@ -30,7 +30,7 @@ void TextBatcher::DrawText(const std::wstring& text, const glm::vec2& position, 
 
 	frameIndex %= text.size();
 
-	float baseScale = (1.0f / 32.0f);
+	float baseScale = (1.0f / 48.0f);
 	float scale = baseScale * mParameters.fontSize;
 
 	glm::vec3 coords = { position.x, position.y, 0.0f };
@@ -149,7 +149,7 @@ glm::vec3 TextBatcher::GetStringSize(const std::wstring& text) const
 
 	frameIndex %= text.size();
 
-	float baseScale = (1.0f / 32.0f);
+	float baseScale = (1.0f / 48.0f);
 	float scale = baseScale * mParameters.fontSize;
 
 	glm::vec3 coords = { 0.0f, 0.0f, 0.0f };

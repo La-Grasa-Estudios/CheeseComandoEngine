@@ -32,6 +32,12 @@ glm::vec3 TransformComponent::GetWorldSpacePosition() const
 	return InverseBindMatrix * glm::vec4(Position, 1.0f);
 }
 
+glm::vec3 CameraComponent::ScreenPointToWorld(const glm::vec3& point) const
+{
+	auto inv = this->InverseProjectionViewMatrix * glm::vec4(point, 1.0f);
+	return  inv / inv.w;
+}
+
 // Entity mappings for EDF if you don't declare this they won't show in level editor
 
 DECLARE_COMPONENT(NameComponent, name)

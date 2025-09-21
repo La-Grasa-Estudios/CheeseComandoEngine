@@ -9,7 +9,7 @@ DX12::DynamicDescriptorHeap::DynamicDescriptorHeap(D3D12_DESCRIPTOR_HEAP_DESC de
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_DescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
-	for (int i = 0; i < desc.NumDescriptors; i++)
+	for (uint32_t i = 0; i < desc.NumDescriptors; i++)
 	{
 		m_DescriptorPtrs.push(handle.ptr);
 		handle.Offset(m_IncrementSize);

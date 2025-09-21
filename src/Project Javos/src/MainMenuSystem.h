@@ -23,7 +23,6 @@ namespace Funkin
 		void RenderImGui(Stratum::Scene* scene) final;
 
 		Stratum::Ref<Stratum::MP3AudioSource> MusicSource;
-		Stratum::Ref<Stratum::MP3AudioSource> HoverFxSource;
 		Stratum::Ref<Stratum::MP3AudioSource> ConfirmFxSource;
 		Stratum::Ref<Stratum::MP3AudioSource> CancelFxSource;
 

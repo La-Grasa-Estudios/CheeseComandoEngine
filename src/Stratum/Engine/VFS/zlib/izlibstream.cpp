@@ -111,11 +111,11 @@ inflate_streambuf::int_type inflate_streambuf::underflow()
             }
 
             zstr.next_in = reinterpret_cast<Bytef*>(in.data());
-            zstr.avail_in = count;
+            zstr.avail_in = static_cast<uint32_t>(count);
         }
 
         zstr.next_out = reinterpret_cast<Bytef*>(out.data());
-        zstr.avail_out = out.size();
+        zstr.avail_out = static_cast<uint32_t>(out.size());
 
         int ret = inflate(&zstr, Z_NO_FLUSH);
         have = out.size() - zstr.avail_out;

@@ -46,7 +46,7 @@ BindlessDescriptorIndex Render::BindlessDescriptorTable::AllocateDescriptor(nvrh
 	{
 		if (!mAllocatedDescriptorIndexes[i])
 		{
-			slot = i;
+			slot = static_cast<int>(i);
 			break;
 		}
 	}

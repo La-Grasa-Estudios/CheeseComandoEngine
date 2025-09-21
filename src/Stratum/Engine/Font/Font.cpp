@@ -20,7 +20,7 @@ Font::Font(const std::string_view& path)
 
     using namespace rectpack2D;
 
-    const uint32_t size = 32;
+    const uint32_t size = 48;
     FT_Library ft;
     if (FT_Init_FreeType(&ft))
     {
@@ -31,7 +31,7 @@ Font::Font(const std::string_view& path)
 
     RefBinaryStream stream = ZVFS::GetFile(path.data());
 
-    if (FT_New_Memory_Face(ft, stream->As<FT_Byte>(), stream->Size(), 0, &face))
+    if (FT_New_Memory_Face(ft, stream->As<FT_Byte>(), static_cast<FT_Long>(stream->Size()), 0, &face))
     {
         ErrorLogCs("ZGUI", "Failed to load font");
         return;
@@ -85,16 +85,16 @@ Font::Font(const std::string_view& path)
 
         auto rect = rect_xywh(0, 0, slot->bitmap.width + 2, slot->bitmap.rows + 2);
 
-        rect.u = glyphData.size(); // Store the character index in the rectangle
+        rect.u = static_cast<int>(glyphData.size());
         rectangles.push_back(rect);
         glyphData.push_back(data);
 
         CharGlyph glyph;
 
-        glyph.advance_x = slot->advance.x; // Convert from 26.6 fixed point to pixels
-        glyph.advance_y = slot->advance.y; // Convert from 26.6 fixed point to pixels
-        glyph.bearing_x = slot->bitmap_left; // Left bearing in pixels
-        glyph.bearing_y = slot->bitmap_top; // Top bearing in pixels
+        glyph.advance_x = slot->advance.x;
+        glyph.advance_y = slot->advance.y;
+        glyph.bearing_x = static_cast<float>(slot->bitmap_left);
+        glyph.bearing_y = static_cast<float>(slot->bitmap_top);
 
         mGlyphs[i] = glyph;
         mGlyphs[i].rect.w = slot->bitmap.width;

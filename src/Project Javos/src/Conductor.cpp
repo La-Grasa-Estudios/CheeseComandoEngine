@@ -5,6 +5,7 @@
 #include "ChartLoader.h"
 #include "SparrowReader.h"
 #include "Events.h"
+#include "Settings.h"
 
 #include <Core/Logger.h>
 #include <Scene/Scene.h>
@@ -95,6 +96,8 @@ void Funkin::Conductor::Init(Stratum::Scene* scene)
 		Stratum::SpriteAnimator::Animation().SetFrameRate(24).SetNextState("default").SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "right confirm00", true, true)),
 	};
 
+	auto& downscroll = Settings::s_Settings->Get("downscroll", false);
+
 	for (int i = 0; i < 4; i++)
 	{
 		auto entity = scene->EntityManager.CreateEntity();
@@ -103,7 +106,7 @@ void Funkin::Conductor::Init(Stratum::Scene* scene)
 		auto& transform = scene->Transforms.Create(entity);
 		auto& anchor = scene->GuiAnchors.Create(entity);
 
-		anchor.AnchorPoint = Stratum::GuiAnchorPoint::TOP;
+		anchor.AnchorPoint = downscroll.boolValue ? Stratum::GuiAnchorPoint::BOTTOM : Stratum::GuiAnchorPoint::TOP;
 
 		sprite.RenderLayer = NOTE_BUTTON_LAYER;
 		sprite.Rect = rects[i];
@@ -190,7 +193,7 @@ void Funkin::Conductor::Init(Stratum::Scene* scene)
 		auto& coverTransform = scene->Transforms.Create(coverEntity);
 		auto& anchor = scene->GuiAnchors.Create(coverEntity);
 
-		anchor.AnchorPoint = Stratum::GuiAnchorPoint::TOP;
+		anchor.AnchorPoint = downscroll.boolValue ? Stratum::GuiAnchorPoint::BOTTOM : Stratum::GuiAnchorPoint::TOP;
 		anchor.Position = { (i - 2.0f) * 384.0f + 196.0f, 320.0f };
 
 		coverSprite.Enabled = false;
@@ -280,30 +283,33 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 	const int NOTE_MISS_SCORE = 100;
 
-	BeatCountF = (chart.info.bpm / 60.0f) * SongTime;
-	BeatCount = glm::floor(BeatCountF);
-
-	const float stepsPerSecond = 1.0f / ((chart.info.bpm / 60.0f) * 4.0f);
-	const uint32_t expectedStepCount = glm::floor(BeatCountF * 4.0f);
-
-	auto lastStepCount = mStepCount;
-
-	uint32_t simulatedSteps = expectedStepCount - lastStepCount;
-
-	// Big lag spike! (TO DO: Fix the engine/get a good pc)
-	// Simulate last 64 steps (Also helps during development when skipping parts of the song)
-	if (simulatedSteps > 64)
+	if (SongStarted)
 	{
-		mStepCount += simulatedSteps - 64;
-		simulatedSteps = 64;
-	}
+		BeatCountF = (chart.info.bpm / 60.0f) * SongTime;
+		BeatCount = glm::floor(BeatCountF);
 
-	// Need to do this to avoid skipping steps in case of lag
-	while (simulatedSteps > 0)
-	{
-		simulatedSteps -= 1;
-		OnStep();
-		mStepCount += 1;
+		const float stepsPerSecond = 1.0f / ((chart.info.bpm / 60.0f) * 4.0f);
+		const uint32_t expectedStepCount = glm::floor(BeatCountF * 4.0f);
+
+		auto lastStepCount = mStepCount;
+
+		uint32_t simulatedSteps = expectedStepCount - lastStepCount;
+
+		// Big lag spike! (TO DO: Fix the engine/get a good pc)
+		// Simulate last 64 steps (Also helps during development when skipping parts of the song)
+		if (simulatedSteps > 64)
+		{
+			mStepCount += simulatedSteps - 64;
+			simulatedSteps = 64;
+		}
+
+		// Need to do this to avoid skipping steps in case of lag
+		while (simulatedSteps > 0)
+		{
+			simulatedSteps -= 1;
+			OnStep();
+			mStepCount += 1;
+		}
 	}
 
 	bool botEnabled = EnableBot || false || BotPlay;
@@ -334,6 +340,8 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 	const float SAFEZONE_PLUS = SongTime + SAFE_ZONE * 0.8f;
 	const float SAFEZONE_MINUS = SongTime - SAFE_ZONE;
 
+	auto& downscrollSetting = Settings::s_Settings->Get("downscroll", false);
+
 	for (auto entity : notes)
 	{
 		auto& note = notesManager->Get(entity);
@@ -350,8 +358,13 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 		}
 
 		STRUM_LINE_Y = buttonTransform.Position.y;
+		
+		float songY = (SongTime - note.Time) * (400.0f * chart.info.speed * 3.0f);
 
-		float y = (STRUM_LINE_Y + 0.0f + (SongTime - note.Time) * (400.0f * chart.info.speed * 3.0f));
+		if (downscrollSetting.boolValue)
+			songY = -songY;
+
+		float y = (STRUM_LINE_Y + 0.0f + songY);
 
 		if (inputs[note.NoteType])
 		{
@@ -377,7 +390,12 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 		transform.SetPosition(position);
 
-		if (y > (160.0f + 384.0f) + STRUM_LINE_Y)
+		bool noteOutside = y > (160.0f + 384.0f) + STRUM_LINE_Y;
+
+		if (downscrollSetting.boolValue)
+			noteOutside = y < -(160.0f + 384.0f) + STRUM_LINE_Y;
+
+		if (noteOutside)
 		{
 			scene->EntityManager.DestroyEntity(entity);
 
@@ -409,6 +427,15 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 			float y1 = sustain.HoldTime * 400.0f * chart.info.speed * 3.0f;
 			float scaleY = y1 / 87.0f * 0.5f;
+
+			auto& sustainEndSprite = scene->SpriteRenderers.Get(sustain.SustainEndSprite);
+			sustainEndSprite.FlipY = downscrollSetting.boolValue;
+
+			if (downscrollSetting.boolValue)
+			{
+				y1 = -y1;
+				scaleY = -scaleY;
+			}
 			
 			sustainTransform.SetScale(glm::vec3(1.0f, scaleY, 1.0f));
 			sustainTransform.SetPosition(position);
@@ -518,6 +545,14 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 			float y = STRUM_LINE_Y;
 			float y1 = (sustainNote.HoldTime - holdTime) * 400.0f * chart.info.speed * 3.0f;
 			float scaleY = y1 / 87.0f / 2.0f;
+
+			sustainEndSprite.FlipY = downscrollSetting.boolValue;
+
+			if (downscrollSetting.boolValue)
+			{
+				y1 = -y1;
+				scaleY = -scaleY;
+			}
 
 			auto position = sustainTransform.Position;
 			position.y = y;

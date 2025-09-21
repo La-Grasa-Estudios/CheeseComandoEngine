@@ -19,7 +19,7 @@ normbyte::normbyte(uint8_t& h)
 
 normbyte::normbyte(float f)
 {
-	data = f * 255.0f;
+	data = static_cast<uint8_t>(f * 255.0f);
 }
 
 normbyte::operator float()

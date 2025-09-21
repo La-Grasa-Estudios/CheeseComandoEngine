@@ -200,7 +200,7 @@ std::vector<shaderbinding_t> GetShaderBindings(SpfFile& file, std::string kind, 
 
     std::vector<shaderbinding_t> bindings;
 
-    for (int i = 0; i < numBindings; i++)
+    for (uint32_t i = 0; i < numBindings; i++)
     {
         shaderbinding_t binding{};
         stream.read(&binding.Type, sizeof(uint8_t));
