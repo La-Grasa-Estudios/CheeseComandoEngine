@@ -6,6 +6,8 @@
 
 BEGIN_ENGINE
 
+struct Render2DInstance;
+
 struct AppUIEvent
 {
 	std::string EventName;
@@ -23,12 +25,28 @@ struct RenderQueue2D;
 struct Render2DInstance;
 class Scene;
 
+struct t_userimage
+{
+	struct t_state
+	{
+		Render::BindlessDescriptorIndex handle;
+		uint32_t texture;
+		bool embed = false;
+		uint32_t render_width = 0;
+		uint32_t render_height = 0;
+		int32_t offset_x = 0;
+		int32_t offset_y = 0;
+	};
+	std::unordered_map<std::string, t_state> states;
+};
+
 enum class UIComponentType
 {
 	INVALID = -1,
 	RECT,
 	LABEL,
 	BUTTON,
+	CHECKBOX,
 };
 
 enum class UINextElement
@@ -50,7 +68,12 @@ struct UIButton
 struct UILabel
 {
 	std::wstring Text;
-	float TextAlignment;
+	float TextAlignment = 0.0f;
+};
+
+struct UICheckbox
+{
+	bool value;
 };
 
 enum UIPanelTransitionState
@@ -95,6 +118,7 @@ struct UIComponent
 	uint32_t RenderLayer = 0;
 	UIButton Button;
 	UILabel Label;
+	UICheckbox Checkbox;
 	std::vector<Ref<UIComponent>> Components;
 
 	int32_t Background = -1;
@@ -121,6 +145,7 @@ struct UIComponent
 	std::string PadRight;
 
 	bool Hovered = false;
+	t_userimage uimg;
 
 	float GetRootEM()
 	{
@@ -172,13 +197,25 @@ class UITransitionFactory : public UITransitionFactoryInterface
 	}
 };
 
+using UIFuncRenderPtr = void(*)(UIComponent*, Render2DInstance*);
+
 class SceneUI
 {
+
+	struct t_uirendermeta
+	{
+		UIFuncRenderPtr func;
+		const char* rendertype;
+	};
+
+	static inline std::array<t_uirendermeta, 256> s_RenderFuncvtable;
 
 public:
 
 	SceneUI(Scene* scene);
 	~SceneUI();
+
+	static void AddComponentRenderer(UIComponentType type, UIFuncRenderPtr funcPtr, const char* rendertype);
 
 	void CreateUIPanel(const std::string& panelName, const std::string& jsonFile);
 	void ShowUIPanel(const std::string& panelName);
@@ -214,6 +251,9 @@ private:
 
 	float ParseUnits(const std::string& str, float relative, float rem, float em);
 	void ParseVector(float* dest, int nbComps, nlohmann::json& json);
+	t_userimage LoadUIMG(const std::string& path);
+
+	void ReleasePanel(UIPanel& panel);
 
 	Scene* mScene;
 	ECS::edict_t mTextEntity;

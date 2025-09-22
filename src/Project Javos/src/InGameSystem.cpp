@@ -662,6 +662,8 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 
 	auto entity = Stratum::ECS::C_INVALID_ENTITY;
 
+	auto& volumeSetting = Settings::s_Settings->Get("volume", 1.0f);
+
 	if (mIsPaused)
 	{
 		if (Stratum::Input::GetKeyDown(KeyCode::DOWN) || Stratum::Input::GetGamepadButtonDown(GamepadButton::DPAD_DOWN))
@@ -726,8 +728,6 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 			}
 		}
 
-		auto& volumeSetting = Settings::s_Settings->Get("volume", 1.0f);
-
 		if (mPauseUiButtonIndex == 1)
 		{
 			if (Stratum::Input::GetKeyDown(KeyCode::LEFT) || 
@@ -735,12 +735,14 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 			{
 				volumeSetting.floatValue -= 0.05f;
 				scrollSource->Play();
+				Settings::s_Settings->SaveToFile("settings.json");
 			}
 			if (Stratum::Input::GetKeyDown(KeyCode::RIGHT) || 
 				Stratum::Input::GetGamepadButtonDown(GamepadButton::DPAD_RIGHT))
 			{
 				volumeSetting.floatValue += 0.05f;
 				scrollSource->Play();
+				Settings::s_Settings->SaveToFile("settings.json");
 			}
 			volumeSetting.floatValue = glm::clamp(volumeSetting.floatValue, 0.0f, 1.0f);
 		}
@@ -808,7 +810,7 @@ void Funkin::InGameSystem::PostUpdate(Stratum::Scene* scene)
 		}
 	}
 
-	ma_engine_set_volume(mScene->AudioEngine->GetEngine(), Settings::s_Settings->Get("volume", 1.0f));
+	ma_engine_set_volume(mScene->AudioEngine->GetEngine(), volumeSetting.floatValue);
 
 	mConductor->IsPaused = this->IsPaused();
 

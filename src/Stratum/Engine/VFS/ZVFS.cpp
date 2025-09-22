@@ -101,6 +101,7 @@ void ENGINE_NAMESPACE::ZVFS::Mount(std::string directory, bool root)
     }
 
     ZVFS* filesystem = m_Instance;
+    size_t count = 0;
     for (const auto& entry : std::filesystem::recursive_directory_iterator(directory)) {
         std::filesystem::path path = entry.path();
         if (path.has_extension()) {
@@ -127,6 +128,8 @@ void ENGINE_NAMESPACE::ZVFS::Mount(std::string directory, bool root)
                 file.name = root ? p.c_str() + (directory.size() + 1) : p;
                 file.path = path.string();
                 filesystem->files[file.name] = file;
+
+                count++;
             }
         }
     }
@@ -140,8 +143,11 @@ void ENGINE_NAMESPACE::ZVFS::Mount(std::string directory, bool root)
             file.pPack = pack;
 
             filesystem->pfiles[file.pEntry->Path] = file;
+            count++;
         }
     }
+
+    Z_INFO("Mounted {} with {} files", directory, count);
 
 }
 

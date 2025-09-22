@@ -3,15 +3,19 @@
 
 #include "RendererCommon.h"
 #include "TextBatcher.h"
+#include "UI/RendererFuncs.h"
 
 #include <Event/EventBus.h>
 #include <Input/Input.h>
 #include <Scene/Scene.h>
 #include <VFS/ZVFS.h>
+#include <VFS/base64.hpp>
 #include <Util/StrUtil.h>
 #include <Util/Globals.h>
 
 #include <queue>
+#include <zlib/izlibstream.h>
+#include <VFS/stb/stb_image.h>
 
 using namespace ENGINE_NAMESPACE;
 
@@ -25,11 +29,11 @@ static T GetJsonValue(nlohmann::json& json, const std::string& key, const T& def
 	return defaultValue;
 }
 
-float easeInOutCubic(float x) {
+static float easeInOutCubic(float x) {
 	return x < 0.5 ? 4 * x * x * x : 1 - glm::pow(-2 * x + 2, 3) / 2;
 }
 
-float easeOutElastic(float x) {
+static float easeOutElastic(float x) {
 	const float  c4 = (2 * glm::pi<float>()) / 3;
 	
 	return x == 0
@@ -39,7 +43,7 @@ float easeOutElastic(float x) {
 	  : glm::pow(2, -10 * x) * glm::sin((x * 10 - 0.75) * c4 * 1.0f) * 2.0f + 1;
 }
 
-float easeOutBounce(float x) {
+static float easeOutBounce(float x) {
 const float n1 = 7.5625;
 const float d1 = 2.75;
 
@@ -174,6 +178,8 @@ SceneUI::SceneUI(Scene* scene)
 {
 	mScene = scene;
 
+	RendererFuncs::Init();
+
 	auto entity = scene->EntityManager.CreateEntity();
 	scene->Transforms.Create(entity);
 	scene->TextComponents.Create(entity);
@@ -190,6 +196,11 @@ SceneUI::SceneUI(Scene* scene)
 SceneUI::~SceneUI()
 {
 
+}
+
+void SceneUI::AddComponentRenderer(UIComponentType type, UIFuncRenderPtr funcPtr, const char* rendertype)
+{
+	s_RenderFuncvtable[(int)type] = { funcPtr, rendertype };
 }
 
 void SceneUI::CreateUIPanel(const std::string& panelName, const std::string& jsonFile)
@@ -212,7 +223,39 @@ void SceneUI::CreateUIPanel(const std::string& panelName, const std::string& jso
 		CalculateLayout(root.get());
 	}
 
+	if (mPanels.contains(panelName))
+	{
+		ReleasePanel(mPanels[panelName]);
+	}
+
 	mPanels[panelName] = panel;
+}
+
+void SceneUI::ReleasePanel(UIPanel& panel)
+{
+	std::queue<Ref<UIComponent>> componentQueue;
+
+	for (auto& root : panel.Roots)
+	{
+		componentQueue.push(root);
+	}
+
+	while (!componentQueue.empty())
+	{
+		auto& component = componentQueue.front();
+		componentQueue.pop();
+
+		for (auto& state : component->uimg.states)
+		{
+			//if (state.second.embed)
+			//	mScene->Resources.ReleaseImage(state.second.handle);
+		}
+
+		for (auto child : component->Components)
+		{
+			componentQueue.push(child);
+		}
+	}
 }
 
 void SceneUI::ShowUIPanel(const std::string& panelName)
@@ -341,12 +384,15 @@ void SceneUI::Update()
 
 	if (lastMousePos != MousePosition)
 	{
+		hoveredComponent = nullptr;
 		lastMousePos = MousePosition;
 
 		Stratum::Input::SetInputMode(Stratum::MouseInputMode::Normal);
 		mIsMouseHidden = false;
 
-		if (hoveredComponent && hoveredComponent->Type != UIComponentType::BUTTON)
+		if (hoveredComponent && 
+			(hoveredComponent->Type != UIComponentType::BUTTON &&
+				hoveredComponent->Type != UIComponentType::CHECKBOX))
 		{
 			glm::vec2 pos = { hoveredComponent->GetPositionX(), hoveredComponent->GetPositionY() };
 
@@ -454,7 +500,9 @@ void SceneUI::Update()
 	}
 
 	if ((Stratum::Input::AnyGamepadDown() &&
-		(!hoveredComponent || (hoveredComponent && hoveredComponent->Type != UIComponentType::BUTTON))) ||
+		(!hoveredComponent || (hoveredComponent && 
+			(hoveredComponent->Type != UIComponentType::BUTTON &&
+			hoveredComponent->Type != UIComponentType::CHECKBOX)))) ||
 		(focus != lastFocus && mIsMouseHidden))
 	{
 		hoveredComponent = nullptr;
@@ -495,6 +543,9 @@ void SceneUI::Update()
 			return;
 		}
 
+		if (!hoveredComponent)
+			return;
+
 		if (!hoveredComponent->Hovered && !hoveredComponent->OnHover.empty())
 		{
 			AppUIEvent e;
@@ -511,6 +562,11 @@ void SceneUI::Update()
 			e.PanelName = hoveredComponent->PanelName;
 			e.EventName = hoveredComponent->Button.OnClick;
 			EventBus::InvokeEvent<AppUIEvent>(e);
+		}
+
+		if (hoveredComponent->Type == UIComponentType::CHECKBOX && (Input::GetMouseButtonDown(0) || Stratum::Input::GetGamepadButtonDown(GamepadButton::A)))
+		{
+			hoveredComponent->Checkbox.value = !hoveredComponent->Checkbox.value;
 		}
 
 		hoveredComponent->Hovered = true;
@@ -630,7 +686,10 @@ void SceneUI::Render(RenderQueue2D* ppRenderQueues)
 		transform = glm::translate(transform, glm::vec3(mScene->VirtualScreenSize * glm::vec2(-1.0f, 1.0f), 0.0f));
 		transform = glm::translate(transform, glm::vec3(x, y, 0.0f));
 
-		if (component.Type == UIComponentType::RECT || component.Type == UIComponentType::BUTTON)
+		auto t_render = &s_RenderFuncvtable[(int)component.Type];
+
+		if (component.Type == UIComponentType::RECT ||
+			(t_render->func && strncmp(t_render->rendertype, "rect", 4) == 0))
 		{
 			Render2DInstance instance{};
 
@@ -644,16 +703,9 @@ void SceneUI::Render(RenderQueue2D* ppRenderQueues)
 			instance.batch.texture = component.Background;
 			instance.batch.scaleWithRenderSize = false;
 
-			if (component.Type == UIComponentType::BUTTON)
+			if (t_render->func)
 			{
-				if (!component.Hovered)
-				{
-					instance.batch.color = component.Button.UnhoveredColor;
-				}
-				else
-				{
-					instance.batch.color = component.Button.HoveredColor;
-				}
+				t_render->func(&component, &instance);
 			}
 
 			if (instance.batch.texture != -1)
@@ -916,7 +968,7 @@ glm::vec2 SceneUI::ComputeComponentBBox(UIComponent* component)
 		glm::vec2 size = textRenderer.GetStringSize(component->Label.Text);
 		return size;
 	}
-	if (component->Type == UIComponentType::BUTTON || component->Type == UIComponentType::RECT)
+	if (component->Type == UIComponentType::BUTTON || component->Type == UIComponentType::RECT || component->Type == UIComponentType::CHECKBOX)
 	{
 		return { component->Width, component->Height };
 	}
@@ -955,6 +1007,11 @@ void SceneUI::ParseTree(nlohmann::json& json, UIComponent* Parent, UIPanel& pane
 		component->PadRight = GetJsonValue<std::string>(comp, "right", "");
 		component->Name = GetJsonValue<std::string>(comp, "name", "");
 
+		if (comp.contains("uimg"))
+		{
+			component->uimg = LoadUIMG(comp["uimg"]);
+		}
+
 		if (Parent)
 		{
 			component->TransitionModuleIn = Parent->TransitionModuleIn;
@@ -977,6 +1034,15 @@ void SceneUI::ParseTree(nlohmann::json& json, UIComponent* Parent, UIPanel& pane
 			ParseVector(glm::value_ptr(component->FgColor), 4, comp["foreground-color"]);
 		}
 
+		if (comp.contains("unhovered-color"))
+		{
+			ParseVector(glm::value_ptr(component->Button.UnhoveredColor), 4, comp["unhovered-color"]);
+		}
+		if (comp.contains("hovered-color"))
+		{
+			ParseVector(glm::value_ptr(component->Button.HoveredColor), 4, comp["hovered-color"]);
+		}
+
 		if (comp["type"] == "rect")
 		{
 			component->Type = UIComponentType::RECT;
@@ -990,15 +1056,12 @@ void SceneUI::ParseTree(nlohmann::json& json, UIComponent* Parent, UIPanel& pane
 		else if (comp["type"] == "button")
 		{
 			component->Type = UIComponentType::BUTTON;
-			if (comp.contains("unhovered-color"))
-			{
-				ParseVector(glm::value_ptr(component->Button.UnhoveredColor), 4, comp["unhovered-color"]);
-			}
-			if (comp.contains("hovered-color"))
-			{
-				ParseVector(glm::value_ptr(component->Button.HoveredColor), 4, comp["hovered-color"]);
-			}
 			component->Button.OnClick = GetJsonValue<std::string>(comp, "onClick", "");
+		}
+		else if (comp["type"] == "checkbox") 
+		{
+			component->Type = UIComponentType::CHECKBOX;
+			component->Checkbox.value = false;
 		}
 
 		if (comp.contains("next-element"))
@@ -1107,4 +1170,66 @@ void SceneUI::ParseVector(float* dest, int nbComps, nlohmann::json& json)
 	{
 		dest[i] = json[i].get<float>();
 	}
+}
+
+t_userimage SceneUI::LoadUIMG(const std::string& path)
+{
+	auto file = ZVFS::GetFile(path.c_str());
+	nlohmann::json json = nlohmann::json::parse(file->Str());
+	t_userimage container{};
+	for (auto& state : json["states"].items())
+	{
+		auto& substate = state.value();
+		t_userimage::t_state uimg{};
+		if (substate.contains("embed"))
+		{
+			std::string bf = substate["embed"];
+			bf = base64::from_base64(bf);
+			int width;
+			int height;
+			int nrChannels;
+			auto buff = stbi_load_from_memory(reinterpret_cast<stbi_uc*>(bf.data()),
+				static_cast<int>(bf.size()),
+				&width,
+				&height,
+				&nrChannels,
+				0);
+			Render::ImageDescription imageDesc{};
+
+			switch (nrChannels)
+			{
+			case 1:
+				imageDesc.Format = Render::ImageFormat::R8_UNORM;
+				break;
+			case 2:
+				imageDesc.Format = Render::ImageFormat::RG8_UNORM;
+				break;
+			default:
+				imageDesc.Format = Render::ImageFormat::RGBA8_UNORM;
+				break;
+			}
+
+			imageDesc.Width = width;
+			imageDesc.Height = height;
+			imageDesc.Immutable = true;
+			imageDesc.MipLevels = 1;
+			imageDesc.DefaultData = { { buff, (uint32_t)(width * nrChannels) } };
+
+			uimg.handle = mScene->Resources.CreateTextureImage(imageDesc);
+			uimg.texture = uimg.handle;
+			uimg.embed = true;
+		}
+		else
+		{
+			std::string loc = substate["src"];
+			uimg.texture = mScene->Resources.LoadTextureImage(loc);
+		}
+
+		uimg.render_width = GetJsonValue(substate, "width", 0);
+		uimg.render_height = GetJsonValue(substate, "height", 0);
+		uimg.offset_x = GetJsonValue(substate, "offset-x", 0);
+		uimg.offset_y = GetJsonValue(substate, "offset-y", 0);
+		container.states[state.key()] = uimg;
+	}
+	return container;
 }

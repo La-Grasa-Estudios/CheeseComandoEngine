@@ -40,7 +40,7 @@ MainMenuCharacter characters[] = {
 	{ "ui/menu/char/Nonsense5.png", "ui/menu/char/Nonsense5.xml", "nonsensegod", { 850, 100 } },
 	{ "ui/menu/char/Nonsense6.png", "ui/menu/char/Nonsense6.xml", "Nonsense", { 900, 30 }, 0.8f, 26 },
 	{ "ui/menu/char/Nonsense14.png", "ui/menu/char/Nonsense14.xml", "Nonsense Bop", { 900, 30 } },
-	{ "ui/menu/char/whatIsThis.png", "ui/menu/char/whatIsThis.xml", "that", { 900, 30 }, 2.3f, 27 },
+	{ "ui/menu/char/whatIsThis.png", "ui/menu/char/whatIsThis.xml", "that", { 900, 30 }, 2.3f, 17 * (102.0f / 60)},
 	{ "ui/menu/char/ClassicNonsense.png", "ui/menu/char/ClassicNonsense.xml", "classicNonsense", { 900, 30 }, 1.6f, 24 },
 };
 
@@ -688,6 +688,57 @@ public:
 	}
 };
 
+class OptionsMenuPanel : public MenuPanel
+{
+	Funkin::MainMenuSystem* pMainSystem;
+public:
+	OptionsMenuPanel(Funkin::MainMenuSystem* pSystem)
+	{
+		pMainSystem = pSystem;
+	}
+	void Precache(Stratum::Scene* scene) override
+	{
+		scene->UI->CreateUIPanel("options", "ui/panels/options.json");
+	}
+	void Update(Stratum::Scene* scene) override
+	{
+		auto& setting = Funkin::Settings::s_Settings->Get("downscroll", false);
+		setting.boolValue = scene->UI->FindObject("options", "downscroll-box")->Checkbox.value;
+
+		if (Stratum::Input::GetInputDown("menu_back"))
+		{
+			SetPanel(gLastPanel);
+			pMainSystem->CancelFxSource->Play();
+		}
+	}
+	void Show(Stratum::Scene* scene) override
+	{
+		scene->UI->ShowUIPanel("options");
+
+		pMainSystem->CreateControllerPrompt(GamepadButton::DPAD_UP, L"Navigate Up");
+		pMainSystem->CreateControllerPrompt(GamepadButton::DPAD_DOWN, L"Navigate Down");
+		pMainSystem->CreateControllerPrompt(GamepadButton::A, L"Select");
+		pMainSystem->CreateControllerPrompt(GamepadButton::B, L"Back");
+		pMainSystem->CreateControllerPrompt(GamepadButton::BACK, L"Fullscreen");
+
+		auto& setting = Funkin::Settings::s_Settings->Get("downscroll", false);
+		scene->UI->FindObject("options", "downscroll-box")->Checkbox.value = setting;
+	}
+	void Hide(Stratum::Scene* scene) override
+	{
+		scene->UI->HideUIPanel("options");
+		pMainSystem->ClearControllerPrompts();
+	}
+	void Destroy(Stratum::Scene* scene) override
+	{
+
+	}
+	bool CanSwap(Stratum::Scene* scene) override
+	{
+		return true;
+	}
+};
+
 Stratum::Ref<MenuPanel> gCurrentPanel;
 Stratum::Ref<MenuPanel> gPanels[64];
 
@@ -766,6 +817,7 @@ void Funkin::MainMenuSystem::Init(Stratum::Scene* scene)
 	gPanels[MP_TITLE] = Stratum::CreateRef<TitleMenuPanel>(this);
 	gPanels[MP_MAIN] = Stratum::CreateRef<MainMenuPanel>(this);
 	gPanels[MP_FREEPLAY] = Stratum::CreateRef<FreeplayMenuPanel>(this);
+	gPanels[MP_OPTIONS] = Stratum::CreateRef<OptionsMenuPanel>(this);
 
 	for (auto& panel : gPanels)
 	{
@@ -846,6 +898,14 @@ void Funkin::MainMenuSystem::Init(Stratum::Scene* scene)
 				using namespace ENGINE_NAMESPACE;
 				
 				SetPanel(MP_FREEPLAY);
+				ConfirmFxSource->Play();
+				return;
+			}
+			if (e.EventName == "switch-options-panel")
+			{
+				using namespace ENGINE_NAMESPACE;
+
+				SetPanel(MP_OPTIONS);
 				ConfirmFxSource->Play();
 				return;
 			}
