@@ -21,4 +21,7 @@ Stratum/EngineLog.log
 /projects
 Stratum Engine.sln
 Build/temp.dxil
+<<<<<<< Updated upstream
 Build/settings.json
+=======
+>>>>>>> Stashed changes

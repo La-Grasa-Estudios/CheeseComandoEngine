@@ -1,0 +1,3 @@
+[submodule "Dependencies/Thirdparty/angelscript"]
+	path = Dependencies/Thirdparty/angelscript
+	url = https://github.com/anjo76/angelscript
