@@ -56,8 +56,6 @@ void Window::Create(int width, int height)
 		m_IsWindowFullScreen = true;
 	}
 
-
-
 	m_Window = SDL_CreateWindow(this->m_Name, width, height, flags);
 	if (!m_Window)
 	{
@@ -193,7 +191,7 @@ void Internal::Window::SetFullScreen(bool fs, VideoDisplayMode* dp)
 		{
 			auto displayId = SDL_GetDisplayForWindow(m_Window);
 
-			auto mode = SDL_GetClosestFullscreenDisplayMode(displayId, dp->Width, dp->Height, dp->RefreshRate, SDL_FALSE);;
+			auto mode = SDL_GetClosestFullscreenDisplayMode(displayId, dp->Width, dp->Height, static_cast<float>(dp->RefreshRate), SDL_FALSE);;
 						
 			SDL_SetWindowFullscreenMode(m_Window, mode);
 		}
@@ -240,7 +238,7 @@ std::vector<VideoDisplayMode> Internal::Window::GetDisplayModes()
 
 	for (int i = 0; i < count; i++)
 	{
-		VideoDisplayMode mode{ modes[i]->format, modes[i]->w, modes[i]->h, modes[i]->refresh_rate };
+		VideoDisplayMode mode{ modes[i]->format, static_cast<uint32_t>(modes[i]->w), static_cast<uint32_t>(modes[i]->h), static_cast<uint32_t>(modes[i]->refresh_rate) };
 		modesArray.push_back(mode);
 	}
 

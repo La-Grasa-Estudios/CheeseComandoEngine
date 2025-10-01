@@ -260,7 +260,7 @@ void Render::BackendInitializerD3D12::InitializeBackend(Internal::Window* pWindo
 
     pContext->pDevice = nvrhi::d3d12::createDevice(deviceDesc);
 #ifdef _DEBUG
-    pContext->pDevice = nvrhi::validation::createValidationLayer(pContext->pDevice);
+    // pContext->pDevice = nvrhi::validation::createValidationLayer(pContext->pDevice);
 #endif
 
     ComPtr<IDXGISwapChain4> dxgiSwapChain4;

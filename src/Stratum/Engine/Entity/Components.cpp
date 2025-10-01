@@ -32,6 +32,12 @@ glm::vec3 TransformComponent::GetWorldSpacePosition() const
 	return InverseBindMatrix * glm::vec4(Position, 1.0f);
 }
 
+glm::vec3 CameraComponent::ScreenPointToWorld(const glm::vec3& point) const
+{
+	auto inv = this->InverseProjectionViewMatrix * glm::vec4(point, 1.0f);
+	return  inv / inv.w;
+}
+
 // Entity mappings for EDF if you don't declare this they won't show in level editor
 
 DECLARE_COMPONENT(NameComponent, name)
@@ -62,7 +68,7 @@ DECLARE_COMPONENT_FIELD(SpriteRendererComponent, RenderLayer)
 DECLARE_COMPONENT_FIELD(SpriteRendererComponent, Center)
 DECLARE_COMPONENT_FIELD(SpriteRendererComponent, Rotation)
 DECLARE_COMPONENT_FIELD(SpriteRendererComponent, SpriteColor)
-DECLARE_COMPONENT_FIELD(SpriteRendererComponent, IsGui)
+DECLARE_COMPONENT_FIELD(SpriteRendererComponent, CameraLayer)
 DECLARE_COMPONENT_FIELD(SpriteRendererComponent, FlipX)
 DECLARE_COMPONENT_FIELD(SpriteRendererComponent, FlipY)
 DECLARE_COMPONENT_FIELD(SpriteRendererComponent, UseNearestTextureFilter)
@@ -84,7 +90,7 @@ DECLARE_COMPONENT_FIELD(TextComponent, Text)
 DECLARE_COMPONENT_FIELD(TextComponent, FontSize)
 
 DECLARE_COMPONENT_FIELD(TextRendererComponent, Enabled)
-DECLARE_COMPONENT_FIELD(TextRendererComponent, IsGui)
+DECLARE_COMPONENT_FIELD(TextRendererComponent, CameraLayer)
 DECLARE_COMPONENT_FIELD(TextRendererComponent, Alignment)
 DECLARE_COMPONENT_FIELD(TextRendererComponent, RenderLayer)
 DECLARE_COMPONENT_FIELD(TextRendererComponent, Color)

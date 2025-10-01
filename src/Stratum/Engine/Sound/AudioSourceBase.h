@@ -16,6 +16,7 @@ struct AudioSourceParams
 	bool ShouldPlay = false;
 	bool IsLooping = false;
 	bool IsPaused = false;
+	bool RemoveOnFinish = false;
 	float Volume = 1.0f;
 	float Pitch = 1.0f;
 	float Pan = 0.5f;
@@ -25,6 +26,8 @@ class AudioSourceBase
 {
 
 public:
+
+	friend class AudioEngine;
 
 	AudioSourceBase();
 

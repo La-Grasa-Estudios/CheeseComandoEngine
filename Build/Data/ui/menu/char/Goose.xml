@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="Nonsense9.png">
+	<!-- Created with Adobe Animate version 22.0.2.168 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="goose0000" x="2" y="2" width="1018" height="1685"/>
+	<SubTexture name="goose0001" x="2" y="2" width="1018" height="1685"/>
+	<SubTexture name="goose0002" x="1022" y="2" width="1017" height="1684" frameX="0" frameY="0" frameWidth="1018" frameHeight="1685"/>
+	<SubTexture name="goose0003" x="1022" y="2" width="1017" height="1684" frameX="0" frameY="0" frameWidth="1018" frameHeight="1685"/>
+</TextureAtlas>

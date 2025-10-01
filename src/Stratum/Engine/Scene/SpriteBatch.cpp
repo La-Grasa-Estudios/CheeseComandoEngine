@@ -70,6 +70,7 @@ void SpriteBatch::Begin()
 	mBatches.clear();
 	mShaderBefore = NULL;
 
+	mRenderQueue.clear();
 	SetBatch(nullptr, BatchType::UNDEFINED);
 }
 
@@ -82,7 +83,7 @@ void SpriteBatch::SetBatch(Render::GraphicsPipeline* pConfig, BatchType batchTyp
 	mCurrentBatch.Type = batchType;
 	if (pConfig)
 		mCurrentBatch.Pipeline = pConfig;
-	mCurrentBatch.RenderQueue.clear();
+	mCurrentBatch.RenderCount = 0;
 }
 
 void SpriteBatch::DrawSprite(const SpriteInstance& instance)
@@ -164,7 +165,8 @@ void SpriteBatch::DrawSprite(const SpriteInstance& instance)
 		renderable.flags |= FLAG_SPRITE_NEAREST;
 	}
 
-	mCurrentBatch.RenderQueue.push_back(renderable);
+	mRenderQueue.push_back(renderable);
+	mCurrentBatch.RenderCount += 1;
 
 }
 
@@ -208,9 +210,9 @@ void SpriteBatch::Render(Render::GraphicsCommandBuffer* pCmdBuffer)
 		// Now a batch is rendered in one single drawcall
 		// NonUniformResourceIndex is required to avoid artifacts on some gpus
 		pCmdBuffer->PushConstants(&batchOffset, sizeof(uint32_t));
-		pCmdBuffer->DrawInstanced(6, 0, batch.RenderQueue.size(), 0);
+		pCmdBuffer->DrawInstanced(6, 0, batch.RenderCount, 0);
 
-		batchOffset += batch.RenderQueue.size();
+		batchOffset += batch.RenderCount;
 	}
 }
 
@@ -222,12 +224,7 @@ void SpriteBatch::End(Render::CopyCommandBuffer* pCmdBuffer)
 	if (mBatches.empty()) // No need to render if there isn't anything in the queue
 		return;
 
-	size_t RenderSize = 0;
-
-	for (uint32_t i = 0; i < mBatches.size(); i++)
-	{
-		RenderSize += mBatches[i].RenderQueue.size();
-	}
+	size_t RenderSize = mRenderQueue.size();
 
 	if (mSpriteBufferSize < RenderSize)
 	{
@@ -241,13 +238,7 @@ void SpriteBatch::End(Render::CopyCommandBuffer* pCmdBuffer)
 		mSpriteBuffer = CopySafeResource<Render::Buffer>(desc);
 	}
 
-	uint32_t batchOffset = 0;
-
-	for (uint32_t i = 0; i < mBatches.size(); i++)
-	{
-		pCmdBuffer->GetNativeCommandList()->writeBuffer(mSpriteBuffer->Handle, mBatches[i].RenderQueue.data(), mBatches[i].RenderQueue.size() * sizeof(SpriteRenderable), batchOffset * sizeof(SpriteRenderable));
-		batchOffset += mBatches[i].RenderQueue.size();
-	}
+	pCmdBuffer->GetNativeCommandList()->writeBuffer(mSpriteBuffer->Handle, mRenderQueue.data(), mRenderQueue.size() * sizeof(SpriteRenderable), 0L);
 
 }
 
@@ -258,7 +249,7 @@ void SpriteBatch::SetResources(SceneResources* pRsc)
 
 void SpriteBatch::EndBatch()
 {
-	if (mCurrentBatch.Pipeline && !mCurrentBatch.RenderQueue.empty())
+	if (mCurrentBatch.Pipeline && mCurrentBatch.RenderCount > 0)
 	{
 		mBatches.push_back(mCurrentBatch);
 	}
@@ -266,14 +257,14 @@ void SpriteBatch::EndBatch()
 
 SpriteBatch::Batch::Batch(const Batch& other)
 {
-	RenderQueue = std::move(other.RenderQueue);
 	Type = other.Type;
 	Pipeline = other.Pipeline;
+	RenderCount = other.RenderCount;
 }
 
 SpriteBatch::Batch::Batch(Batch&& other)
 {
-	RenderQueue = std::move(other.RenderQueue);
 	Type = other.Type;
 	Pipeline = other.Pipeline;
+	RenderCount = other.RenderCount;
 }

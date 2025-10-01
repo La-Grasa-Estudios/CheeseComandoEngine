@@ -9,6 +9,7 @@
 #include <Core/Time.h>
 #include <Font/Font.h>
 #include <Util/StrUtil.h>
+#include <Util/Globals.h>
 #include <Input/Input.h>
 
 #include "SpriteBatch.h"
@@ -19,6 +20,11 @@
 #include <format>
 
 // #define DEBUG_RENDERER
+
+extern size_t totalAllocated;
+extern size_t totalAllocations;
+extern size_t freedAllocations;
+extern std::atomic_uint64_t gUsedMemory;
 
 using namespace ENGINE_NAMESPACE;
 
@@ -57,7 +63,7 @@ Renderer2D::Renderer2D()
 {
 	if (!debugLogAdded)
 	{
-		Logger::s_LogReceivers.push_back(new DebugLogReceiver());
+		//Logger::s_LogReceivers.push_back(new DebugLogReceiver());
 	}
 
 	pStack = new Render::PostProcessingStack();
@@ -66,9 +72,6 @@ Renderer2D::Renderer2D()
 	mCmdBuffer = CreateRef<Render::GraphicsCommandBuffer>();
 	mComputeCmdBuffer = CreateRef<Render::ComputeCommandBuffer>(mCmdBuffer.get());
 	mCopyCmdBuffer = CreateRef<Render::CopyCommandBuffer>();
-
-	mMainCamera = {};
-	mGuiCamera = {};
 
 	Render::PipelineDescription pipelineDesc{};
 
@@ -122,11 +125,26 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 
 	mSpriteBatch->SetResources(&scene->Resources);
 
-	mRenderQueue.Clear();
-	mGuiRenderQueue.Clear();
+	for (int i = 0; i < 16; i++)
+		mRenderQueues[i].Clear();
+
+	memset(mCameras.data(), 0, sizeof(mCameras));
+
+	PerFrameData perFrameData{};
 
 	auto& spriteRenderers = scene->SpriteRenderers.GetEntities();
 	auto& textRenderers = scene->TextRenderers.GetEntities();
+
+	auto& cameras = scene->Cameras.GetEntities();
+
+	for (auto entity : cameras)
+	{
+		auto& camera = scene->Cameras.Get(entity);
+		if (camera.RenderLayer < 16)
+		{
+			mCameras[camera.RenderLayer] = entity;
+		}
+	}
 
 	struct AABB
 	{
@@ -175,7 +193,6 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 
 	for (auto entity : spriteRenderers)
 	{
-
 		if (!scene->Transforms.HasComponent(entity))
 			continue;
 
@@ -198,7 +215,7 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 		if (!screenAABB.Overlap(instanceAABB))
 			continue;
 
-		RenderQueue2D::RenderInstance instance{};
+		Render2DInstance instance{};
 
 		glm::vec2 flipMult = glm::vec2(renderer.FlipX ? -1.0f : 1.0f, renderer.FlipY ? -1.0f : 1.0f);
 
@@ -244,13 +261,11 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 		instance.batch.color = renderer.SpriteColor;
 		instance.batch.useNearestFilter = renderer.UseNearestTextureFilter;
 
-		if (!renderer.IsGui)
+		if (renderer.CameraLayer < 16)
 		{
-			mRenderQueue.Push(instance);
-		}
-		else
-		{
-			mGuiRenderQueue.Push(instance);
+			if (mCameras[renderer.CameraLayer] == ECS::C_INVALID_ENTITY)
+				continue;
+			mRenderQueues[renderer.CameraLayer].Push(instance);
 		}
 	}
 	for (auto entity : textRenderers)
@@ -263,21 +278,39 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 		if (!renderer.Enabled)
 			continue;
 
-		RenderQueue2D::RenderInstance instance{};
+		Render2DInstance instance{};
 
-		instance.kind = RenderQueue2D::RenderInstanceKind::TEXT;
-		instance.textEntity = entity;
+		instance.kind = Render2DInstanceKind::TEXT;
+		instance.text.textEntity = entity;
 		instance.zIndex = renderer.RenderLayer;
 
-		if (renderer.IsGui)
-			mGuiRenderQueue.Push(instance);
-		else
-			mRenderQueue.Push(instance);
+		if (renderer.CameraLayer < 16)
+		{
+			if (mCameras[renderer.CameraLayer] == ECS::C_INVALID_ENTITY)
+				continue;
+			mRenderQueues[renderer.CameraLayer].Push(instance);
+		}
 	}
 
-	// Parallel sorting :D
-	JobManager::Execute([&] { mRenderQueue.Sort(); });
-	JobManager::Execute([&] { mGuiRenderQueue.Sort(); });
+	scene->UI->Render(mRenderQueues.data());
+
+	for (int i = 0; i < mRenderQueues.size(); i++)
+		mRenderQueues[i].Sort();
+
+	/*
+	JobManager::Dispatch(16, 4, [this](JobDispatchArgs args)
+		{
+			mRenderQueues[args.jobIndex].Sort();
+		});
+	*/
+
+	for (int i = 0; i < mCameras.size(); i++)
+	{
+		if (mCameras[i] != ECS::C_INVALID_ENTITY)
+		{
+			perFrameData.ProjView[i] = scene->Cameras.Get(mCameras[i]).ProjectionViewMatrix;
+		}
+	}
 
 	JobManager::Wait();
 
@@ -292,20 +325,21 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 	parameters.lineHeight = 1.2f;
 	textRenderer.SetParameters(parameters);
 
-	for (int k = 0; k < 2; k++)
+	for (int k = 0; k < mRenderQueues.size(); k++)
 	{
-		auto& renderQueue = mRenderQueue;
-		if (k == 1) renderQueue = mGuiRenderQueue;
+		auto& renderQueue = mRenderQueues[k];
 
 		for (int j = 0; j < renderQueue.instances.size(); j++)
 		{
 			auto& instance = renderQueue.instances[j];
 
-			if (instance.kind == RenderQueue2D::RenderInstanceKind::TEXT)
+			if (instance.kind == Render2DInstanceKind::TEXT)
 			{
-				auto textEntity = instance.textEntity;
+				auto textEntity = instance.text.textEntity;
 				if (!scene->TextComponents.HasComponent(textEntity))
 					continue;
+
+				scene->UI->OnTextRender(&instance);
 
 				auto& textComponent = scene->TextComponents.Get(textEntity);
 				auto& renderer = scene->TextRenderers.Get(textEntity);
@@ -334,7 +368,7 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 					offsetX = textRenderer.GetStringSize(textComponent.Text).x * renderer.Alignment;
 				}
 
-				textRenderer.DrawText(textComponent.Text, glm::vec2(-offsetX, 0.0f), transform.ModelMatrix, renderer.Color, renderer.IsGui);
+				textRenderer.DrawText(textComponent.Text, glm::vec2(-offsetX, 0.0f), transform.ModelMatrix, renderer.Color, renderer.CameraLayer);
 
 				continue;
 			}
@@ -349,7 +383,7 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 				{
 					mSpriteBatch->SetBatch(mMainPipeline.get(), BatchType::SPRITE);
 				}
-				instance.batch.UserData = k == 0 ? 0 : 1;
+				instance.batch.UserData |= k;
 				mSpriteBatch->DrawSprite(instance.batch);
 			}
 		}
@@ -359,17 +393,24 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 
 	glm::vec2 scaling = scene->VirtualScreenSize / glm::vec2(pOutput->GetSize());
 
-	auto gd = Render::RendererContext::s_Context->GetGraphicsDeviceProperties();
-	auto baseString = std::wstring(L"Stratum Engine {}, {}\nFPS: {} CPU: {:.2f}ms GPU: {:.2f}ms\n{} - {}/{}MB\n");
 
 	mSpriteBatch->SetBatch(nullptr, BatchType::TEXT);
 
-	if (scene->FontRegistry.NeedsUpload("Roboto"))
+	static std::string c_DefaultFont = "Roboto";
+
+	if (scene->FontRegistry.NeedsUpload(c_DefaultFont))
 	{
 		scene->Resources.CreateFontImage(scene->FontRegistry.GetFont("Roboto"));
 	}
 
 #ifdef DEBUG_RENDERER
+
+	auto before = totalAllocations;
+	auto beforeKb = totalAllocated;
+
+	static auto baseString = std::wstring(L"Stratum Engine {}, {}\nFPS: {} CPU: {:.2f}ms GPU: {:.2f}ms\n{} - {}/{}MB\nEntities Alive: {}\nAllocs: {} Count | {} Freed | {:.2f} Kb Total | Used (Aprox): {:.2f}Kb");
+	auto gd = Render::RendererContext::s_Context->GetGraphicsDeviceProperties();
+
 	parameters.font = scene->FontRegistry.GetFont("Roboto");
 	parameters.fontSize = 64.0f;
 	textRenderer.SetParameters(parameters);
@@ -378,8 +419,34 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 		(int)(1.0f / Time::UnscaledDeltaTime), Time::UnscaledDeltaTime * 1000.0f, Time::GPURenderTime * 1000.0f,
 		Utils::ToWideString(gd.Description).c_str(),
 		(int)(gd.UsedVideoMemory / 1024.0f / 1024.0f),
-		gd.DedicatedVideoMemory / 1024 / 1024),
+		gd.DedicatedVideoMemory / 1024 / 1024,
+		scene->EntityManager.LiveEntities,
+		gpGlobals->totalAllocations, gpGlobals->freedAllocations, gpGlobals->totalAllocated / 1024.0f, gUsedMemory / 1024.0f),
 		glm::vec2(-VirtualScreenSize.x + 20, VirtualScreenSize.y - 64), glm::identity<glm::mat4>());
+	/*
+
+	static auto baseString = std::wstring(L"Stratum Engine {}, {}\nFPS: {}");
+	auto gd = Render::RendererContext::s_Context->GetGraphicsDeviceProperties();
+
+	parameters.font = scene->FontRegistry.GetFont("Roboto");
+	parameters.fontSize = 64.0f;
+	textRenderer.SetParameters(parameters);
+
+	textRenderer.DrawText(Utils::FormatString(baseString, L"" __DATE__, L"" __TIME__,
+		(int)(1.0f / Time::UnscaledDeltaTime)),
+		glm::vec2(-VirtualScreenSize.x + 20, VirtualScreenSize.y - 64), glm::identity<glm::mat4>());
+
+	auto times = EngineStats::GetTimes();
+
+	int index = 0;
+
+	for (auto& t : times)
+	{
+		textRenderer.DrawText(Utils::FormatString(L"{}: {:.2f}ms", Utils::ToWideString(t.name), t.time),
+			glm::vec2(-VirtualScreenSize.x + 20, VirtualScreenSize.y - 200 - (64 * index)), glm::identity<glm::mat4>());
+		index++;
+	}
+	*/
 
 	parameters.fontSize = 48;
 	parameters.maxWidth = VirtualScreenSize.x * 2;
@@ -415,41 +482,20 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 		offset += str.y * 1.2f;
 	}
 	g_DebugSync.release();
+
+	auto after = totalAllocations;
+	auto afterKb = totalAllocated;
+	auto total = after - before;
+	auto totalKb = afterKb - beforeKb;
+	totalAllocations -= total;
+	totalAllocated -= totalKb;
 #endif
-	glm::mat4 matrices[2];
-
-	{
-		auto camera = &mMainCamera;
-		glm::mat4 proj = glm::ortho(-VirtualScreenSize.x, VirtualScreenSize.x, -VirtualScreenSize.y, VirtualScreenSize.y);
-		glm::mat4 view = glm::identity<glm::mat4>();
-
-		view = glm::translate(view, glm::vec3(-camera->Position, 0.0f));
-		view = glm::rotate(view, glm::radians(camera->Rotation), glm::vec3(0.0f, 0.0f, 1.0f));
-		view = glm::scale(view, glm::vec3(camera->Zoom, 1.0f));
-
-		matrices[0] = proj * view;
-	}
-
-	{
-		auto camera = &mGuiCamera;
-		glm::mat4 proj = glm::ortho(-VirtualScreenSize.x, VirtualScreenSize.x, -VirtualScreenSize.y, VirtualScreenSize.y);
-		glm::mat4 view = glm::identity<glm::mat4>();
-
-		view = glm::translate(view, glm::vec3(-camera->Position, 0.0f));
-		view = glm::rotate(view, glm::radians(camera->Rotation), glm::vec3(0.0f, 0.0f, 1.0f));
-		view = glm::scale(view, glm::vec3(camera->Zoom, 1.0f));
-
-		matrices[1] = proj * view;
-	}
 
 	mCopyCmdBuffer->Begin();
 
-	PerFrameData data{};
-	data.ProjView[0] = matrices[0];
-	data.ProjView[1] = matrices[1];
-	data.ScreenSize = pOutput->GetSize();
+	perFrameData.ScreenSize = pOutput->GetSize();
 
-	mCopyCmdBuffer->UpdateConstantBuffer(mPerFrameData.get(), &data);
+	mCopyCmdBuffer->UpdateConstantBuffer(mPerFrameData.get(), &perFrameData);
 	mSpriteBatch->End(mCopyCmdBuffer.get());
 
 	mCopyCmdBuffer->End();
@@ -460,6 +506,20 @@ void Renderer2D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 
 void Renderer2D::Render(Scene* scene, Render::Framebuffer* pOutput)
 {
+
+	bool isQueueEmpty = true;
+
+	for (auto& queue : mRenderQueues)
+	{
+		if (queue.instances.empty())
+		{
+			isQueueEmpty = false;
+			break;
+		}
+	}
+
+	if (isQueueEmpty)
+		return;
 
 	Z_PROFILE_SCOPE("Renderer2D::Render");
 
@@ -550,48 +610,11 @@ void Renderer2D::UpdateScreenSize(const glm::ivec2& size)
 	VirtualScreenSize = ssize;
 }
 
-// This works for the game i'm making now as of 17/05/2025
-// But can easily be expanded so i can use the ECS to specify camera parameters
-
-void Renderer2D::SetCameraPosition(const glm::vec2& position)
-{
-	mMainCamera.Position = position;
-}
-
-void Renderer2D::SetGuiCameraPosition(const glm::vec2& position)
-{
-	mGuiCamera.Position = position;
-}
-
-void Renderer2D::SetCameraZoom(const glm::vec2& zoom)
-{
-	mMainCamera.Zoom = zoom;
-}
-
-void Renderer2D::SetGuiCameraZoom(const glm::vec2& zoom)
-{
-	mGuiCamera.Zoom = zoom;
-}
-
-void Renderer2D::SetCameraRotation(float rotation)
-{
-	mMainCamera.Rotation = rotation;
-}
-
-void Renderer2D::SetGuiCameraRotation(float rotation)
-{
-	mGuiCamera.Rotation = rotation;
-}
+// Finally made the switch to a scene based camera system
 
 Render::Framebuffer* Renderer2D::GetRenderTarget()
 {
 	return mMainRenderTarget.get();
-}
-
-void Renderer2D::RenderCamera(Camera2D* camera, RenderQueue2D* renderQueue, Scene* scene, Render::Framebuffer* pOutput)
-{
-	// Bindless rendering ftw :D
-
 }
 
 void Renderer2D::SetConstantBuffer(Render::ConstantBuffer* pBuffer, uint32_t slot)

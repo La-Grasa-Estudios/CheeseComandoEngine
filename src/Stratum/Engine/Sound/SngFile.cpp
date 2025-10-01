@@ -137,11 +137,11 @@ SngMetadataValueKeyPair::SngMetadataValueKeyPair()
 
 SngMetadataValueKeyPair::SngMetadataValueKeyPair(const std::string& key, const std::string& value)
 {
-	KeyLen = key.size();
+	KeyLen = static_cast<int>(key.size());
 	Key = new char[key.size()];
 	memcpy(Key, key.c_str(), key.size());
 
-	ValueLen = value.size();
+	ValueLen = static_cast<int>(value.size());
 	Value = new char[value.size()];
 	memcpy(Value, value.c_str(), value.size());
 }
@@ -200,7 +200,7 @@ SngFileMetadata::SngFileMetadata()
 
 SngFileMetadata::SngFileMetadata(const std::string& filename)
 {
-	FilenameLen = filename.size();
+	FilenameLen = static_cast<uint8_t>(filename.size());
 	Filename = new char[filename.size()];
 	memcpy(Filename, filename.c_str(), filename.size());
 }

@@ -90,6 +90,7 @@ protected:
 
 	Ref<AudioEngine> m_AudioEngine;
 	Ref<Renderer3D> m_RenderPath3D;
+	Ref<Renderer2D> m_RenderPath2D;
 
 	Console m_Console{};
 

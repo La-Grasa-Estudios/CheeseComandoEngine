@@ -131,7 +131,7 @@ DescriptorHandle SceneResources::AllocateMaterialHandle()
 		mMaterials.resize(capacity);
 		memset(mMaterials.data() + oldCapacity, 0, sizeof(MaterialIndex) * (capacity - oldCapacity));
 		memset(mMaterialsRefCount.data() + oldCapacity, 0, sizeof(int32_t) * (capacity - oldCapacity));
-		slot = oldCapacity;
+		slot = static_cast<int>(oldCapacity);
 	}
 	mAllocatedMaterials[slot] = true;
 	mMaterialsRefCount[slot] += 1;
@@ -336,7 +336,7 @@ int32_t SceneResources::AllocateBufferHandle()
 		memset(&mBufferIndexes[oldCapacity], 0, sizeof(Render::BindlessDescriptorIndex) * (capacity - oldCapacity));
 		memset(&mBuffersRefCount[oldCapacity], 0, sizeof(int32_t) * (capacity - oldCapacity));
 
-		slot = oldCapacity;
+		slot = static_cast<int>(oldCapacity);
 	}
 
 	mAllocatedBuffers[slot] = true;

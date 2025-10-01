@@ -3,6 +3,8 @@
 #include "InGameSystem.h"
 #include "SparrowReader.h"
 
+#include <Scene/SceneUI.h>
+
 #include <Core/Logger.h>
 #include <Core/Application.h>
 #include <Input/Input.h>
@@ -41,6 +43,14 @@ void Funkin::LoadingScreenSystem::Init(Stratum::Scene* scene)
 	doTransition = false;
 
 	loadingProgressEntity = scene->EntityManager.CreateEntity();
+
+	{
+		auto entity = scene->EntityManager.CreateEntity();
+		auto& camera = scene->Cameras.Create(entity);
+		auto& transform = scene->Transforms.Create(entity);
+		camera.RendersToGui = true;
+		camera.Orthographic = true;
+	}
 
 	{
 		bgEntity = scene->EntityManager.CreateEntity();

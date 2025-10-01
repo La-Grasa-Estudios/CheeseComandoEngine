@@ -1,0 +1,182 @@
+{
+	"pad-default": "story-button",
+	"components": [
+	{
+		"type": "rect",
+		"name": "menu-container",
+		"width": "60%",
+		"height": "100%",
+		"anchor": "right",
+		"transform-x": "-60%",
+		"transform-y": "0%",
+		"background-color": [0.0, 0.0, 0.0, 0.0],
+		"camera-layer": 0,
+		"render-layer": 10000,
+		"transition-in": "slide-right-bounce",
+		"transition-out": "slide-right",
+		"transition-len": 2,
+		"transition-offset": 0,
+		"font": "vcr",
+		"_comment": "If no height is provided, it will be automatically calculated based on all the children of this component, camera-layer means the actual camera to be rendering to, render-layer is the layering within the same camera-layer, both camera-layer and render-layer+1 are inherited, all children of this inherit the same transition",
+		"components": [
+		{
+			"type": "rect",
+			"width": "auto",
+			"height": "100%",
+			"transform-x": "7%",
+			"is-background": true,
+			"background": "ui/menu/border.png",
+			"transition-len": 1,
+			"transition-offset": 0
+		},
+		{
+			"type": "rect",
+			"width": "auto",
+			"height": "100%",
+			"transform-x": "19%",
+			"transform-y": "15%",
+			"is-background": true,
+			"background-color": [0.0, 0.0, 0.0, 0.0],
+			"background": "ui/menu/border.png",
+			"components": [
+				{
+					"type": "rect",
+					"width": "80%",
+					"height": "100%",
+					"is-background": true,
+					"background-color": [0.0, 0.0, 0.0, 0.0],
+					"components": [
+					{
+					"type": "button",
+					"name": "story-button",
+					"width": "84.9%",
+					"height": "auto",
+					"padding-top": "2.5%",
+					"padding-left": "11.1%",
+					"background": "ui/menu/story_mode.png",
+					"transition-offset": 0.1,
+					"unhovered-color": [ 0.75, 0.75, 0.75, 1.0 ],
+					"onHover": "sfx-ui",
+					"onClick": "switch-story-panel",
+					"down": "freeplay-button"
+				},
+				{
+					"type": "button",
+					"name": "freeplay-button",
+					"width": "53%",
+					"height": "auto",
+					"padding-left": "4%",
+					"padding-top": "2%",
+					"next-element": "right",
+					"background": "ui/menu/freeplay.png",
+					"transition-offset": 0.3,
+					"unhovered-color": [ 0.75, 0.75, 0.75, 1.0 ],
+					"onHover": "sfx-ui",
+					"onClick": "switch-freeplay-panel",
+					"down": "promo-button",
+					"up": "story-button",
+					"right": "options-button"
+				},
+				{
+					"_comment": "If no next-element tag is present the next element will be placed at the far left of the root container below this element",
+					"type": "button",
+					"name": "options-button",
+					"_comment": "Text is embedded into image (true for all buttons) otherwise use text property, auto height keeps the aspect ratio compared to width",
+					"width": "40%",
+					"height": "auto",
+					"background": "ui/menu/options.png",
+					"transform-x": "-1%",
+					"transition-offset": 0.3,
+					"unhovered-color": [ 0.75, 0.75, 0.75, 1.0 ],
+					"onHover": "sfx-ui",
+					"onClick": "switch-options-panel",
+					"up": "story-button",
+					"down": "credits-button",
+					"left": "freeplay-button"
+				},
+				{
+					"type": "button",
+					"name": "credits-button",
+					"width": "43.5%",
+					"height": "auto",
+					"padding-left": "7.5%",
+					"background": "ui/menu/credits.png",
+					"transform-x": "45%",
+					"transition-offset": 0.3,
+					"unhovered-color": [ 0.75, 0.75, 0.75, 1.0 ],
+					"onHover": "sfx-ui",
+					"onClick": "switch-credits-panel",
+					"down": "promo-button",
+					"left": "freeplay-button",
+					"up": "options-button"
+				},
+				{
+					"type": "button",
+					"name": "promo-button",
+					"width": "96%",
+					"height": "auto",
+					"padding-top": "2.5%",
+					"padding-left": "0%",
+					"background": "ui/menu/promo.png",
+					"transition-offset": 0.5,
+					"unhovered-color": [ 0.75, 0.75, 0.75, 1.0 ],
+					"onHover": "sfx-ui",
+					"onClick": "open-nonsense-youtube",
+					"up": "credits-button"
+				},
+				{
+					"type": "label",
+					"padding-top": "2%",
+					"transform-x": "50.0%",
+					"transition-offset": 0.5,
+					"text": "ST-UI V0.1 (First Release)",
+					"text-align": "50%"
+				}
+				]
+			}
+			]
+		}
+		]
+	},
+	{
+		"type": "rect",
+		"width": "100%",
+		"height": "10%",
+		"transform-y": "90%",
+		"camera-layer": 0,
+		"render-layer": 20000,
+		"transition-in": "slide-left",
+		"transition-out": "slide-left",
+		"transition-len": 1.5,
+		"background": "ui/triangle.png"
+	},
+	{
+		"type": "rect",
+		"width": "-100%",
+		"height": "-10%",
+		"transform-x": "100%",
+		"transform-y": "10%",
+		"transition-in": "slide-right",
+		"transition-out": "slide-right",
+		"transition-len": 1.5,
+		"camera-layer": 0,
+		"render-layer": 20000,
+		"background": "ui/triangle.png"
+	},
+	{
+		"type": "label",
+		"padding-top": "-3.5em%",
+		"transform-x": "3.5%",
+		"transform-y": "100.0%",
+		"transition-in": "slide-left",
+		"transition-out": "slide-left",
+		"transition-len": 1.5,
+		"transition-offset": 0.0,
+		"font": "vcr",
+		"text": "Stratum Engine - 0.0.1",
+		"camera-layer": 0,
+		"render-layer": 20000
+	}
+	]
+}
+

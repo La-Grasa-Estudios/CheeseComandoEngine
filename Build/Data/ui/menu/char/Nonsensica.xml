@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="Nonsense15.png">
+	<!-- Created with Adobe Animate version 19.0.0.326 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="Nonsensica0000" x="5" y="5" width="484" height="729" frameX="0" frameY="-8" frameWidth="484" frameHeight="737"/>
+	<SubTexture name="Nonsensica0001" x="494" y="5" width="484" height="722" frameX="0" frameY="-15" frameWidth="484" frameHeight="737"/>
+	<SubTexture name="Nonsensica0002" x="1447" y="747" width="473" height="726" frameX="-7" frameY="-11" frameWidth="484" frameHeight="737"/>
+	<SubTexture name="Nonsensica0003" x="1447" y="747" width="473" height="726" frameX="-7" frameY="-11" frameWidth="484" frameHeight="737"/>
+	<SubTexture name="Nonsensica0004" x="972" y="747" width="470" height="732" frameX="-9" frameY="-5" frameWidth="484" frameHeight="737"/>
+	<SubTexture name="Nonsensica0005" x="972" y="747" width="470" height="732" frameX="-9" frameY="-5" frameWidth="484" frameHeight="737"/>
+	<SubTexture name="Nonsensica0006" x="5" y="739" width="473" height="735" frameX="-6" frameY="-2" frameWidth="484" frameHeight="737"/>
+	<SubTexture name="Nonsensica0007" x="5" y="739" width="473" height="735" frameX="-6" frameY="-2" frameWidth="484" frameHeight="737"/>
+	<SubTexture name="Nonsensica0008" x="494" y="732" width="473" height="737" frameX="-5" frameY="0" frameWidth="484" frameHeight="737"/>
+	<SubTexture name="Nonsensica0009" x="494" y="732" width="473" height="737" frameX="-5" frameY="0" frameWidth="484" frameHeight="737"/>
+	<SubTexture name="Nonsensica0010" x="494" y="732" width="473" height="737" frameX="-5" frameY="0" frameWidth="484" frameHeight="737"/>
+	<SubTexture name="Nonsensica0011" x="983" y="5" width="474" height="737" frameX="-4" frameY="0" frameWidth="484" frameHeight="737"/>
+	<SubTexture name="Nonsensica0012" x="983" y="5" width="474" height="737" frameX="-4" frameY="0" frameWidth="484" frameHeight="737"/>
+	<SubTexture name="Nonsensica0013" x="983" y="5" width="474" height="737" frameX="-4" frameY="0" frameWidth="484" frameHeight="737"/>
+	<SubTexture name="Nonsensica0014" x="983" y="5" width="474" height="737" frameX="-4" frameY="0" frameWidth="484" frameHeight="737"/>
+</TextureAtlas>

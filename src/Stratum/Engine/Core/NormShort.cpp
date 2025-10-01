@@ -19,7 +19,7 @@ normshort::normshort(uint16_t& h)
 
 normshort::normshort(float f)
 {
-	data = f * 65535.0f;
+	data = static_cast<uint16_t>(f * 65535.0f);
 }
 
 normshort::operator float()

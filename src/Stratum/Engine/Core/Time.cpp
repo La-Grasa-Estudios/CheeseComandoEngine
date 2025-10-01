@@ -27,6 +27,12 @@ void Time::EndProfile()
 		//Z_WARN("Frametime got over 100ms! ({}ms), clamping to 100ms", DeltaTime * 1000.0f);
 		//DeltaTime = 100.0f / 1000.0f;
 	}
+	if (SkipFrame)
+	{
+		SkipFrame = false;
+		DeltaTime = 0.0f;
+		UnscaledDeltaTime = 0.0f;
+	}
 	GlobalTime += DeltaTime;
 }
 

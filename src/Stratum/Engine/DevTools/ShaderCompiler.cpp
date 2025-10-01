@@ -363,7 +363,7 @@ std::vector<uint8_t> ShaderCompiler::GetShaderBinary(RefBinaryStream& ss, Shader
 
 		// Reflection!
 		// Now i don't need to manually create root signatures :DDD
-		for (int i = 0; i < shaderDesc.BoundResources; i++)
+		for (uint32_t i = 0; i < shaderDesc.BoundResources; i++)
 		{
 			D3D12_SHADER_INPUT_BIND_DESC shaderInputBindDesc{};
 			shaderReflection->GetResourceBindingDesc(i, &shaderInputBindDesc);

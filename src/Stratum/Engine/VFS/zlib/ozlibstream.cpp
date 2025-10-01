@@ -80,11 +80,11 @@ void deflate_streambuf::reset()
 void deflate_streambuf::deflate_chunk(int flush)
 {
     zstr.next_in = reinterpret_cast<Bytef*>(pbase());
-    zstr.avail_in = pptr() - pbase();
+    zstr.avail_in = static_cast<uint32_t>(pptr() - pbase());
     do
     {
         zstr.next_out = reinterpret_cast<Bytef*>(out.data());
-        zstr.avail_out = out.size();
+        zstr.avail_out = static_cast<uint32_t>(out.size());
         int ret = deflate(&zstr, flush);
         if(ret != Z_OK && ret != Z_STREAM_END)
         {

@@ -25,6 +25,7 @@
 
 #include "Util/PathUtils.h"
 #include "Util/Globals.h"
+#include "Util/CpuUtil.h"
 
 #include "Thirdparty/imgui/imgui.h"
 
@@ -33,7 +34,6 @@
 #include <filesystem>
 
 using namespace ENGINE_NAMESPACE;
-
 
 // Remnant of the old fury engine branch
 ConsoleVar* g_GameRscDir;
@@ -44,6 +44,12 @@ std::binary_semaphore g_WaitForRender(0);
 std::binary_semaphore g_WaitForUpdateFinish(0);
 
 std::atomic_bool g_FinishUpdateThread;
+
+extern size_t totalAllocated;
+extern size_t totalAllocations;
+extern size_t freedAllocations;
+
+extern void resetTotalAllocs();
 
 Ref<Render::RendererContext> g_RenderContext;
 
@@ -57,6 +63,9 @@ Application::Application(ApplicationInfo& appInfo)
 void Application::Run(std::vector<std::string> args)
 {
 	gpGlobals = new GlobalVars();
+	{
+		volatile auto utilInit = Utils::CpuUtil();
+	}
 
 	// I know how to update the build date every time it compiles
 	// BUT i don't like the fact that every debug session i need to recompile a single file
@@ -284,6 +293,7 @@ void Application::Run(std::vector<std::string> args)
 	EventBus::InvokeEvent(EngineModuleInitEvent(EngineModuleInitEvent::ENGINE_MODULE_LATE_INIT));
 
 	m_RenderPath3D = CreateRef<Renderer3D>();
+	m_RenderPath2D = CreateRef<Renderer2D>();
 
 	if (!m_Window->CloseRequested())
 	{
@@ -326,6 +336,7 @@ void Application::MainLoop()
 
 	bool LogStutters = false;
 	float LastFrameDelta = 0.0f;
+	float AllocTimer = 0.0f;
 
 	bool ShouldClose = false;
 
@@ -370,7 +381,10 @@ void Application::MainLoop()
 		JobManager::ExecuteMainJobs();
 
 		gpGlobals->deltaTime = Time::DeltaTime;
+		gpGlobals->elapsedTime = Time::GlobalTime;
 		InternalUpdate();
+
+		m_RenderPath2D->UpdateScreenSize(m_Window->GetFramebuffer()->GetSize());
 
 		if (mCurrentScene)
 		{
@@ -382,7 +396,7 @@ void Application::MainLoop()
 				SetScene(mCurrentScene->NextScenePtr);
 			}
 
-			mCurrentScene->VirtualScreenSize = m_RenderPath3D->RenderPath2D->VirtualScreenSize;
+			mCurrentScene->VirtualScreenSize = m_RenderPath2D->VirtualScreenSize;
 			mCurrentScene->UpdateSystems();
 		}
 
@@ -410,8 +424,14 @@ void Application::MainLoop()
 
 		if (mCurrentScene)
 		{
+
 			m_RenderPath3D->PreRender(mCurrentScene, m_Window->GetFramebuffer().get());
+			m_RenderPath2D->PreRender(mCurrentScene, m_Window->GetFramebuffer().get());
+
 			m_RenderPath3D->Render(mCurrentScene, m_Window->GetFramebuffer().get());
+			m_RenderPath2D->Render(mCurrentScene, m_Window->GetFramebuffer().get());
+
+			m_RenderPath2D->Submit();
 		}
 
 		if (m_AppInfo.IsImGuiEnabled)
@@ -473,12 +493,25 @@ void Application::MainLoop()
 		}
 		LogStutters = false;
 
+		AllocTimer += Time::UnscaledDeltaTime;
+
+		if (AllocTimer > 1.0f)
+		{
+			AllocTimer = 0.0f;
+
+			gpGlobals->totalAllocated = totalAllocated;
+			gpGlobals->freedAllocations = freedAllocations;
+			gpGlobals->totalAllocations = totalAllocations;
+
+			resetTotalAllocs();
+		}
 	}
 
 	Cleanup();
 	SetScene(NULL);
 
 	m_RenderPath3D = NULL;
+	m_RenderPath2D = NULL;
 }
 
 void Application::RenderStartupMedia()
@@ -662,7 +695,7 @@ void Application::InternalUpdate()
 
 void Application::SetScene(Scene* scene)
 {
-	if (mCurrentScene && scene)
+	if (mCurrentScene)
 	{
 		JobManager::Wait();
 		Render::RendererContext::GetDevice()->waitForIdle();
@@ -677,7 +710,7 @@ void Application::SetScene(Scene* scene)
 		InitSceneResources(scene);
 
 	if (scene)
-		m_RenderPath3D->RenderPath2D->UpdateScreenSize(m_Window->GetFramebuffer()->GetSize());
+		m_RenderPath2D->UpdateScreenSize(m_Window->GetFramebuffer()->GetSize());
 
 	Time::TimeScale = 1.0f;
 }
@@ -690,6 +723,7 @@ void Application::InitSceneResources(Scene* scene)
 		scene->AudioEngine = m_AudioEngine.get();
 		scene->Window = m_Window.get();
 		scene->RenderPath3D = m_RenderPath3D.get();
+		scene->RenderPath2D = m_RenderPath2D.get();
 	}
 }
 

@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="Nonsense6.png">
+	<!-- Created with Adobe Animate version 22.0.0.93 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="Nonsense0000" x="5" y="2151" width="812" height="1062" frameX="0" frameY="-6" frameWidth="829" frameHeight="1068"/>
+	<SubTexture name="Nonsense0001" x="1623" y="5" width="803" height="1047" frameX="-5" frameY="-21" frameWidth="829" frameHeight="1068"/>
+	<SubTexture name="Nonsense0002" x="822" y="2150" width="793" height="1055" frameX="-14" frameY="-13" frameWidth="829" frameHeight="1068"/>
+	<SubTexture name="Nonsense0003" x="822" y="2150" width="793" height="1055" frameX="-14" frameY="-13" frameWidth="829" frameHeight="1068"/>
+	<SubTexture name="Nonsense0004" x="823" y="5" width="795" height="1062" frameX="-21" frameY="-6" frameWidth="829" frameHeight="1068"/>
+	<SubTexture name="Nonsense0005" x="823" y="5" width="795" height="1062" frameX="-21" frameY="-6" frameWidth="829" frameHeight="1068"/>
+	<SubTexture name="Nonsense0006" x="820" y="1078" width="804" height="1067" frameX="-21" frameY="-1" frameWidth="829" frameHeight="1068"/>
+	<SubTexture name="Nonsense0007" x="820" y="1078" width="804" height="1067" frameX="-21" frameY="-1" frameWidth="829" frameHeight="1068"/>
+	<SubTexture name="Nonsense0008" x="5" y="1078" width="810" height="1068" frameX="-17" frameY="0" frameWidth="829" frameHeight="1068"/>
+	<SubTexture name="Nonsense0009" x="5" y="1078" width="810" height="1068" frameX="-17" frameY="0" frameWidth="829" frameHeight="1068"/>
+	<SubTexture name="Nonsense0010" x="5" y="5" width="813" height="1068" frameX="-16" frameY="0" frameWidth="829" frameHeight="1068"/>
+	<SubTexture name="Nonsense0011" x="5" y="5" width="813" height="1068" frameX="-16" frameY="0" frameWidth="829" frameHeight="1068"/>
+	<SubTexture name="Nonsense0012" x="5" y="5" width="813" height="1068" frameX="-16" frameY="0" frameWidth="829" frameHeight="1068"/>
+	<SubTexture name="Nonsense0013" x="5" y="5" width="813" height="1068" frameX="-16" frameY="0" frameWidth="829" frameHeight="1068"/>
+	<SubTexture name="Nonsense0014" x="5" y="5" width="813" height="1068" frameX="-16" frameY="0" frameWidth="829" frameHeight="1068"/>
+</TextureAtlas>

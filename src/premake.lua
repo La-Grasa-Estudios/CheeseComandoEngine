@@ -68,6 +68,25 @@ project "Project Javos"
 	optimize "On"
 	kind "WindowedApp"
 	
+project "3D"
+	stratum_config()
+	kind "ConsoleApp"
+	
+	files {
+		"3D/**.c",
+		"3D/**.cpp",
+		"3D/**.h*",
+		"3D/**.hpp"
+	}
+
+	filter "configurations:Debug"
+	defines { "_DEBUG" }
+	symbols "On"
+	
+	filter "configurations:Release"
+	defines { "NDEBUG" }
+	optimize "On"
+	
 project "ResourceCompiler"
 
 	stratum_config()

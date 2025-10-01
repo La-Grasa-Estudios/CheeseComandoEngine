@@ -8,6 +8,8 @@
 #include "InputLayer.h"
 
 #include <glm/glm.hpp>
+#include <unordered_set>
+#include <unordered_map>
 #include <vector>
 
 struct SDL_Window;
@@ -27,6 +29,17 @@ enum class MouseInputMode {
 	Normal,
 	Hidden,
 	Disabled,
+};
+
+enum class MouseButton
+{
+	LEFT,
+	RIGHT,
+	MIDDLE,
+	MOUSE4,
+	MOUSE5,
+	MOUSE6,
+	MOUSE7
 };
 
 class Input {
@@ -67,6 +80,9 @@ public:
 	static void SetMousePos(glm::vec2 pos);
 	static void SetGamepad(int button, bool press);
 	static void SetGamepadAxis(int axis, int16_t value);
+	static void SetGamepadRumble(float left_intensity, float right_intensity, uint32_t duration);
+
+	// Legacy Stuff
 
 	static void SetInputMode(MouseInputMode mode);
 
@@ -74,12 +90,30 @@ public:
 	static bool GetKey(KeyCode keyCode);
 
 	static bool GetMouseButton(int button);
-	static bool GetMouseButttonDown(int button);
+	static bool GetMouseButtonDown(int button);
 
-	static bool GetGamepadButton(int button);
-	static bool GetGamepadButtonDown(int button);
+	static bool GetGamepadButton(GamepadButton button);
+	static bool GetGamepadButtonDown(GamepadButton button);
 
-	static float GetGamepadAxis(int axis);
+	static float GetGamepadAxis(GamepadAxis axis);
+
+	static int32_t GetGamepadType();
+
+	static void BindAlias(const char* alias, KeyCode keyCode);
+	static void BindAlias(const char* alias, MouseButton button);
+	static void BindAlias(const char* alias, GamepadButton gamepadButton);
+	static void BindAxisToAlias(const char* alias, GamepadAxis axis, float activation = 0.5f);
+
+	static void UnBindAlias(const char* alias, KeyCode keyCode);
+	static void UnBindAlias(const char* alias, MouseButton button);
+	static void UnBindAlias(const char* alias, GamepadButton gamepadButton);
+	static void UnBindAxisFromAlias(const char* alias, GamepadAxis axis);
+
+	static bool GetInput(const char* alias);
+	static bool GetInputDown(const char* alias);
+	static bool GetInputUp(const char* alias);
+
+	static float GetAxis(const char* alias);
 
 	static bool AnyKeyDown();
 	static bool AnyGamepadDown();
@@ -95,6 +129,18 @@ public:
 
 private:
 
+	struct InputAlias
+	{
+		std::unordered_set<KeyCode> keyCodes;
+		std::unordered_set<MouseButton> mouseButtons;
+		std::unordered_set<int32_t> gamepadButtons;
+		std::unordered_set<int32_t> gpadAxis;
+		bool active = false;
+	};
+
+	static InputAlias* GetInputAlias(const char* name);
+
+	inline static std::unordered_map<const char*, InputAlias> sAliases;
 	inline static std::vector<InputLayer_Interface*> sLayers;
 
 };

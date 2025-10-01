@@ -20,11 +20,6 @@ void RenderQueue::Push(const RenderInstance& instance)
 	renderInstances.push_back(instance);
 }
 
-void RenderQueue::Push(uint32_t VertexBufferIndex, uint32_t IndexBufferIndex, uint32_t IndexOffset, uint32_t IndexCount, uint32_t InstanceIndex)
-{
-	renderInstances.emplace_back(VertexBufferIndex, IndexBufferIndex, IndexOffset, IndexCount, InstanceIndex);
-}
-
 RenderQueue::RenderQueue(RenderQueue&& other) noexcept
 {
 	renderInstances = std::move(other.renderInstances);
@@ -37,8 +32,6 @@ Renderer3D::Renderer3D()
 	mCommandBuffer = {};
 
 	InitializePipelines();
-
-	RenderPath2D = CreateRef<Renderer2D>();
 }
 
 void Renderer3D::SetScene(Scene* scene)
@@ -63,7 +56,16 @@ void Renderer3D::SetViewPose(const ViewPose& pose)
 
 void Renderer3D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 {
-	/*
+	auto& cameras = scene->Cameras.GetEntities();
+
+	for (auto entity : cameras)
+	{
+		auto& camera = scene->Cameras.Get(entity);
+		ViewPose vp = { RenderUtil::GetProjectionMatrix(entity, scene), RenderUtil::GetViewMatrix(entity, scene) };
+		camera.ProjectionViewMatrix = vp.ProjectionViewMatrix;
+		camera.InverseProjectionViewMatrix = vp.InverseProjectionViewMatrix;
+	}
+
 	Render::Frustum frustum(mViewPose.ProjectionViewMatrix);
 
 	mainVisRenderQueue.Clear();
@@ -78,24 +80,21 @@ void Renderer3D::PreRender(Scene* scene, Render::Framebuffer* pOutput)
 
 		for (auto& subset : renderer.Subsets)
 		{
-			mainVisRenderQueue.Push(renderer.VertexBufferDescriptorIndex, renderer.IndexBufferDescriptorIndex, subset.IndexOffset, subset.IndexCount, instanceIndex++);
+			RenderInstance instance{};
+			instance.VertexBufferIndex = renderer.VertexBufferDescriptorIndex;
+			instance.IndexBufferIndex = renderer.IndexBufferDescriptorIndex;
+			instance.IndexOffset = subset.IndexOffset;
+			instance.IndexCount = subset.IndexCount;
+			instance.InstanceIndex = instanceIndex++;
+			mainVisRenderQueue.Push(instance);
 		}
 
 	}
-	*/
-
-	RenderPath2D->PreRender(scene, pOutput);
-
 }
 
 void Renderer3D::Render(Scene* scene, Render::Framebuffer* pOutput)
 {
 	using namespace Render;
-
-	RenderPath2D->UpdateScreenSize(pOutput->GetSize());
-	RenderPath2D->Render(scene, pOutput);
-
-	RenderPath2D->Submit();
 
 	return;
 
@@ -146,8 +145,10 @@ void Renderer3D::Render(Scene* scene, Render::Framebuffer* pOutput)
 
 	mCommandBuffer.End();
 	mCommandBuffer.Submit();
+}
 
-	RenderPath2D->Submit();
+void Renderer3D::BindGraphicsCommonResources(Render::GraphicsCommandBuffer* pCmdBuffer)
+{
 }
 
 void Renderer3D::InitializePipelines()

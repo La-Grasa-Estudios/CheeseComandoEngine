@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TextureAtlas imagePath="MadBear.png">
+	<!-- Created with Adobe Animate version 22.0.2.168 -->
+	<!-- http://www.adobe.com/products/animate.html -->
+	<SubTexture name="goofy0000" x="2" y="2" width="1537" height="1542" frameX="0" frameY="-4" frameWidth="1537" frameHeight="1546"/>
+	<SubTexture name="goofy0001" x="1541" y="2" width="1535" height="1546" frameX="-1" frameY="0" frameWidth="1537" frameHeight="1546"/>
+	<SubTexture name="goofy0002" x="3078" y="2" width="1532" height="1544" frameX="-2" frameY="-2" frameWidth="1537" frameHeight="1546"/>
+	<SubTexture name="goofy0003" x="4612" y="2" width="1534" height="1544" frameX="-1" frameY="-2" frameWidth="1537" frameHeight="1546"/>
+	<SubTexture name="goofy0004" x="6148" y="2" width="1535" height="1544" frameX="-1" frameY="-2" frameWidth="1537" frameHeight="1546"/>
+	<SubTexture name="goofy0005" x="2" y="1550" width="1535" height="1546" frameX="-1" frameY="0" frameWidth="1537" frameHeight="1546"/>
+	<SubTexture name="goofy0006" x="1539" y="1550" width="1534" height="1544" frameX="-1" frameY="-2" frameWidth="1537" frameHeight="1546"/>
+	<SubTexture name="goofy0007" x="3075" y="1550" width="1536" height="1542" frameX="-1" frameY="-4" frameWidth="1537" frameHeight="1546"/>
+</TextureAtlas>

@@ -49,11 +49,26 @@ void Funkin::ErectDadBattleSong::Init(Conductor* pConductor, InGameSystem* pInga
 			pConductor->chart.events.push_back(EventWhite);
 			pConductor->chart.events.push_back(EventStopWhite);
 		});
-	CharaRegistry::GetCharacter("erect-dad")->AddAnimation("scared", "DAD SCARED", "", 30, true, false);
-	CharaRegistry::GetCharacter("erect-bf")->AddAnimation("hey", "BF HEY!!", "idle", 14, false, false);
+
+	pConductor->AddScriptedEvent(385, [&] {
+		//CharaRegistry::GetCharacter("erect-bf")->DoDanceBeatOverride = 0;
+		});
+
+	auto gf = CharaRegistry::GetCharacter("erect-bf");
+
+	if (gf)
+	{
+		CharaRegistry::GetCharacter("erect-dad")->AddAnimation("scared", "DAD SCARED", "", 30, true, false);
+		gf->AddAnimation("hey", "BF HEY!!", "idle", 14, false, false);
+		gf->DoDanceBeatOverride = 4;
+		gf->SetEnabled(true);
+		gf->SetLayer(9);
+	}
+
 	CharaRegistry::AddCharacter("erect-gf");
 	CharaRegistry::GetCharacter("erect-gf")->SetEnabled(true);
 	CharaRegistry::GetCharacter("erect-gf")->SetLayer(9);
+	
 }
 
 void Funkin::ErectDadBattleSong::Update()

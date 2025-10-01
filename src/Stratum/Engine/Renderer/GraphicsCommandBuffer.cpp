@@ -4,7 +4,6 @@
 #include "Core/Timer.h"
 #include "Core/Time.h"
 
-#include "Util/StackAllocator.h"
 #include "BindlessDescriptorTable.h"
 
 #include <nvrhi/nvrhi.h>

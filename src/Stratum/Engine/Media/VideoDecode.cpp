@@ -14,7 +14,7 @@ VideoDecode::VideoDecode(std::string_view path, AudioEngine* pEngine)
 	m_Initialized = false;
 	m_Finished = false;
 
-	m_Reader = av::StreamReader::create(path.data(), true).value();
+	m_Reader = av::StreamReader::create(path.data(), false).value();
 
 	bool AudioEnabled = pEngine;
 
@@ -44,7 +44,7 @@ VideoDecode::VideoDecode(std::string_view path, AudioEngine* pEngine)
 
 		pFrame->width = width;
 		pFrame->height = height;
-		pFrame->format = AV_PIX_FMT_ARGB;
+		pFrame->format = AV_PIX_FMT_RGB0;
 		pFrame->pts = 0;
 
 		/* allocate the buffers for the frame data */
@@ -55,7 +55,7 @@ VideoDecode::VideoDecode(std::string_view path, AudioEngine* pEngine)
 		m_Pending.push_back(frame);
 	}
 
-	m_Sws = av::Scale::create(width, height, pixFmt, width, height, AV_PIX_FMT_ARGB).value();
+	m_Sws = av::Scale::create(width, height, pixFmt, width, height, AV_PIX_FMT_RGB0).value();
 
 	if (AudioEnabled)
 	{

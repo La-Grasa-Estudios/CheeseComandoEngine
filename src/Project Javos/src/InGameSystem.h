@@ -34,9 +34,9 @@ namespace Funkin
 		bool IsLoadingDone();
 		bool IsPaused() const { return mIsPaused; }
 
-		Stratum::ECS::edict_t CreateTextEntity(const std::wstring& defaultText, const glm::vec2& pos, float fontSize = 64.0f, bool isGui = false, uint32_t renderLayer = 0, float align = 0.0f);
-		Stratum::ECS::edict_t CreateSpriteEntity(const::std::string& spritePath, const glm::vec2& pos, const glm::vec2& scale = { 1.0f, 1.0f }, bool isGui = false, uint32_t renderLayer = 0, bool flipX = false);
-		Stratum::ECS::edict_t CreateRectEntity(const glm::vec2& pos, const glm::ivec2& rectSize = { 1.0f, 1.0f }, const glm::vec2& center = { 0.0f, 0.0f }, bool isGui = false, uint32_t renderLayer = 0);
+		Stratum::ECS::edict_t CreateTextEntity(const std::wstring& defaultText, const glm::vec2& pos, float fontSize = 64.0f, uint8_t cameraLayer = 0, uint32_t renderLayer = 0, float align = 0.0f);
+		Stratum::ECS::edict_t CreateSpriteEntity(const::std::string& spritePath, const glm::vec2& pos, const glm::vec2& scale = { 1.0f, 1.0f }, uint8_t cameraLayer = 0, uint32_t renderLayer = 0, bool flipX = false);
+		Stratum::ECS::edict_t CreateRectEntity(const glm::vec2& pos, const glm::ivec2& rectSize = { 1.0f, 1.0f }, const glm::vec2& center = { 0.0f, 0.0f }, uint8_t cameraLayer = 0, uint32_t renderLayer = 0);
 
 		TimedActionSystem* pTimedActionSystem;
 
@@ -86,7 +86,7 @@ namespace Funkin
 
 		int32_t mPauseUiButtonIndex = 0;
 
-		float mVolume = 1.0f;
 		float mWaitTimer = 0.0f;
+		float mCountdownTimer = 4.0f;
 	};
 }

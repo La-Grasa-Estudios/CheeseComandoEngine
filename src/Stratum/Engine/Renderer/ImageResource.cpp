@@ -93,7 +93,7 @@ Render::ImageResource::ImageResource(const ImageDescription& desc)
 
 		cmd.commandList->setTextureState(Handle, nvrhi::AllSubresources, nvrhi::ResourceStates::CopyDest);
 
-		for (int i = 0; i < desc.DefaultData.size() && i < desc.MipLevels; i++)
+		for (uint32_t i = 0; i < desc.DefaultData.size() && i < desc.MipLevels; i++)
 		{
 			ImageResourceData rsc = desc.DefaultData[i];
 			cmd.commandList->writeTexture(Handle, 0, i, rsc.pSysMem, rsc.MemPitch);
@@ -115,7 +115,7 @@ Render::ImageResource::ImageResource(const ImageDescription& desc)
 	}
 
 	size_t size = 0;
-	for (int i = 0; i < desc.MipLevels; i++)
+	for (uint32_t i = 0; i < desc.MipLevels; i++)
 	{
 		size += RendererContext::GetSizeForFormat(ImageDesc.Width / (i + 1), ImageDesc.Height / (i + 1), (uint32_t)ImageDesc.Format);
 	}
@@ -125,7 +125,7 @@ Render::ImageResource::ImageResource(const ImageDescription& desc)
 Render::ImageResource::~ImageResource()
 {
 	size_t size = 0;
-	for (int i = 0; i < ImageDesc.MipLevels; i++)
+	for (uint32_t i = 0; i < ImageDesc.MipLevels; i++)
 	{
 		size += RendererContext::GetSizeForFormat(ImageDesc.Width / (i + 1), ImageDesc.Height / (i + 1), (uint32_t)ImageDesc.Format);
 	}

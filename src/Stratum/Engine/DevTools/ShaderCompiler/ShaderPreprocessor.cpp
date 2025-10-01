@@ -139,7 +139,7 @@ void ShaderPreprocessor::AnalyzeDependencies(std::string& code, std::filesystem:
 
             std::bitset<256> bits{};
 
-            for (int i = 0; i < count; i++)
+            for (uint32_t i = 0; i < count; i++)
             {
                 std::vector<std::string> permutationIndex;
                 permutationIndex.push_back(kp.second[0]);
@@ -196,7 +196,7 @@ void ShaderPreprocessor::AnalyzeDependencies(std::string& code, std::filesystem:
 
         std::string space;
 
-        for (int i = 0; i < depth; i++) {
+        for (uint32_t i = 0; i < depth; i++) {
             space.append("----");
         }
 

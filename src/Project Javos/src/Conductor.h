@@ -49,6 +49,7 @@ namespace Funkin
 
 		bool EnableBot = false;
 		bool BotPlay = false;
+		bool SongStarted = false;
 		int32_t PlayerScore = 0;
 		int32_t MissCount = 0;
 		float Accuracy = 1.0f;

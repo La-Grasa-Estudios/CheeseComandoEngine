@@ -33,7 +33,6 @@ public:
 
 	struct SpriteInstance
 	{
-		glm::mat4 transform;
 		SpriteRendererComponent::SpriteRect rect;
 		glm::ivec2 RenderSize;
 		glm::vec2 center;
@@ -44,6 +43,7 @@ public:
 		bool scaleWithRenderSize = true;
 		uint32_t UserData;
 		Render::GraphicsPipeline* pCustomShader;
+		glm::mat4 transform;
 	};
 
 	SpriteBatch(SceneResources* pResources);
@@ -73,7 +73,7 @@ private:
 	{
 		BatchType Type;
 		Render::GraphicsPipeline* Pipeline;
-		std::vector<SpriteRenderable> RenderQueue;
+		uint32_t RenderCount = 0;
 
 		Batch() = default;
 		Batch(const Batch& other);
@@ -98,6 +98,7 @@ private:
 	SceneResources* mResources;
 
 	Batch mCurrentBatch;
+	std::vector<SpriteRenderable> mRenderQueue;
 	Render::GraphicsPipeline* mShaderBefore;
 
 

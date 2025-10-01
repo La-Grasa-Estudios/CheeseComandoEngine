@@ -2,6 +2,7 @@
 
 #include "Entity/ECS.h"
 
+#include "SceneUI.h"
 #include "SceneResources.h"
 #include "Renderer/BindlessDescriptorTable.h"
 
@@ -41,6 +42,7 @@ protected:
 
 class AudioEngine;
 class Renderer3D;
+class Renderer2D;
 
 namespace Internal
 {
@@ -77,6 +79,7 @@ public:
 	ECS::ComponentManager<VideoSurfaceComponent> VideoSurfaces;
 	ECS::ComponentManager<TextComponent> TextComponents;
 	ECS::ComponentManager<TextRendererComponent> TextRenderers;
+	ECS::ComponentManager<CameraComponent> Cameras;
 
 	void LoadModel(const std::string& path, const ECS::edict_t edict);
 
@@ -104,10 +107,13 @@ public:
 
 	AudioEngine* AudioEngine;
 	Renderer3D* RenderPath3D = nullptr;
+	Renderer2D* RenderPath2D = nullptr;
 
 	Internal::Window* Window;
 	
 	Scene* NextScenePtr = 0;
+
+	Scope<SceneUI> UI;
 
 private:
 

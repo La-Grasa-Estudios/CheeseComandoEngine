@@ -19,7 +19,7 @@ unormbyte::unormbyte(uint8_t& h)
 
 unormbyte::unormbyte(float f)
 {
-	data = f * 127.0f;
+	data = static_cast<uint8_t>(f * 127.0f);
 }
 
 unormbyte::operator float()

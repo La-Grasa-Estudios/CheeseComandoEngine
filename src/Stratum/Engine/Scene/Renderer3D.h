@@ -21,6 +21,12 @@ struct RenderInstance
 	uint32_t IndexOffset;
 	uint32_t IndexCount;
 	uint32_t InstanceIndex;
+	union
+	{
+		uint32_t DistanceBits;
+		float Distance;
+	};
+	Render::GraphicsPipeline* pPipeline; // If null use main pipeline
 };
 
 /// <summary>
@@ -33,13 +39,9 @@ struct RenderQueue
 	void Clear();
 
 	void Push(const RenderInstance& instance);
-	void Push(uint32_t VertexBufferIndex, uint32_t IndexBufferIndex, uint32_t IndexOffset, uint32_t IndexCount, uint32_t InstanceIndex);
 
 	RenderQueue() = default;
 
-	/// <summary>
-	/// Copies the other instance, uses std::move to avoid memory allocation
-	/// </summary>
 	RenderQueue(RenderQueue&& other) noexcept;
 };
 
@@ -48,8 +50,6 @@ struct Visibility
 	RenderQueue visQueue;
 	void CullQueue(const ViewPose& viewPose, RenderQueue& queue);
 };
-
-class Renderer2D;
 
 class Renderer3D
 {
@@ -67,8 +67,6 @@ public:
 
 	RenderQueue mainVisRenderQueue;
 	Render::PostProcessingStack PostProcessingStack;
-
-	Ref<Renderer2D> RenderPath2D;
 
 private:
 

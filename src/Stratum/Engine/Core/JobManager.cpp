@@ -104,7 +104,7 @@ void JobManager::Dispatch(uint32_t jobCount, uint32_t groupSize, const std::func
             const uint64_t groupJobEnd = std::min(groupJobOffset + groupSize, (uint64_t)jobCount);
 
             JobDispatchArgs args;
-            args.groupIndex = groupIndex;
+            args.groupIndex = static_cast<uint32_t>(groupIndex);
 
             args.sharedMemory = _malloca(sharedMemorySize);
 
@@ -113,7 +113,7 @@ void JobManager::Dispatch(uint32_t jobCount, uint32_t groupSize, const std::func
             {
                 args.IsFirstJobInGroup = i == groupJobOffset;
                 args.IsLastJobInGroup = i == groupJobEnd;
-                args.jobIndex = i;
+                args.jobIndex = static_cast<uint32_t>(i);
                 job(args);
             }
 

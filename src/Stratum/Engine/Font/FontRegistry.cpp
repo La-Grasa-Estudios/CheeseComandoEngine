@@ -56,7 +56,7 @@ bool FontRegistry::NeedsUpload(const std::string& fontName)
 		if (kp->second.isReadyInGpu)
 			return false;
 		kp->second.isReadyInGpu = true;
-		return true;
+		return kp->second.isReadyInGpu;
 	}
 	return false;
 }

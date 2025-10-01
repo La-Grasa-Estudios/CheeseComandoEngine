@@ -8,6 +8,7 @@
 #include <Core/Time.h>
 
 #include "Util/Globals.h"
+#include "Util/CpuUtil.h"
 
 #include "VFS/ZVFS.h"
 
@@ -36,10 +37,13 @@ Scene::Scene()
 	INIT_COMPONENT_MANAGER(VideoSurfaces);
 	INIT_COMPONENT_MANAGER(TextComponents);
 	INIT_COMPONENT_MANAGER(TextRenderers);
+	INIT_COMPONENT_MANAGER(Cameras);
 
 	mVideoCopyCommandBuffer = new Render::CopyCommandBuffer();
 
 	FontRegistry.LoadFont("Roboto", "fonts/Roboto-Regular.ttf");
+
+	UI = CreateScope<SceneUI>(this);
 }
 
 Scene::~Scene()
@@ -80,12 +84,17 @@ void Scene::UpdateSystems()
 {
 	UpdateTransforms();
 	UpdateAnimators();
+	UI->Update();
+
+
+
 	for (int i = 0; i < mSystems.size(); i++)
 	{
 		if (!mSystems[i]->mInitialized)
 		{
 			mSystems[i]->Init(this);
 			mSystems[i]->mInitialized = true;
+			Time::SkipFrame = true;
 		}
 	}
 	for (int i = 0; i < mSystems.size(); i++)
@@ -94,6 +103,7 @@ void Scene::UpdateSystems()
 		{
 			mSystems[i]->OnActivate(this);
 			mSystems[i]->mHasBeenActivated = true;
+			Time::SkipFrame = true;
 		}
 		mSystems[i]->Update(this);
 	}
@@ -200,7 +210,7 @@ void Scene::LoadModel(const std::string& path, const ECS::edict_t edict)
 		pStream->read((char*)&mMesh.bbmax, sizeof(glm::vec3));
 
 		subset.IndexCount = mMesh.tris_count;
-		subset.IndexOffset = indices.size();
+		subset.IndexOffset = static_cast<int>(indices.size());
 
 		for (int i = 0; i < mMesh.tris_count; i++)
 		{
@@ -496,7 +506,7 @@ void Scene::UpdateVideoPlayers()
 
 		surface.mFrameAccumulator += gpGlobals->deltaTime;
 
-		float frameTime = decode->GetFrametime();
+		float frameTime = decode->GetFrametime() / surface.PlaybackSpeed;
 		while (surface.mFrameAccumulator >= frameTime && !decode->Finished())
 		{
 			if (surface.mShouldPlay)
@@ -515,33 +525,13 @@ void Scene::UpdateVideoPlayers()
 					mVideoCopyCommandBuffer->Begin();
 
 				auto cmd = mVideoCopyCommandBuffer->GetNativeCommandList();
-				// mVideoCopyCommandBuffer->RequireTextureState(pSurface, Render::ResourceState::ShaderResource, Render::ResourceState::CopyDest);
-				// mVideoCopyCommandBuffer->CommitBarriers();
 
 				uint32_t count = surface.VideoResolution.x * surface.VideoResolution.y;
 				auto data = frame->native()->data[0];
 
-				// TO DO: Move to async GPU compute
-				JobManager::Dispatch(count, 65535, [&](JobDispatchArgs args)
-					{
-						uint32_t index = args.jobIndex * 4;
-						uint8_t r = data[index + 0];
-						uint8_t g = data[index + 1];
-						uint8_t b = data[index + 2];
-						uint8_t a = data[index + 3];
-						data[index + 0] = g;
-						data[index + 1] = b;
-						data[index + 2] = a;
-						data[index + 3] = r;
-					});
-
-				JobManager::Wait();
-
 				mVideoCopyCommandBuffer->RequireTextureState(pSurface, Render::ResourceState::ShaderResource, Render::ResourceState::CopyDest);
 				cmd->writeTexture(pSurface->Handle, 0, 0, data, surface.VideoResolution.x * 4);
 				mVideoCopyCommandBuffer->RequireTextureState(pSurface, Render::ResourceState::CopyDest, Render::ResourceState::ShaderResource);
-				// mVideoCopyCommandBuffer->RequireTextureState(pSurface, Render::ResourceState::CopyDest, Render::ResourceState::ShaderResource);
-				// mVideoCopyCommandBuffer->CommitBarriers();
 				decode->PushFrame(frame);
 
 				VideoUpdateRequired = true;

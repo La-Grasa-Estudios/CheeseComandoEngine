@@ -21,6 +21,7 @@ public:
 	void Update();
 
 	void AddSource(Ref<AudioSourceBase> source);
+	void PlayOneShot(const std::string& path, float volume = 1.0f, float pitch = 1.0f, float pan = 0.5f);
 	
 	void StopAll();
 

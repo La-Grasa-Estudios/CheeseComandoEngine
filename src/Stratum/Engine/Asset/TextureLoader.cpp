@@ -273,7 +273,7 @@ ImageDescription CreateFromRGBAData(TextureCreationRGBA rgba, const ITextureDesc
 
 	int nrChannels = (rgba.Format == TextureFormat::RGBA8 ? 4 : rgba.Format == TextureFormat::RGB8 ? 3 : rgba.Format == TextureFormat::R8 ? 1 : 2);
 
-	int lodReduction = 2;
+	uint32_t lodReduction = 2;
 
 	while (desc.Width / lodReduction > lodReduction && desc.Height / lodReduction > lodReduction && lodReduction < 4) {
 		lodReduction += 2;
@@ -327,8 +327,8 @@ ImageDescription CreateFromRGBAData(TextureCreationRGBA rgba, const ITextureDesc
 	}
 
 	if (desc.Width > lodReduction && desc.Height > lodReduction && !noLod) {
-		for (int x = 0; x < desc.Width / lodReduction; x++) {
-			for (int y = 0; y < desc.Height / lodReduction; y++) {
+		for (uint32_t x = 0; x < desc.Width / lodReduction; x++) {
+			for (uint32_t y = 0; y < desc.Height / lodReduction; y++) {
 
 				uint32_t avgr = 0;
 				uint32_t avgg = 0;
@@ -450,7 +450,7 @@ uint8_t* Load(std::string_view path, int& width, int& height, int& nrChannels, b
 	}
 	else {
 		if (_inLocalFilesystem) {
-			data = stbi_load_from_memory(in->As<stbi_uc>(), in->Size(), &width, &height, &nrChannels, 0);
+			data = stbi_load_from_memory(in->As<stbi_uc>(), static_cast<int>(in->Size()), &width, &height, &nrChannels, 0);
 
 			if (path.find(".dds") != std::string::npos)
 			{

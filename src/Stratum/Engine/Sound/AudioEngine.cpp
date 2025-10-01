@@ -1,5 +1,9 @@
 #include "AudioEngine.h"
 
+#include "MP3AudioSource.h"
+
+#include <Core/Logger.h>
+
 using namespace ENGINE_NAMESPACE;
 
 AudioEngine::AudioEngine()
@@ -45,8 +49,14 @@ void AudioEngine::Update()
         {
             m_Sources[i]->UpdateSource();
 
-            if (m_Sources[i]->Removed)
+            auto source = m_Sources[i].get();
+
+            if (source->Removed || (!source->IsPlaying() && source->p_Params.RemoveOnFinish))
             {
+                if (source->p_Params.IsReady)
+                {
+                    ma_node_detach_all_output_buses(&source->p_Sound);
+                }
                 m_Sources[i] = NULL;
             }
         }
@@ -63,6 +73,21 @@ void AudioEngine::AddSource(Ref<AudioSourceBase> source)
             return;
         }
     }
+}
+
+void AudioEngine::PlayOneShot(const std::string& path, float volume, float pitch, float pan)
+{
+	Ref<AudioSourceBase> source = nullptr;
+    if (path.ends_with("mp3"))
+    {
+		source = CreateRef<MP3AudioSource>(path.c_str(), this->GetEngine());
+    }
+	source->SetPan(pan);
+	source->SetPitch(pitch);
+	source->SetVolume(volume);
+    this->AddSource(source);
+    source->Play();
+    source->p_Params.RemoveOnFinish = true;
 }
 
 void AudioEngine::StopAll()

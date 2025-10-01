@@ -5,6 +5,7 @@
 #include "ChartLoader.h"
 #include "SparrowReader.h"
 #include "Events.h"
+#include "Settings.h"
 
 #include <Core/Logger.h>
 #include <Scene/Scene.h>
@@ -38,6 +39,28 @@ Funkin::Conductor::Conductor()
 
 void Funkin::Conductor::Init(Stratum::Scene* scene)
 {
+	Stratum::Input::BindAlias("funkin_left", KeyCode::A);
+	Stratum::Input::BindAlias("funkin_left", KeyCode::LEFT);
+	Stratum::Input::BindAlias("funkin_left", GamepadButton::DPAD_LEFT);
+	Stratum::Input::BindAlias("funkin_left", GamepadButton::X);
+	Stratum::Input::BindAlias("funkin_right", KeyCode::D);
+	Stratum::Input::BindAlias("funkin_right", KeyCode::RIGHT);
+	Stratum::Input::BindAlias("funkin_right", GamepadButton::DPAD_RIGHT);
+	Stratum::Input::BindAlias("funkin_right", GamepadButton::B);
+	Stratum::Input::BindAlias("funkin_up", KeyCode::W);
+	Stratum::Input::BindAlias("funkin_up", KeyCode::UP);
+	Stratum::Input::BindAlias("funkin_up", GamepadButton::DPAD_UP);
+	Stratum::Input::BindAlias("funkin_up", GamepadButton::Y);
+	Stratum::Input::BindAlias("funkin_down", KeyCode::S);
+	Stratum::Input::BindAlias("funkin_down", KeyCode::DOWN);
+	Stratum::Input::BindAlias("funkin_down", GamepadButton::A);
+	Stratum::Input::BindAlias("funkin_down", GamepadButton::DPAD_DOWN);
+
+	Stratum::Input::BindAlias("funkin_up", GamepadButton::RIGHT_SHOULDER);
+	Stratum::Input::BindAlias("funkin_down", GamepadButton::LEFT_SHOULDER);
+	Stratum::Input::BindAxisToAlias("funkin_right", GamepadAxis::RIGHT_TRIGGER);
+	Stratum::Input::BindAxisToAlias("funkin_left", GamepadAxis::LEFT_TRIGGER);
+
 	// Precache everything needed
 	scene->Resources.LoadTextureImage("textures/noteSplashes.png");
 
@@ -73,6 +96,8 @@ void Funkin::Conductor::Init(Stratum::Scene* scene)
 		Stratum::SpriteAnimator::Animation().SetFrameRate(24).SetNextState("default").SetFrames(SparrowReader::readXML("textures/NOTE_assets.xml", "right confirm00", true, true)),
 	};
 
+	auto& downscroll = Settings::s_Settings->Get("downscroll", false);
+
 	for (int i = 0; i < 4; i++)
 	{
 		auto entity = scene->EntityManager.CreateEntity();
@@ -81,12 +106,12 @@ void Funkin::Conductor::Init(Stratum::Scene* scene)
 		auto& transform = scene->Transforms.Create(entity);
 		auto& anchor = scene->GuiAnchors.Create(entity);
 
-		anchor.AnchorPoint = Stratum::GuiAnchorPoint::TOP;
+		anchor.AnchorPoint = downscroll.boolValue ? Stratum::GuiAnchorPoint::BOTTOM : Stratum::GuiAnchorPoint::TOP;
 
 		sprite.RenderLayer = NOTE_BUTTON_LAYER;
 		sprite.Rect = rects[i];
 		sprite.TextureHandle = scene->Resources.LoadTextureImage("textures/NOTE_assets.DDS");
-		sprite.IsGui = true;
+		sprite.CameraLayer = 4;
 
 		anchor.Position = { (i - 2.0f) * 384.0f + 196.0f, 320.0f };
 
@@ -168,13 +193,13 @@ void Funkin::Conductor::Init(Stratum::Scene* scene)
 		auto& coverTransform = scene->Transforms.Create(coverEntity);
 		auto& anchor = scene->GuiAnchors.Create(coverEntity);
 
-		anchor.AnchorPoint = Stratum::GuiAnchorPoint::TOP;
+		anchor.AnchorPoint = downscroll.boolValue ? Stratum::GuiAnchorPoint::BOTTOM : Stratum::GuiAnchorPoint::TOP;
 		anchor.Position = { (i - 2.0f) * 384.0f + 196.0f, 320.0f };
 
 		coverSprite.Enabled = false;
 		coverSprite.TextureHandle = handle;
 		coverSprite.RenderLayer = NOTE_EFFECT_LAYER;
-		coverSprite.IsGui = true;
+		coverSprite.CameraLayer = 4;
 		
 		auto anim = Stratum::SpriteAnimator::Animation()
 			.SetFrameRate(24)
@@ -207,7 +232,7 @@ void Funkin::Conductor::Init(Stratum::Scene* scene)
 	scene->TextComponents.Get(mScoreTextEntity).FontSize = 64.0f;
 	scene->TextRenderers.Create(mScoreTextEntity).Alignment = 0.5f;
 	scene->TextRenderers.Get(mScoreTextEntity).RenderLayer = 1000;
-	scene->TextRenderers.Get(mScoreTextEntity).IsGui = true;
+	scene->TextRenderers.Get(mScoreTextEntity).CameraLayer = 5;
 	scene->Transforms.Create(mScoreTextEntity);
 	scene->GuiAnchors.Create(mScoreTextEntity).AnchorPoint = Stratum::GuiAnchorPoint::BOTTOM;
 	scene->GuiAnchors.Get(mScoreTextEntity).Position.y += 60.0f;
@@ -216,7 +241,7 @@ void Funkin::Conductor::Init(Stratum::Scene* scene)
 	scene->TextComponents.Get(mSubtitlesTextEntity).FontSize = 80.0f;
 	scene->TextRenderers.Create(mSubtitlesTextEntity).Alignment = 0.5f;
 	scene->TextRenderers.Get(mSubtitlesTextEntity).RenderLayer = 1001;
-	scene->TextRenderers.Get(mSubtitlesTextEntity).IsGui = true;
+	scene->TextRenderers.Get(mSubtitlesTextEntity).CameraLayer = 4;
 	scene->Transforms.Create(mSubtitlesTextEntity);
 	scene->GuiAnchors.Create(mSubtitlesTextEntity).AnchorPoint = Stratum::GuiAnchorPoint::BOTTOM;
 	scene->GuiAnchors.Get(mSubtitlesTextEntity).Position.y += 200.0f;
@@ -258,33 +283,36 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 	const int NOTE_MISS_SCORE = 100;
 
-	BeatCountF = (chart.info.bpm / 60.0f) * SongTime;
-	BeatCount = glm::floor(BeatCountF);
-
-	const float stepsPerSecond = 1.0f / ((chart.info.bpm / 60.0f) * 4.0f);
-	const uint32_t expectedStepCount = glm::floor(BeatCountF * 4.0f);
-
-	auto lastStepCount = mStepCount;
-
-	uint32_t simulatedSteps = expectedStepCount - lastStepCount;
-
-	// Big lag spike! (TO DO: Fix the engine/get a good pc)
-	// Simulate last 64 steps (Also helps during development when skipping parts of the song)
-	if (simulatedSteps > 64)
+	if (SongStarted)
 	{
-		mStepCount += simulatedSteps - 64;
-		simulatedSteps = 64;
+		BeatCountF = (chart.info.bpm / 60.0f) * SongTime;
+		BeatCount = glm::floor(BeatCountF);
+
+		const float stepsPerSecond = 1.0f / ((chart.info.bpm / 60.0f) * 4.0f);
+		const uint32_t expectedStepCount = glm::floor(BeatCountF * 4.0f);
+
+		auto lastStepCount = mStepCount;
+
+		uint32_t simulatedSteps = expectedStepCount - lastStepCount;
+
+		// Big lag spike! (TO DO: Fix the engine/get a good pc)
+		// Simulate last 64 steps (Also helps during development when skipping parts of the song)
+		if (simulatedSteps > 64)
+		{
+			mStepCount += simulatedSteps - 64;
+			simulatedSteps = 64;
+		}
+
+		// Need to do this to avoid skipping steps in case of lag
+		while (simulatedSteps > 0)
+		{
+			simulatedSteps -= 1;
+			OnStep();
+			mStepCount += 1;
+		}
 	}
 
-	// Need to do this to avoid skipping steps in case of lag
-	while (simulatedSteps > 0)
-	{
-		simulatedSteps -= 1;
-		OnStep();
-		mStepCount += 1;
-	}
-
-	bool botEnabled = EnableBot || false || BotPlay;
+	bool botEnabled = EnableBot || false || BotPlay || Settings::s_Settings->Get("botplay", false).boolValue;
 
 	auto notesManager = scene->GetComponentManager<NoteComponent>(C_NOTE_COMPONENT_NAME);
 	auto noteHoldManager = scene->GetComponentManager<NoteHoldComponent>(C_NOTE_HOLD_COMPONENT_NAME);
@@ -293,26 +321,26 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 	auto& notes = notesManager->GetEntities();
 	auto& effects = effectManager->GetEntities();
 
-	// Working on the new input system with aliases
-	// TO DO: Replace this when the new input system is done AKA: Input::GetButtonDown("left|right|up|down")
-	std::array<bool, 4> inputs = { 
-		Stratum::Input::GetKeyDown(KeyCode::A) || Stratum::Input::GetKeyDown(KeyCode::LEFT)  || Stratum::Input::GetGamepadButtonDown(2) || Stratum::Input::GetGamepadButtonDown(13),
-		Stratum::Input::GetKeyDown(KeyCode::S) || Stratum::Input::GetKeyDown(KeyCode::DOWN)  || Stratum::Input::GetGamepadButtonDown(0) || Stratum::Input::GetGamepadButtonDown(12),
-		Stratum::Input::GetKeyDown(KeyCode::W) || Stratum::Input::GetKeyDown(KeyCode::UP)    || Stratum::Input::GetGamepadButtonDown(3) || Stratum::Input::GetGamepadButtonDown(11),
-		Stratum::Input::GetKeyDown(KeyCode::D) || Stratum::Input::GetKeyDown(KeyCode::RIGHT) || Stratum::Input::GetGamepadButtonDown(1) || Stratum::Input::GetGamepadButtonDown(14)
+	std::array<bool, 4> inputs = {
+		Stratum::Input::GetInputDown("funkin_left"),
+		Stratum::Input::GetInputDown("funkin_down"),
+		Stratum::Input::GetInputDown("funkin_up"),
+		Stratum::Input::GetInputDown("funkin_right"),
 	};
 
 	std::array<bool, 4> inputsHold = {
-		Stratum::Input::GetKey(KeyCode::A) || Stratum::Input::GetKey(KeyCode::LEFT)  || Stratum::Input::GetGamepadButton(2) || Stratum::Input::GetGamepadButton(13) || botEnabled,
-		Stratum::Input::GetKey(KeyCode::S) || Stratum::Input::GetKey(KeyCode::DOWN)  || Stratum::Input::GetGamepadButton(0) || Stratum::Input::GetGamepadButton(12) || botEnabled,
-		Stratum::Input::GetKey(KeyCode::W) || Stratum::Input::GetKey(KeyCode::UP)    || Stratum::Input::GetGamepadButton(3) || Stratum::Input::GetGamepadButton(11) || botEnabled,
-		Stratum::Input::GetKey(KeyCode::D) || Stratum::Input::GetKey(KeyCode::RIGHT) || Stratum::Input::GetGamepadButton(1) || Stratum::Input::GetGamepadButton(14) || botEnabled
+		Stratum::Input::GetInput("funkin_left")  || botEnabled,
+		Stratum::Input::GetInput("funkin_down")  || botEnabled,
+		Stratum::Input::GetInput("funkin_up")	 || botEnabled,
+		Stratum::Input::GetInput("funkin_right") || botEnabled,
 	};
 
 	std::array<nvrhi::static_vector<Stratum::ECS::edict_t, 16>, 4> hitNotes;
 
 	const float SAFEZONE_PLUS = SongTime + SAFE_ZONE * 0.8f;
 	const float SAFEZONE_MINUS = SongTime - SAFE_ZONE;
+
+	auto& downscrollSetting = Settings::s_Settings->Get("downscroll", false);
 
 	for (auto entity : notes)
 	{
@@ -330,8 +358,13 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 		}
 
 		STRUM_LINE_Y = buttonTransform.Position.y;
+		
+		float songY = (SongTime - note.Time) * (400.0f * chart.info.speed * 3.0f);
 
-		float y = (STRUM_LINE_Y + 0.0f + (SongTime - note.Time) * (400.0f * chart.info.speed * 3.0f));
+		if (downscrollSetting.boolValue)
+			songY = -songY;
+
+		float y = (STRUM_LINE_Y + 0.0f + songY);
 
 		if (inputs[note.NoteType])
 		{
@@ -357,7 +390,12 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 		transform.SetPosition(position);
 
-		if (y > (160.0f + 384.0f) + STRUM_LINE_Y)
+		bool noteOutside = y > (160.0f + 384.0f) + STRUM_LINE_Y;
+
+		if (downscrollSetting.boolValue)
+			noteOutside = y < -(160.0f + 384.0f) + STRUM_LINE_Y;
+
+		if (noteOutside)
 		{
 			scene->EntityManager.DestroyEntity(entity);
 
@@ -389,6 +427,15 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 			float y1 = sustain.HoldTime * 400.0f * chart.info.speed * 3.0f;
 			float scaleY = y1 / 87.0f * 0.5f;
+
+			auto& sustainEndSprite = scene->SpriteRenderers.Get(sustain.SustainEndSprite);
+			sustainEndSprite.FlipY = downscrollSetting.boolValue;
+
+			if (downscrollSetting.boolValue)
+			{
+				y1 = -y1;
+				scaleY = -scaleY;
+			}
 			
 			sustainTransform.SetScale(glm::vec3(1.0f, scaleY, 1.0f));
 			sustainTransform.SetPosition(position);
@@ -459,6 +506,8 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 	}
 
+	bool anySustainHeld = false;
+
 	for (int i = 0; i < mSustainHeld.size(); i++)
 	{
 		auto ent = mSustainHeld[i];
@@ -466,6 +515,7 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 		if (ent != Stratum::ECS::C_INVALID_ENTITY)
 		{
+			anySustainHeld = true;
 			auto& sustainNote = noteHoldManager->Get(ent);
 			coverSprite.Enabled = true;
 
@@ -496,6 +546,14 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 			float y1 = (sustainNote.HoldTime - holdTime) * 400.0f * chart.info.speed * 3.0f;
 			float scaleY = y1 / 87.0f / 2.0f;
 
+			sustainEndSprite.FlipY = downscrollSetting.boolValue;
+
+			if (downscrollSetting.boolValue)
+			{
+				y1 = -y1;
+				scaleY = -scaleY;
+			}
+
 			auto position = sustainTransform.Position;
 			position.y = y;
 
@@ -524,6 +582,11 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 		{
 			coverSprite.Enabled = false;
 		}
+	}
+
+	if (anySustainHeld)
+	{
+		Stratum::Input::SetGamepadRumble(0.25f, 0.25f, 100);
 	}
 
 	for (auto entity : effects)
@@ -597,7 +660,7 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 	auto& scoreText = scene->TextComponents.Get(mScoreTextEntity);
 
-	scoreText.Text = Stratum::Utils::FormatString(L"Score: {} | Misses: {} | Accuracy: {:.2f}%", this->PlayerScore, this->MissCount, this->Accuracy * 100.0f);
+	scoreText.Text = Stratum::Utils::FormatString(L"Score: {} | Misses: {} | Accuracy: {:.2f}%\nStep: {}", this->PlayerScore, this->MissCount, this->Accuracy * 100.0f, this->mStepCount);
 }
 
 void Funkin::Conductor::RegisterEventHandler(const std::string& eventName, ChartEventHandler handler)
@@ -718,7 +781,7 @@ void Funkin::Conductor::SpawnNote(Stratum::Scene* scene, ChartNote note, uint32_
 	{
 		auto& sprite = scene->SpriteRenderers.Create(entity);
 
-		sprite.IsGui = true;
+		sprite.CameraLayer = 4;
 		sprite.RenderLayer = NOTE_LAYER;
 
 		if (l == 0)
@@ -774,13 +837,13 @@ void Funkin::Conductor::SpawnNote(Stratum::Scene* scene, ChartNote note, uint32_
 		noteSprite.TextureHandle = scene->Resources.LoadTextureImage("textures/NOTE_hold_assets.png");
 		noteSprite.RenderLayer = NOTE_HOLD_LAYER;
 		noteSprite.Center = { 0.0f, -1.0f };
-		noteSprite.IsGui = true;
+		noteSprite.CameraLayer = 4;
 
 		noteEndSprite.Rect = endRects[l];
 		noteEndSprite.Center = noteSprite.Center;
 		noteEndSprite.TextureHandle = noteSprite.TextureHandle;
 		noteEndSprite.RenderLayer = NOTE_HOLD_LAYER;
-		noteEndSprite.IsGui = true;
+		noteEndSprite.CameraLayer = 4;
 
 		noteHold.NoteType = l;
 		noteHold.HoldTime = note.holdTime;
@@ -804,7 +867,7 @@ void Funkin::Conductor::SpawnNoteSplash(Stratum::Scene* scene, uint32_t noteType
 
 	sprite.TextureHandle = scene->Resources.LoadTextureImage("textures/noteSplashes.png");
 	sprite.RenderLayer = NOTE_EFFECT_LAYER;
-	sprite.IsGui = true;
+	sprite.CameraLayer = 4;
 	sprite.SpriteColor *= 1.15f;
 
 	uint32_t offset = (rand() % 2) * 4;
@@ -835,7 +898,7 @@ void Funkin::Conductor::SpawnSustainCover(Stratum::Scene* scene, uint32_t noteTy
 
 	sprite.TextureHandle = scene->Resources.LoadTextureImage(coverImageNames[noteType]);
 	sprite.RenderLayer = NOTE_EFFECT_LAYER;
-	sprite.IsGui = true;
+	sprite.CameraLayer = 4;
 	sprite.SpriteColor *= 1.15f;
 
 	animator.AnimationMap["coverEnd"] = mNoteCoverEndAnimations[noteType];

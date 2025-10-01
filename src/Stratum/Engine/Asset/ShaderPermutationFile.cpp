@@ -39,10 +39,6 @@ SpfFile::SpfFile(const std::string& path)
 	{
 		Ref<SpfFileMetadata> fileMeta = CreateRef<SpfFileMetadata>();
 		fileMeta->Read(stream);
-		if (this->Files.contains(fileMeta->Filename))
-		{
-			InfoLog("Collision!");
-		}
 		if (fileMeta) this->Files[fileMeta->Filename] = fileMeta;
 	}
 
@@ -134,11 +130,11 @@ SpfMetadataValueKeyPair::SpfMetadataValueKeyPair()
 
 SpfMetadataValueKeyPair::SpfMetadataValueKeyPair(const std::string& key, const std::string& value)
 {
-	KeyLen = key.size();
+	KeyLen = static_cast<int>(key.size());
 	Key = new char[key.size()];
 	memcpy(Key, key.c_str(), key.size());
 
-	ValueLen = value.size();
+	ValueLen = static_cast<int>(value.size());
 	Value = new char[value.size()];
 	memcpy(Value, value.c_str(), value.size());
 }
@@ -198,7 +194,7 @@ SpfFileMetadata::SpfFileMetadata()
 
 SpfFileMetadata::SpfFileMetadata(const std::string& filename)
 {
-	FilenameLen = filename.size();
+	FilenameLen = static_cast<uint8_t>(filename.size());
 	Filename = (char*)malloc(filename.size());
 	memcpy(Filename, filename.c_str(), filename.size());
 }
@@ -228,7 +224,7 @@ size_t SpfFileMetadata::Size()
 
 SpfFileMetadata::~SpfFileMetadata()
 {
-	if (Filename) free(Filename);
+	if (Filename) delete[] Filename;
 }
 
 SpfFileStream::SpfFileStream(const SpfFile& file, SpfFileMetadata* pFileMetadata)

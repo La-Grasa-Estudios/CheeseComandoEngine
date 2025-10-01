@@ -20,6 +20,9 @@
 #include <vector>
 #include <string>
 #include <filesystem>
+#include <json/json.hpp>
+#include <VFS/base64.hpp>
+#include <sstream>
 
 #include "bc7/Bc7Compress.h"
 
@@ -450,98 +453,67 @@ void AudioMode(std::vector<std::string> args, const char* src)
 	Z_INFO("Output: {}", name);
 }
 
+void UserIntefaceImageMode(const char* src)
+{
+	nlohmann::json json;
+	std::ifstream in(src);
+	if (!in.is_open())
+	{
+		printf("Invalid source file\n");
+		return;
+	}
+	in >> json;
+	in.close();
+	auto& rscStates = json["states"];
+
+	// We need to initialize and mount the default Data directory as root
+	std::filesystem::current_path("../");
+	ZVFS::Init();
+	ZVFS::Mount("Data", true);
+
+	for (auto& state : rscStates.items())
+	{
+		printf("State %s\n", state.key().c_str());
+
+		auto& obj = state.value();
+		std::string srcFile = obj["src"];
+		printf("Embed: %s\n", srcFile.c_str());
+
+		bool found = ZVFS::Exists(srcFile.c_str());
+		printf("Found: %i\n", found);
+
+		if (found)
+		{
+			auto file = ZVFS::GetFile(srcFile.c_str());
+			auto b64 = base64::to_base64(file->Str());
+			Z_INFO("Embedding {} {} bytes", srcFile, b64.size());
+			obj["embed"] = b64;
+		}
+	}
+	std::filesystem::current_path("./Bin");
+	auto dump = json.dump();
+	std::ofstream out(src);
+	out << dump;
+	out.close();
+}
+
 #define INPUT_STRING(name) std::string name; std::getline(std::cin, name)
 
 int __cdecl main(int argc, char* argv[])
 {
-	/*
-	printf("¡Hola! ¡Resolvamos este ejercicio creado por el mismísimo Cthulhu!\n");
-
-	printf("Numero de matrices: \n");
-	INPUT_STRING(sN);
-	printf("Numero de filas: \n");
-	INPUT_STRING(sNR);
-	printf("Numero de columnas: \n");
-	INPUT_STRING(sNC);
-
-	int32_t N = std::atoi(sN.c_str());
-	int32_t Rows = std::atoi(sNR.c_str());
-	int32_t Columns = std::atoi(sNC.c_str());
-	
-	int32_t MatrixSize = Rows * Columns;
-
-	Stratum::HeapArray<int32_t> arr(MatrixSize * N);
-
-	for (int i = 0; i < N; i++)
-	{
-		for (int x = 0; x < Columns; x++)
-		{
-			for (int y = 0; y < Rows; y++)
-			{
-
-				printf("Introduce el valor para la matriz %i columna %i fila %i\n", i, x, y);
-
-				INPUT_STRING(Val);
-
-				int32_t val = std::atoi(Val.c_str());
-
-				int32_t index = (x + y * Columns) + i * MatrixSize; // (indice local) + indice global
-
-				arr[index] = val;
-
-			}
-		}
-	}
-
-	Stratum::HeapArray<int32_t> matrix(MatrixSize);
-
-	for (int i = 0; i < N; i++)
-	{
-		for (int x = 0; x < Columns; x++)
-		{
-			for (int y = 0; y < Rows; y++)
-			{
-				int32_t index1 = (x + y * Columns) + i * MatrixSize; // (indice local) + indice global
-				int32_t index2 = (x + y * Columns);
-
-				int32_t nb = arr[index1];
-				matrix[index2] += nb;
-
-			}
-		}
-	}
-
-	for (int y = 0; y < Rows; y++)
-	{
-
-		std::string Column;
-
-		for (int x = 0; x < Columns; x++)
-		{
-			int32_t index = (x + y * Columns);
-
-			Column += std::to_string(matrix[index]);
-			if (x != Columns - 1) Column += ",";
-			
-		}
-
-		printf(Column.c_str());
-		printf("\n");
-	}
-
-	return 0;
-	*/
-
 	if (argc < 2)
 	{
-		printf("Usage: zpk [/nozlib] [/extract] [/root] src\n");
+		printf("Usage: ResourceCompiler [/nozlib] [/extract] [/root] src\n");
 		printf("/nozlib: Dont use Zlib compression\n");
 		printf("/extract: Unpacks the specified zpk file\n");
+		printf("/uimg: Embeds all referenced resource files specified by the states object into the src .uimg file\n");
 
-		printf("Usage: zpk [/texture] -dxt:[bc7, bc5] [-normal, -normal-RG, -albedo, -metalness, -roughness] src\n");
+		printf("Usage: ResourceCompiler [/texture] -dxt:[bc7, bc5] [-normal, -normal-RG, -albedo, -metalness, -roughness] src\n");
 
-		printf("Usage: zpk [/model] -mtfolder=<name> src\n");
-		printf("Usage: zpk [/audio] -start=<loopstart> -end=<loopend> src\n");
+		printf("Usage: ResourceCompiler [/model] -mtfolder=<name> src\n");
+		printf("Usage: ResourceCompiler [/audio] -start=<loopstart> -end=<loopend> src\n");
+		printf("Usage: ResourceCompiler [/audio] -start=<loopstart> -end=<loopend> src\n");
+		printf("Usage: ResourceCompiler [/uimg] src\n");
 		return 1;
 	}
 
@@ -568,6 +540,7 @@ int __cdecl main(int argc, char* argv[])
 
 	bool modelMode = false;
 	bool audioMode = false;
+	bool uimgMode = false;
 	
 	std::vector<const char*> ignore;
 	std::string modelName;
@@ -591,6 +564,11 @@ int __cdecl main(int argc, char* argv[])
 			if (strcmp(arg, "/audio") == 0)
 			{
 				audioMode = true;
+				continue;
+			}
+			if (strcmp(arg, "/uimg") == 0)
+			{
+				uimgMode = true;
 				continue;
 			}
 			if (strcmp(arg, "/nozlib") == 0)
@@ -702,6 +680,17 @@ int __cdecl main(int argc, char* argv[])
 	}
 
 	std::string file = src_name;
+
+	if (file.ends_with("uimg"))
+	{
+		uimgMode = true;
+	}
+
+	if (uimgMode)
+	{
+		UserIntefaceImageMode(src_name);
+		return 0;
+	}
 
 	if (textureMode)
 	{

@@ -65,7 +65,7 @@ bool Console::Draw()
 			cursor++;
 		}
 		if (cursor < 0) {
-			cursor = vars.size() - 1;
+			cursor = static_cast<int>(vars.size() - 1);
 		}
 		if (cursor > vars.size() - 1) {
 			cursor = 0;

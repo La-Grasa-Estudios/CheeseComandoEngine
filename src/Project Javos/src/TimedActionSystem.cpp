@@ -97,6 +97,12 @@ void Funkin::TimedActionSystem::Update(Stratum::Scene* scene)
 			}
 		}
 
+		if (act.params.offset > 0.0f)
+		{
+			act.params.offset -= Stratum::gpGlobals->deltaTime;
+			continue;
+		}
+
 		act.time += Stratum::gpGlobals->deltaTime;
 
 		float interp = glm::clamp(act.time / act.params.duration, 0.0f, 1.0f);
@@ -291,5 +297,9 @@ Funkin::ActionParameters::ActionParameters(const float dur) : duration(dur)
 }
 
 Funkin::ActionParameters::ActionParameters(const float dur, const float amp) : duration(dur), amplitude(amp)
+{
+}
+
+Funkin::ActionParameters::ActionParameters(const float dur, const float amp, const float offset) : duration(dur), amplitude(amp), offset(offset)
 {
 }
