@@ -17,12 +17,15 @@ function base_config()
     cppdialect "C++20"
 	location "../projects"
 	language "C++"
-	includedirs { "../Dependencies/Include", "Stratum/Engine" }
+	includedirs { "../Dependencies/Include", 
+	"../Dependencies/Thirdparty/angelscript/sdk/angelscript/include",
+	"../Dependencies/Thirdparty/angelscript/sdk/add_on",
+	"Stratum/Engine" }
 end
 
 function stratum_config() --every stratum project calls this
 	base_config()
-	links { "Stratum-Core" }
+	links { "Stratum-Core", "angelscript" }
 end
 	
 filter "action:vs*"
@@ -32,6 +35,7 @@ filter "action:vs*"
 project "Stratum-Core"
 	base_config()
 	kind "StaticLib"
+	links { "angelscript" }
 	
 	files {
 		"Stratum/Engine/**.c",
@@ -48,6 +52,8 @@ project "Stratum-Core"
 	defines { "NDEBUG" }
 	optimize "On"
 	
+group "Apps"	
+
 project "Project Javos"
 	stratum_config()
 	
@@ -87,6 +93,7 @@ project "3D"
 	defines { "NDEBUG" }
 	optimize "On"
 	
+group "Tools"		
 project "ResourceCompiler"
 
 	stratum_config()
@@ -109,3 +116,5 @@ project "ResourceCompiler"
 	defines { "NDEBUG" }
 	optimize "On"
 	
+group "ThirdParty"
+include "angelscript"

@@ -85,13 +85,6 @@ enum UIPanelTransitionState
 
 struct UIComponent;
 
-class UITransitionModule
-{
-public:
-	virtual glm::mat4 GetMatrix(UIComponent* component, float p) = 0;
-	virtual glm::vec4 GetColor(UIComponent* component, float p) = 0;
-};
-
 struct UIComponent
 {
 	UIComponentType Type;
@@ -132,8 +125,8 @@ struct UIComponent
 	float TransitionProgress = 0.0f;
 	float TransitionLength = 1.0f;
 	UIPanelTransitionState TransitionState = UIPanelTransitionState::IDLE;
-	UITransitionModule* TransitionModuleIn = nullptr;
-	UITransitionModule* TransitionModuleOut = nullptr;
+	void* TransitionModuleIn = nullptr;
+	void* TransitionModuleOut = nullptr;
 	glm::vec4 TransitionColor = glm::vec4(1.0f);
 
 	std::string PanelName;
@@ -181,22 +174,6 @@ struct UIPanel
 	std::vector<Ref<UIComponent>> Roots;
 };
 
-class UITransitionFactoryInterface
-{
-public:
-	UITransitionModule* pModule;
-};
-
-template<typename T>
-class UITransitionFactory : public UITransitionFactoryInterface
-{
-	public:
-	UITransitionFactory()
-	{
-		pModule = new T();
-	}
-};
-
 using UIFuncRenderPtr = void(*)(UIComponent*, Render2DInstance*);
 
 class SceneUI
@@ -216,6 +193,8 @@ public:
 	~SceneUI();
 
 	static void AddComponentRenderer(UIComponentType type, UIFuncRenderPtr funcPtr, const char* rendertype);
+	// This is called once before the engine passes control to the app, used to load and initialize all ui scripts
+	static void EarlyInit();
 
 	void CreateUIPanel(const std::string& panelName, const std::string& jsonFile);
 	void ShowUIPanel(const std::string& panelName);
@@ -259,7 +238,6 @@ private:
 	ECS::edict_t mTextEntity;
 
 	std::unordered_map<std::string, UIPanel> mPanels;
-	std::unordered_map<std::string, Ref<UITransitionFactoryInterface>> mTransitions;
 
 	std::vector<std::string> mFocusedPanels;
 

@@ -2,6 +2,7 @@
 
 #include "MainMenuSystem.h"
 #include "Cursed/BalatroSystem.h"
+#include <AngelScript/AngelScript.h>
 
 #include <DevTools/ShaderCompiler.h>
 

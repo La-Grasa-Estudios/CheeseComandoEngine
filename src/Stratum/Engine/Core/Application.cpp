@@ -11,6 +11,7 @@
 
 #include <Entity/ClassMetadata.h>
 #include <Entity/ComponentLibrary.h>
+#include <AngelScript/AngelScript.h>
 
 #include "VFS/ZVFS.h"
 #include "Input/Input.h"
@@ -225,7 +226,11 @@ void Application::Run(std::vector<std::string> args)
 	m_RenderContext = CreateRef<Render::RendererContext>();
 	g_RenderContext = m_RenderContext;
 
+
 	OnEarlyInit(); // Use this to hook into events and stuff
+	SceneUI::EarlyInit();
+
+	AngelScriptEngine::Get().Init();
 
 	std::string windowName = m_AppInfo.WindowName;
 

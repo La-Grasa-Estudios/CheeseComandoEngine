@@ -12,6 +12,8 @@
 #include <VFS/base64.hpp>
 #include <Util/StrUtil.h>
 #include <Util/Globals.h>
+#include <AngelScript/AngelScript.h>
+#include <angelscript.h>
 
 #include <queue>
 #include <zlib/izlibstream.h>
@@ -27,38 +29,6 @@ static T GetJsonValue(nlohmann::json& json, const std::string& key, const T& def
 		return json[key].get<T>();
 	}
 	return defaultValue;
-}
-
-static float easeInOutCubic(float x) {
-	return x < 0.5 ? 4 * x * x * x : 1 - glm::pow(-2 * x + 2, 3) / 2;
-}
-
-static float easeOutElastic(float x) {
-	const float  c4 = (2 * glm::pi<float>()) / 3;
-	
-	return x == 0
-	  ? 0
-	  : x == 1
-	  ? 1
-	  : glm::pow(2, -10 * x) * glm::sin((x * 10 - 0.75) * c4 * 1.0f) * 2.0f + 1;
-}
-
-static float easeOutBounce(float x) {
-const float n1 = 7.5625;
-const float d1 = 2.75;
-
-if (x < 1 / d1) {
-	return n1 * x * x;
-}
- else if (x < 2 / d1) {
-  return n1 * (x -= 1.5f / d1) * x + 0.75f;
-}
- else if (x < 2.5 / d1) {
-  return n1 * (x -= 2.25f / d1) * x + 0.9375f;
-}
- else {
-  return n1 * (x -= 2.625f / d1) * x + 0.984375f;
-}
 }
 
 static struct AABB
@@ -87,92 +57,53 @@ static struct AABB
 	}
 };
 
-class ScaleTransitionModule : public UITransitionModule
+struct t_uitransitionmeta
 {
-public:
-	glm::mat4 GetMatrix(UIComponent* component, float p) override
+	asIScriptModule* module;
+	asIScriptContext* context;
+	asIScriptFunction* funcGetMatrix;
+	asIScriptFunction* funcGetColor;
+	t_uitransitionmeta() = default;
+	t_uitransitionmeta(asIScriptModule* module)
 	{
-		p = easeInOutCubic(p);
-		float s = glm::mix(0.0f, 1.0f, p);
-		glm::mat4 transform = glm::mat4(1.0f);
-		transform = glm::scale(transform, glm::vec3(s, s, 1.0f));
-		return transform;
+		this->module = module;
+		context = AngelScriptEngine::Get().CreateContext();
+		funcGetMatrix = module->GetFunctionByDecl("mat4 GetMatrix(float)");
+		funcGetColor = module->GetFunctionByDecl("vec4 GetColor(float)");
 	}
-	glm::vec4 GetColor(UIComponent* component, float p) override
+	glm::mat4 GetMatrix(float p)
 	{
-		p = glm::max((p - 0.6f) / 0.4f, 0.0f);
-		return glm::vec4(1.0f, 1.0f, 1.0f, p);
+		context->Prepare(funcGetMatrix);
+		context->SetArgFloat(0, p);
+		int r = context->Execute();
+		if (r != asEXECUTION_FINISHED)
+		{
+			if (r == asEXECUTION_EXCEPTION)
+			{
+				printf("An exception '%s' occurred. Please correct the code and try again.\n", context->GetExceptionString());
+				return glm::mat4(1.0f);
+			}
+		}
+		return *static_cast<glm::mat4*>(context->GetReturnObject());
+	}
+	glm::vec4 GetColor(float p)
+	{
+		context->Prepare(funcGetColor);
+		context->SetArgFloat(0, p);
+		int r = context->Execute();
+		if (r != asEXECUTION_FINISHED)
+		{
+			if (r == asEXECUTION_EXCEPTION)
+			{
+				printf("An exception '%s' occurred. Please correct the code and try again.\n", context->GetExceptionString());
+				return glm::vec4(1.0f);
+			}
+		}
+		return *static_cast<glm::vec4*>(context->GetReturnObject());
 	}
 };
 
-class ScaleBounceTransitionModule : public UITransitionModule
-{
-public:
-	glm::mat4 GetMatrix(UIComponent* component, float p) override
-	{
-		p = easeOutBounce(p);
-		float s = glm::mix(0.0f, 1.0f, p);
-		glm::mat4 transform = glm::mat4(1.0f);
-		transform = glm::scale(transform, glm::vec3(s, s, 1.0f));
-		return transform;
-	}
-	glm::vec4 GetColor(UIComponent* component, float p) override
-	{
-		p = glm::max((p - 0.6f) / 0.4f, 0.0f);
-		return glm::vec4(1.0f, 1.0f, 1.0f, p);
-	}
-};
-
-class SlideRightBounceTransitionModule : public UITransitionModule
-{
-public:
-	glm::mat4 GetMatrix(UIComponent* component, float p) override
-	{
-		p = easeOutBounce(p);
-		float s = glm::mix(1.0f, 0.0f, p);
-		glm::mat4 transform = glm::mat4(1.0f);
-		transform = glm::translate(transform, glm::vec3(s * 3000.0f, 0.0f, 1.0f));
-		return transform;
-	}
-	glm::vec4 GetColor(UIComponent* component, float p) override
-	{
-		return glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	}
-};
-
-class SlideRightTransitionModule : public UITransitionModule
-{
-public:
-	glm::mat4 GetMatrix(UIComponent* component, float p) override
-	{
-		p = easeInOutCubic(p);
-		float s = glm::mix(1.0f, 0.0f, p);
-		glm::mat4 transform = glm::mat4(1.0f);
-		transform = glm::translate(transform, glm::vec3(s * 4000.0f, 0.0f, 1.0f));
-		return transform;
-	}
-	glm::vec4 GetColor(UIComponent* component, float p) override
-	{
-		return glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	}
-};
-
-class SlideLeftTransitionModule : public UITransitionModule
-{
-public:
-	glm::mat4 GetMatrix(UIComponent* component, float p) override
-	{
-		p = easeInOutCubic(p);
-		float s = glm::mix(1.0f, 0.0f, p);
-		glm::mat4 transform = glm::mat4(1.0f);
-		transform = glm::translate(transform, glm::vec3(s * -4000.0f, 0.0f, 1.0f));
-		return transform;
-	}
-	glm::vec4 GetColor(UIComponent* component, float p) override
-	{
-		return glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	}
-};
+static std::unordered_map<std::string, t_uitransitionmeta> s_UITransitionScripts;
 
 SceneUI::SceneUI(Scene* scene)
 {
@@ -185,12 +116,6 @@ SceneUI::SceneUI(Scene* scene)
 	scene->TextComponents.Create(entity);
 	scene->TextRenderers.Create(entity);
 	mTextEntity = entity;
-
-	mTransitions["scale"] = CreateRef<UITransitionFactory<ScaleTransitionModule>>();
-	mTransitions["scale-bounce"] = CreateRef<UITransitionFactory<ScaleBounceTransitionModule>>();
-	mTransitions["slide-right-bounce"] = CreateRef<UITransitionFactory<SlideRightBounceTransitionModule>>();
-	mTransitions["slide-right"] = CreateRef<UITransitionFactory<SlideRightTransitionModule>>();
-	mTransitions["slide-left"] = CreateRef<UITransitionFactory<SlideLeftTransitionModule>>();
 }
 
 SceneUI::~SceneUI()
@@ -201,6 +126,44 @@ SceneUI::~SceneUI()
 void SceneUI::AddComponentRenderer(UIComponentType type, UIFuncRenderPtr funcPtr, const char* rendertype)
 {
 	s_RenderFuncvtable[(int)type] = { funcPtr, rendertype };
+}
+
+void SceneUI::EarlyInit()
+{
+	EventBus::RegisterListener<ASInitializeEvent>([](ASInitializeEvent e)
+	{
+		if (e.stage == "post")
+		{
+			// We need to load all the scripts in /scripts/easings
+			auto& engine = AngelScriptEngine::Get();
+			auto scripts = ZVFS::GetAllOf(".as");
+			for (auto& sc : scripts)
+			{
+				if (!sc.starts_with("scripts/easings"))
+					continue;
+
+				auto fileName = sc;
+				fileName = fileName.substr(fileName.find_last_of('/') + 1);
+				// Get rid of that extension
+				fileName = fileName.substr(0, fileName.find_last_of('.'));
+
+				auto mod = engine.BuildModule(sc.c_str(), fileName.c_str());
+
+				// If null script has a syntax error probably
+				if (mod)
+				{
+					auto funcGetMatrix = mod->GetFunctionByDecl("mat4 GetMatrix(float)");
+					auto funcGetColor = mod->GetFunctionByDecl("vec4 GetColor(float)");
+
+					if (funcGetMatrix && funcGetColor)
+					{
+						s_UITransitionScripts[fileName] = t_uitransitionmeta(mod);
+					}
+				}
+			}
+			
+		}
+	}, EF_NONE);
 }
 
 void SceneUI::CreateUIPanel(const std::string& panelName, const std::string& jsonFile)
@@ -675,10 +638,11 @@ void SceneUI::Render(RenderQueue2D* ppRenderQueues)
 		if (component.TransitionState != UIPanelTransitionState::IDLE)
 		{
 			auto module = component.TransitionState == UIPanelTransitionState::SHOWING ? component.TransitionModuleIn : component.TransitionModuleOut;
-			if (module)
+			auto script = reinterpret_cast<t_uitransitionmeta*>(module);
+			if (script)
 			{
-				transform *= module->GetMatrix(&component, p);
-				color = module->GetColor(&component, p);
+				transform *= script->GetMatrix(p);
+				color = script->GetColor(p);
 				component.TransitionColor = color;
 			}
 		}
@@ -1079,14 +1043,14 @@ void SceneUI::ParseTree(nlohmann::json& json, UIComponent* Parent, UIPanel& pane
 		auto transitionNameIn = GetJsonValue<std::string>(comp, "transition-in", "");
 		auto transitionNameOut = GetJsonValue<std::string>(comp, "transition-out", "");
 
-		if (mTransitions.contains(transitionNameIn))
+		if (s_UITransitionScripts.contains(transitionNameIn))
 		{
-			component->TransitionModuleIn = mTransitions[transitionNameIn]->pModule;
+			component->TransitionModuleIn = &s_UITransitionScripts[transitionNameIn];
 		}
 
-		if (mTransitions.contains(transitionNameOut))
+		if (s_UITransitionScripts.contains(transitionNameOut))
 		{
-			component->TransitionModuleOut = mTransitions[transitionNameOut]->pModule;
+			component->TransitionModuleOut = &s_UITransitionScripts[transitionNameOut];
 		}
 
 		if (comp.contains("background"))

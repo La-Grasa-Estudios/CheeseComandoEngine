@@ -1,0 +1,142 @@
+class string{
+	~string();
+	string();
+	string(const string&in);
+	string& opAssign(const string&in);
+	string& opAddAssign(const string&in);
+	bool opEquals(const string&in) const;
+	int opCmp(const string&in) const;
+	string opAdd(const string&in) const;
+	uint length() const;
+	void resize(uint);
+	bool isEmpty() const;
+	uint8& opIndex(uint);
+	const uint8& opIndex(uint) const;
+	string& opAssign(double);
+	string& opAddAssign(double);
+	string opAdd(double) const;
+	string opAdd_r(double) const;
+	string& opAssign(float);
+	string& opAddAssign(float);
+	string opAdd(float) const;
+	string opAdd_r(float) const;
+	string& opAssign(int64);
+	string& opAddAssign(int64);
+	string opAdd(int64) const;
+	string opAdd_r(int64) const;
+	string& opAssign(uint64);
+	string& opAddAssign(uint64);
+	string opAdd(uint64) const;
+	string opAdd_r(uint64) const;
+	string& opAssign(bool);
+	string& opAddAssign(bool);
+	string opAdd(bool) const;
+	string opAdd_r(bool) const;
+	string substr(uint start = 0, int count = -1) const;
+	int findFirst(const string&in, uint start = 0) const;
+	int findFirstOf(const string&in, uint start = 0) const;
+	int findFirstNotOf(const string&in, uint start = 0) const;
+	int findLast(const string&in, int start = -1) const;
+	int findLastOf(const string&in, int start = -1) const;
+	int findLastNotOf(const string&in, int start = -1) const;
+	void insert(uint pos, const string&in other);
+	void erase(uint pos, int count = -1);
+	int regexFind(const string&in regex, uint start = 0, uint&out lengthOfMatch = void) const;
+}
+class vec2{
+	~vec2();
+	vec2();
+	vec2(float);
+	vec2(const vec2&in);
+	vec2(float, float);
+	vec2& opAssign(const vec2&in);
+	vec2 opAdd(const vec2&in) const;
+	vec2 opSub(const vec2&in) const;
+	vec2 opMul(const vec2&in) const;
+	string toString() const;
+	vec2 opMul(float) const;
+	float x;
+	float y;
+}
+class vec3{
+	~vec3();
+	vec3();
+	vec3(float);
+	vec3(const vec3&in);
+	vec3(float, float, float);
+	vec3& opAssign(const vec3&in);
+	vec3 opAdd(const vec3&in) const;
+	vec3 opSub(const vec3&in) const;
+	vec3 opMul(const vec3&in) const;
+	string toString() const;
+	vec3 opMul(float) const;
+	float x;
+	float y;
+	float z;
+}
+class vec4{
+	~vec4();
+	vec4();
+	vec4(float);
+	vec4(const vec4&in);
+	vec4(float, float, float, float);
+	vec4& opAssign(const vec4&in);
+	vec4 opAdd(const vec4&in) const;
+	vec4 opSub(const vec4&in) const;
+	vec4 opMul(const vec4&in) const;
+	string toString() const;
+	float x;
+	float y;
+	float z;
+	float w;
+}
+class mat2{
+	~mat2();
+	mat2();
+	mat2(float);
+	mat2& opAssign(const mat2&in);
+	mat2& opMult(const mat2&in);
+	mat2& opMult(float);
+	mat2& opAdd(const mat2&in);
+	mat2& opSub(const mat2&in);
+}
+class mat3{
+	~mat3();
+	mat3();
+	mat3(float);
+	mat3& opAssign(const mat3&in);
+	mat3& opMult(const mat3&in);
+	mat3& opMult(float);
+	mat3& opAdd(const mat3&in);
+	mat3& opSub(const mat3&in);
+}
+class mat4{
+	~mat4();
+	mat4();
+	mat4(float);
+	mat4& opAssign(const mat4&in);
+	mat4& opMult(const mat4&in);
+	mat4& opMult(float);
+	mat4& opAdd(const mat4&in);
+	mat4& opSub(const mat4&in);
+}
+uint scan(const string&in str, ?&out...);
+string format(const string&in fmt, const ?&in...);
+string formatInt(int64 val, const string&in options = "", uint width = 0);
+string formatUInt(uint64 val, const string&in options = "", uint width = 0);
+string formatFloat(double val, const string&in options = "", uint width = 0, uint precision = 0);
+int64 parseInt(const string&in, uint base = 10, uint&out byteCount = 0);
+uint64 parseUInt(const string&in, uint base = 10, uint&out byteCount = 0);
+double parseFloat(const string&in, uint&out byteCount = 0);
+void logInfo(const string&in);
+mat4 perspective(float fov, float aspect, float near, float far);
+mat4 translate(const mat4&in mat, const vec3&in v);
+mat4 scale(const mat4&in mat, const vec3&in v);
+float mix(float a, float b, float t);
+float min(float a, float b);
+float max(float a, float b);
+float sin(float t);
+float cos(float t);
+float pow(float b, float e);
+float deltaTime;
+float timeScale;
