@@ -5,7 +5,7 @@
 
 using namespace ENGINE_NAMESPACE;
 
-void RenderUI_CHECKBOX(UIComponent* pComponent, Render2DInstance* pInstance)
+void RenderUI_BUTTON(UIComponent* pComponent, Render2DInstance* pInstance)
 {
 	if (!pComponent->Hovered)
 	{
@@ -15,6 +15,12 @@ void RenderUI_CHECKBOX(UIComponent* pComponent, Render2DInstance* pInstance)
 	{
 		pInstance->batch.color = pComponent->Button.HoveredColor;
 	}
+}
+DECLARE_UI_COMPONENT_RENDERER(BUTTON, rect);
+
+void RenderUI_CHECKBOX(UIComponent* pComponent, Render2DInstance* pInstance)
+{
+	RenderUI_BUTTON(pComponent, pInstance);
 	glm::vec2 size = {};
 	if (!pComponent->Checkbox.value)
 	{
@@ -46,19 +52,6 @@ void RenderUI_CHECKBOX(UIComponent* pComponent, Render2DInstance* pInstance)
 	pInstance->batch.RenderSize = size;
 }
 DECLARE_UI_COMPONENT_RENDERER(CHECKBOX, rect);
-
-void RenderUI_BUTTON(UIComponent* pComponent, Render2DInstance* pInstance)
-{
-	if (!pComponent->Hovered)
-	{
-		pInstance->batch.color = pComponent->Button.UnhoveredColor;
-	}
-	else
-	{
-		pInstance->batch.color = pComponent->Button.HoveredColor;
-	}
-}
-DECLARE_UI_COMPONENT_RENDERER(BUTTON, rect);
 
 void RendererFuncs::Init()
 {

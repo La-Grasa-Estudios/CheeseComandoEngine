@@ -703,7 +703,9 @@ public:
 	void Update(Stratum::Scene* scene) override
 	{
 		auto& setting = Funkin::Settings::s_Settings->Get("downscroll", false);
+		auto& botplay = Funkin::Settings::s_Settings->Get("botplay", false);
 		setting.boolValue = scene->UI->FindObject("options", "downscroll-box")->Checkbox.value;
+		botplay.boolValue = scene->UI->FindObject("options", "botplay-box")->Checkbox.value;
 
 		if (Stratum::Input::GetInputDown("menu_back"))
 		{
@@ -722,7 +724,9 @@ public:
 		pMainSystem->CreateControllerPrompt(GamepadButton::BACK, L"Fullscreen");
 
 		auto& setting = Funkin::Settings::s_Settings->Get("downscroll", false);
+		auto& botplay = Funkin::Settings::s_Settings->Get("botplay", false);
 		scene->UI->FindObject("options", "downscroll-box")->Checkbox.value = setting;
+		scene->UI->FindObject("options", "botplay-box")->Checkbox.value = botplay;
 	}
 	void Hide(Stratum::Scene* scene) override
 	{

@@ -312,7 +312,7 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 		}
 	}
 
-	bool botEnabled = EnableBot || false || BotPlay;
+	bool botEnabled = EnableBot || false || BotPlay || Settings::s_Settings->Get("botplay", false).boolValue;
 
 	auto notesManager = scene->GetComponentManager<NoteComponent>(C_NOTE_COMPONENT_NAME);
 	auto noteHoldManager = scene->GetComponentManager<NoteHoldComponent>(C_NOTE_HOLD_COMPONENT_NAME);
