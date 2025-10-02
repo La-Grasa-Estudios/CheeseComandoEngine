@@ -184,7 +184,6 @@ public:
 	void Hide(Stratum::Scene* scene) override
 	{
 		pMainSystem->ClearControllerPrompts();
-		scene->UI->HideUIPanel("main_menu");
 		auto& anchor = scene->GuiAnchors.Get(bgChara);
 		pTimedActionSystem->PushAction(&anchor.Position.x, -3000.0f, 1.0f, Funkin::Easing::BackIn, [this]
 			{
@@ -913,12 +912,6 @@ void Funkin::MainMenuSystem::Init(Stratum::Scene* scene)
 				ConfirmFxSource->Play();
 				return;
 			}
-			if (e.EventName == "close-imp")
-			{
-				mScene->UI->HideUIPanel("not_implemented_popup");
-				return;
-			}
-			mScene->UI->ShowUIPanel("not_implemented_popup");
 		}, Stratum::EventFlagBits::EF_REMOVE_ON_SCENE_LOAD);
 	
 	MusicSource->Play();

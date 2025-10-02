@@ -187,7 +187,7 @@ static void RegisterGLMMatrix(asIScriptEngine* engine, const std::string& name)
         asMETHODPR(MatT, operator-=, (const MatT&), MatT&), asCALL_THISCALL));
 }
 
-void RegisterMath(asIScriptEngine* engine)
+void as_RegisterMath(asIScriptEngine* engine)
 {
     RegisterGLMVector<glm::vec2, 2>(engine, "vec2");
     RegisterGLMVector<glm::vec3, 3>(engine, "vec3");

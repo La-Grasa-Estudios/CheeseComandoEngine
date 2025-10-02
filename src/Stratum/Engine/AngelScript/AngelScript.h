@@ -20,6 +20,11 @@ class asIStringFactory;
 
 BEGIN_ENGINE
 
+// Script masks
+
+constexpr size_t AS_ALL_MASK = 0xFFFFFFFF;
+constexpr size_t AS_UI_SCRIPT_MASK = 1 << 16;
+
 struct ASInitializeEvent
 {
 	const char* stage;
@@ -35,7 +40,7 @@ public:
 	void Init();
 	void Shutdown();
 
-	asIScriptModule* BuildModule(const char* path, const char* name);
+	asIScriptModule* BuildModule(const char* path, const char* name, size_t mask = 0xFFFFFFFF);
 	asIScriptContext* CreateContext();
 	// Runs the script one single time, useful for script that initializes things
 	// Remember to call free on the context when finished

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Entity/ECS.h"
+#include <Entity/ECS.h>
+#include <Util/VoidPtr.h>
 
 #include <json/json.hpp>
 
@@ -113,6 +114,7 @@ struct UIComponent
 	UILabel Label;
 	UICheckbox Checkbox;
 	std::vector<Ref<UIComponent>> Components;
+	std::unordered_map<std::string, VoidPtr> EventCallbacks;
 
 	int32_t Background = -1;
 	int32_t Foreground = -1;
@@ -215,6 +217,8 @@ public:
 
 private:
 
+	VoidPtr mScriptExecutionCtx;
+
 	bool mIsMouseHidden = false;
 
 	void CalculateBBoxes(UIPanel& panel);
@@ -240,6 +244,8 @@ private:
 	std::unordered_map<std::string, UIPanel> mPanels;
 
 	std::vector<std::string> mFocusedPanels;
+
+
 
 };
 

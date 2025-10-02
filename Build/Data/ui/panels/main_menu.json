@@ -1,5 +1,8 @@
 {
 	"pad-default": "story-button",
+	"scripts": [
+		"scripts/main-menu.as"
+	],
 	"components": [
 	{
 		"type": "rect",
@@ -56,8 +59,6 @@
 					"background": "ui/menu/story_mode.png",
 					"transition-offset": 0.1,
 					"unhovered-color": [ 0.75, 0.75, 0.75, 1.0 ],
-					"onHover": "sfx-ui",
-					"onClick": "switch-story-panel",
 					"down": "freeplay-button"
 				},
 				{
@@ -71,8 +72,6 @@
 					"background": "ui/menu/freeplay.png",
 					"transition-offset": 0.3,
 					"unhovered-color": [ 0.75, 0.75, 0.75, 1.0 ],
-					"onHover": "sfx-ui",
-					"onClick": "switch-freeplay-panel",
 					"down": "promo-button",
 					"up": "story-button",
 					"right": "options-button"
@@ -88,8 +87,6 @@
 					"transform-x": "-1%",
 					"transition-offset": 0.3,
 					"unhovered-color": [ 0.75, 0.75, 0.75, 1.0 ],
-					"onHover": "sfx-ui",
-					"onClick": "switch-options-panel",
 					"up": "story-button",
 					"down": "credits-button",
 					"left": "freeplay-button"
@@ -104,8 +101,6 @@
 					"transform-x": "45%",
 					"transition-offset": 0.3,
 					"unhovered-color": [ 0.75, 0.75, 0.75, 1.0 ],
-					"onHover": "sfx-ui",
-					"onClick": "switch-credits-panel",
 					"down": "promo-button",
 					"left": "freeplay-button",
 					"up": "options-button"
@@ -120,8 +115,6 @@
 					"background": "ui/menu/promo.png",
 					"transition-offset": 0.5,
 					"unhovered-color": [ 0.75, 0.75, 0.75, 1.0 ],
-					"onHover": "sfx-ui",
-					"onClick": "open-nonsense-youtube",
 					"up": "credits-button"
 				},
 				{

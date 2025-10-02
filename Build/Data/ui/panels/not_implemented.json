@@ -1,5 +1,8 @@
 {
 	"pad-default": "ok-button",
+	"scripts": [
+		"scripts/not-implemented.as"
+	],
 	"components": [
 	{
 		"type": "rect",
@@ -59,7 +62,6 @@
 			"transform-y": "70%",
 			"unhovered-color": [0.5, 0.5, 0.5, 1.0],
 			"hovered-color": [0.70, 0.70, 0.70, 1.0],
-			"onClick": "close-imp",
 			"components": [
 			{
 				"type": "label",

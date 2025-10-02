@@ -8,6 +8,7 @@
 #include <angelscript.h>
 #include <scriptstdstring/scriptstdstring.h>
 #include <scriptbuilder/scriptbuilder.h>
+#include <scriptarray/scriptarray.h>
 #include <cassert>
 
 using namespace ENGINE_NAMESPACE;
@@ -24,6 +25,22 @@ static void ENGINE_AS_CALL MessageCallback(const asSMessageInfo* msg, void* para
 		type = "INFO";
 	Z_INFO("[AngelScript] {} ({}, {}) : {} : {}", msg->section, msg->row, msg->col, type, msg->message);
 }
+
+void ExceptionCallback(asIScriptContext* ctx, void* /*userParam*/) {
+	asIScriptFunction* func = ctx->GetExceptionFunction();
+	const char* section = func->GetModuleName();
+	const char* decl = func->GetDeclaration();
+	int line = ctx->GetExceptionLineNumber();
+	const char* msg = ctx->GetExceptionString();
+
+	std::stringstream ss;
+	ss << "[AngelScript Exception] "
+		<< section << " (" << line << "): "
+		<< decl << " — " << msg;
+
+	Z_ERROR(ss.str()); // Replace with your logging system
+}
+
 
 static int IncludeCallback(const char* include, const char* from, CScriptBuilder* builder, void* userParam)
 {
@@ -61,21 +78,27 @@ AngelScriptEngine::AngelScriptEngine()
 {
 }
 
-extern void RegisterMath(asIScriptEngine* engine);
+extern void as_RegisterMath(asIScriptEngine* engine);
+extern void as_RegisterUI(asIScriptEngine* engine);
+extern void as_RegisterAudio(asIScriptEngine* engine);
 
 void AngelScriptEngine::Init()
 {
 	asIScriptEngine* engine = asCreateScriptEngine();
 	AS_RETURN_CHECK(engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL));
+	engine->SetDefaultAccessMask(AS_ALL_MASK);
 
 	RegisterStdString(engine);
+	RegisterScriptArray(engine, true); // 'true' enables debug info
 
 	//engine->SetDefaultNamespace("Stratum");
 	AS_RETURN_CHECK(engine->RegisterGlobalFunction("void logInfo(const string &in)", asFUNCTION(asWrapper_LogInfo), asCALL_CDECL));
 	AS_RETURN_CHECK(engine->RegisterGlobalProperty("const float deltaTime", &Time::DeltaTime));
 	AS_RETURN_CHECK(engine->RegisterGlobalProperty("float timeScale", &Time::TimeScale));
 	
-	RegisterMath(engine);
+	as_RegisterMath(engine);
+	as_RegisterUI(engine);
+	as_RegisterAudio(engine);
 
 	EventBus::InvokeEvent(ASInitializeEvent{ "pre", engine });
 
@@ -90,6 +113,7 @@ void AngelScriptEngine::Init()
 asIScriptContext* AngelScriptEngine::CreateContext()
 {
 	asIScriptContext* ctx = mEngine->CreateContext();
+	ctx->SetExceptionCallback(asFUNCTION(ExceptionCallback), nullptr, asCALL_CDECL);
 	return ctx;
 }
 
@@ -118,12 +142,13 @@ AngelScriptEngine& AngelScriptEngine::Get()
 	return instance;
 }
 
-asIScriptModule* AngelScriptEngine::BuildModule(const char* path, const char* name)
+asIScriptModule* AngelScriptEngine::BuildModule(const char* path, const char* name, size_t mask)
 {
 	std::string script = ZVFS::GetFile(path)->Str();
 
 	CScriptBuilder builder;
 	int r = builder.StartNewModule(mEngine, name);
+	builder.GetModule()->SetAccessMask(mask);
 	builder.SetIncludeCallback(IncludeCallback, nullptr);
 	if (r < 0)
 	{
@@ -149,6 +174,5 @@ asIScriptModule* AngelScriptEngine::BuildModule(const char* path, const char* na
 		printf("Please correct the errors in the script and try again.\n");
 		return nullptr;
 	}
-
-	return mEngine->GetModule(name);
+	return builder.GetModule();
 }

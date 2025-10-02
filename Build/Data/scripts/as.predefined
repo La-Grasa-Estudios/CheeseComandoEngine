@@ -1,3 +1,9 @@
+enum UIComponentType {
+	INVALID,
+	BUTTON,
+	CHECKBOX,
+	RECT
+}
 class string{
 	~string();
 	string();
@@ -42,6 +48,38 @@ class string{
 	void insert(uint pos, const string&in other);
 	void erase(uint pos, int count = -1);
 	int regexFind(const string&in regex, uint start = 0, uint&out lengthOfMatch = void) const;
+}
+class array<T>{
+	T& opIndex(uint index);
+	const T& opIndex(uint index) const;
+	uint opForBegin() const;
+	bool opForEnd(uint) const;
+	uint opForNext(uint) const;
+	const T& opForValue0(uint index) const;
+	uint opForValue1(uint index) const;
+	T[]& opAssign(const T[]&in);
+	void insertAt(uint index, const T&in value);
+	void insertAt(uint index, const T[]&inout arr);
+	void insertLast(const T&in value);
+	void removeAt(uint index);
+	void removeLast();
+	void removeRange(uint start, uint count);
+	uint length() const;
+	void reserve(uint length);
+	void resize(uint length);
+	void sortAsc();
+	void sortAsc(uint startAt, uint count);
+	void sortDesc();
+	void sortDesc(uint startAt, uint count);
+	void reverse();
+	int find(const T&in value) const;
+	int find(uint startAt, const T&in value) const;
+	int findByRef(const T&in value) const;
+	int findByRef(uint startAt, const T&in value) const;
+	bool opEquals(const T[]&in) const;
+	bool isEmpty() const;
+	void sort(T[]::less&in, uint startAt = 0, uint count = uint(-1));
+	funcdef bool less(const T&in, const T&in);
 }
 class vec2{
 	~vec2();
@@ -120,6 +158,18 @@ class mat4{
 	mat4& opAdd(const mat4&in);
 	mat4& opSub(const mat4&in);
 }
+class UIComponent{
+	UIComponent@ getParent();
+	void addEventHandler(const string&in event, OnEvent@ handler);
+	void removeEventHandler(const string&in event);
+	UIComponentType Type;
+}
+class UIManager{
+	UIComponent@ getElementByName(const string&in documentTitle, const string&in objectName) const;
+	void hideDocument(const string&in documentTitle);
+	void showDocument(const string&in documentTitle);
+	void invokeEvent(const string&in eventName, UIComponent@ comp);
+}
 uint scan(const string&in str, ?&out...);
 string format(const string&in fmt, const ?&in...);
 string formatInt(int64 val, const string&in options = "", uint width = 0);
@@ -138,5 +188,6 @@ float max(float a, float b);
 float sin(float t);
 float cos(float t);
 float pow(float b, float e);
+namespace Audio { void playOneShot(const string&in path, float vol = 1.0f, float pitch = 1.0f, float pan = 0.5f); }
 float deltaTime;
 float timeScale;

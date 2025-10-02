@@ -116,11 +116,13 @@ SceneUI::SceneUI(Scene* scene)
 	scene->TextComponents.Create(entity);
 	scene->TextRenderers.Create(entity);
 	mTextEntity = entity;
+
+	mScriptExecutionCtx = AngelScriptEngine::Get().CreateContext();
 }
 
 SceneUI::~SceneUI()
 {
-
+	mScriptExecutionCtx.As<asIScriptContext>()->Release();
 }
 
 void SceneUI::AddComponentRenderer(UIComponentType type, UIFuncRenderPtr funcPtr, const char* rendertype)
@@ -192,6 +194,35 @@ void SceneUI::CreateUIPanel(const std::string& panelName, const std::string& jso
 	}
 
 	mPanels[panelName] = panel;
+
+	if (json.contains("scripts"))
+	{
+		auto ctx = mScriptExecutionCtx.As<asIScriptContext>();
+
+		for (auto& s : json["scripts"])
+		{
+			std::string src = s;
+			auto module = AngelScriptEngine::Get().BuildModule(src.c_str(), src.c_str(), AS_UI_SCRIPT_MASK);
+			if (module)
+			{
+				auto doc = module->GetGlobalVarIndexByDecl("UIManager @document");
+				auto name = module->GetGlobalVarIndexByDecl("string documentId");
+
+				auto setupFunc = module->GetFunctionByDecl("void setupScript(const string& in, UIManager@)");
+				auto func = module->GetFunctionByDecl("void setup()");
+				if (func && setupFunc)
+				{
+					ctx->Prepare(setupFunc);
+					ctx->SetArgObject(1, this);
+					ctx->SetArgObject(0, &panel.Name);
+					ctx->Execute();
+					ctx->Prepare(func);
+					ctx->Execute();
+				}
+			}
+
+		}
+	}
 }
 
 void SceneUI::ReleasePanel(UIPanel& panel)
@@ -518,8 +549,26 @@ void SceneUI::Update()
 			EventBus::InvokeEvent<AppUIEvent>(e);
 		}
 
+		if (!hoveredComponent->Hovered)
+		{
+			if (auto cb = hoveredComponent->EventCallbacks.find("hover"); cb != hoveredComponent->EventCallbacks.end())
+			{
+				auto ctx = mScriptExecutionCtx.As<asIScriptContext>();
+				ctx->Prepare(cb->second.As<asIScriptFunction>());
+				ctx->SetArgObject(0, hoveredComponent);
+				ctx->Execute();
+			}
+		}
+
 		if (hoveredComponent->Type == UIComponentType::BUTTON && (Input::GetMouseButtonDown(0) || Stratum::Input::GetGamepadButtonDown(GamepadButton::A)))
 		{
+			if (auto cb = hoveredComponent->EventCallbacks.find("click"); cb != hoveredComponent->EventCallbacks.end())
+			{
+				auto ctx = mScriptExecutionCtx.As<asIScriptContext>();
+				ctx->Prepare(cb->second.As<asIScriptFunction>());
+				ctx->SetArgObject(0, hoveredComponent);
+				ctx->Execute();
+			}
 			AppUIEvent e;
 			e.ElementName = hoveredComponent->Name;
 			e.PanelName = hoveredComponent->PanelName;
