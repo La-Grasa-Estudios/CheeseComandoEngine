@@ -38,7 +38,7 @@ StructuredBuffer<SpriteInstance> Instances : REGISTER_SRV(10, 0);
 
 cbuffer FrameData : register(b1)
 {
-    float4x4 ProjView[2];
+    float4x4 ProjView[16];
 	float2 ScreenResolution;
 };
 
@@ -65,7 +65,7 @@ v2f main(in i2v input, in uint vertexID : SV_VertexID)
     float4 uv = uvLut[vertexID] == 0 ? instance.uv1 : instance.uv2;
     
 	v2f output;
-    output.ClipPos = mul(ProjView[instance.userData & 0x1], mul(instance.Transform, float4(float3(input.Position, 0.0), 1.0)));
+    output.ClipPos = mul(ProjView[instance.userData & 0xF], mul(instance.Transform, float4(float3(input.Position, 0.0), 1.0)));
     output.ClipPos.z = 0.0f;
     output.TexCoord = swlut[vertexID] == 0 ? uv.xy : uv.zw;
     output.instanceID = input.instanceID + DrawData.BatchIndex;

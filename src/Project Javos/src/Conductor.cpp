@@ -41,20 +41,23 @@ void Funkin::Conductor::Init(Stratum::Scene* scene)
 {
 	Stratum::Input::BindAlias("funkin_left", KeyCode::A);
 	Stratum::Input::BindAlias("funkin_left", KeyCode::LEFT);
-	Stratum::Input::BindAlias("funkin_left", GamepadButton::DPAD_LEFT);
-	Stratum::Input::BindAlias("funkin_left", GamepadButton::X);
+	//Stratum::Input::BindAlias("funkin_left", GamepadButton::DPAD_LEFT);
+	Stratum::Input::BindAlias("funkin_left", GamepadButton::A);
 	Stratum::Input::BindAlias("funkin_right", KeyCode::D);
 	Stratum::Input::BindAlias("funkin_right", KeyCode::RIGHT);
-	Stratum::Input::BindAlias("funkin_right", GamepadButton::DPAD_RIGHT);
-	Stratum::Input::BindAlias("funkin_right", GamepadButton::B);
+	//Stratum::Input::BindAlias("funkin_right", GamepadButton::DPAD_RIGHT);
+	Stratum::Input::BindAlias("funkin_right", GamepadButton::Y);
 	Stratum::Input::BindAlias("funkin_up", KeyCode::W);
 	Stratum::Input::BindAlias("funkin_up", KeyCode::UP);
-	Stratum::Input::BindAlias("funkin_up", GamepadButton::DPAD_UP);
-	Stratum::Input::BindAlias("funkin_up", GamepadButton::Y);
+	//Stratum::Input::BindAlias("funkin_up", GamepadButton::DPAD_UP);
+	Stratum::Input::BindAlias("funkin_up", GamepadButton::X);
 	Stratum::Input::BindAlias("funkin_down", KeyCode::S);
 	Stratum::Input::BindAlias("funkin_down", KeyCode::DOWN);
-	Stratum::Input::BindAlias("funkin_down", GamepadButton::A);
-	Stratum::Input::BindAlias("funkin_down", GamepadButton::DPAD_DOWN);
+	Stratum::Input::BindAlias("funkin_down", GamepadButton::B);
+	//Stratum::Input::BindAlias("funkin_down", GamepadButton::DPAD_DOWN);
+
+	Stratum::Input::BindAlias("funkin_strum", GamepadButton::DPAD_UP);
+	Stratum::Input::BindAlias("funkin_strum", GamepadButton::DPAD_DOWN);
 
 	Stratum::Input::BindAlias("funkin_up", GamepadButton::RIGHT_SHOULDER);
 	Stratum::Input::BindAlias("funkin_down", GamepadButton::LEFT_SHOULDER);
@@ -281,6 +284,9 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 		return;
 	}
 
+	const float strumTimeGraceWindow = 0.1f;
+	static float strumTimeGrace = strumTimeGraceWindow;
+
 	const int NOTE_MISS_SCORE = 100;
 
 	if (SongStarted)
@@ -335,12 +341,21 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 		Stratum::Input::GetInput("funkin_right") || botEnabled,
 	};
 
+	if (Stratum::Input::GetInputDown("funkin_strum"))
+	{
+		strumTimeGrace = 0.0f;
+	}
+
+	strumTimeGrace += Stratum::gpGlobals->deltaTime;
+
 	std::array<nvrhi::static_vector<Stratum::ECS::edict_t, 16>, 4> hitNotes;
 
 	const float SAFEZONE_PLUS = SongTime + SAFE_ZONE * 0.8f;
 	const float SAFEZONE_MINUS = SongTime - SAFE_ZONE;
 
 	auto& downscrollSetting = Settings::s_Settings->Get("downscroll", false);
+
+	bool hitAnyNote = false;
 
 	for (auto entity : notes)
 	{
@@ -366,12 +381,15 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 
 		float y = (STRUM_LINE_Y + 0.0f + songY);
 
-		if (inputs[note.NoteType])
+		if (inputsHold[note.NoteType] && strumTimeGrace < strumTimeGraceWindow)
 		{
 			if (note.Time < SAFEZONE_PLUS
 				&& note.Time > SAFEZONE_MINUS) {
 				if (hitNotes[note.NoteType].size() < hitNotes[note.NoteType].max_size() - 2)
+				{
 					hitNotes[note.NoteType].push_back(entity);
+					hitAnyNote = true;
+				}
 			}
 		}
 
@@ -446,6 +464,9 @@ void Funkin::Conductor::Update(Stratum::Scene* scene)
 		}
 
 	}
+
+	if (hitAnyNote)
+		strumTimeGrace = strumTimeGraceWindow;
 
 	for (int i = 0; i < 4; i++)
 	{

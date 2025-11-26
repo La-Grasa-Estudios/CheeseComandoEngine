@@ -70,7 +70,7 @@ static ID3D12DescriptorHeap* g_pd3dSrvDescHeap = nullptr;
 
 uint32_t gFrameCount = 0;
 ID3D12Fence* gFrameFence = nullptr;
-void* gFrameFenceEvents[2];
+void* gFrameFenceEvents[DX12::s_MaxInFlightFrames];
 
 void Render::BackendInitializerD3D12::InitializeBackend(Internal::Window* pWindow, RendererContext* pContext)
 {
@@ -237,13 +237,14 @@ void Render::BackendInitializerD3D12::InitializeBackend(Internal::Window* pWindo
     ComPtr<ID3D12InfoQueue> pInfoQueue;
     if (SUCCEEDED(dxSharedData->Device.As(&pInfoQueue)))
     {
-       pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-       pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-       pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+       // pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+       // pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+       // pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
     }
 #endif
 
     dxSharedData->CommandQueue = DX12::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_QUEUE_PRIORITY_HIGH);
+    dxSharedData->ComputeQueue = DX12::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE, D3D12_COMMAND_QUEUE_PRIORITY_HIGH);
     dxSharedData->CopyQueue = DX12::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY, D3D12_COMMAND_QUEUE_PRIORITY_NORMAL);
 
     for (int i = 0; i < DX12::s_MaxInFlightFrames; i++)
@@ -255,6 +256,7 @@ void Render::BackendInitializerD3D12::InitializeBackend(Internal::Window* pWindo
     deviceDesc.errorCB = &pContext->mCallbackLogger;
     deviceDesc.pDevice = dxSharedData->Device.Get();
     deviceDesc.pGraphicsCommandQueue = dxSharedData->CommandQueue.Get();
+    deviceDesc.pComputeCommandQueue = dxSharedData->ComputeQueue.Get();
     deviceDesc.pCopyCommandQueue = dxSharedData->CopyQueue.Get();
     deviceDesc.enableHeapDirectlyIndexed = true;
 
@@ -381,6 +383,7 @@ void Render::BackendInitializerD3D12::TerminateBackend(RendererContext* pContext
     dxSharedData->BackBufferFence = NULL;
     dxSharedData->CommandList->Release();
     dxSharedData->CommandQueue->Release();
+    dxSharedData->ComputeQueue->Release();
     dxSharedData->CopyQueue->Release();
     dxSharedData->SwapChain->Release();
     dxSharedData->Adapter->Release();

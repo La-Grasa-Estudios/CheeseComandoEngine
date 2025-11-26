@@ -3,6 +3,8 @@
 #include "miniaudio/miniaudio.h"
 #include "znmsp.h"
 
+#include <Util/HeapArray.h>
+
 #include <future>
 
 BEGIN_ENGINE
@@ -22,6 +24,12 @@ struct AudioSourceParams
 	float Pan = 0.5f;
 };
 
+enum class WaveformMode
+{
+	AMPLITUDE_DOMAIN,
+	FREQUENCY_DOMAIN
+};
+
 class AudioSourceBase
 {
 
@@ -36,6 +44,11 @@ public:
 	virtual void Pause();
 	virtual void Resume();
 	virtual void Rewind() {}
+
+	// Step size is used as the resolution of the internal frequency domain table used for waveform visualization.
+	// Domain size is 65536 / stepSize.
+	// Higher step sizes mean more detail, but also more CPU usage.
+	void EnableWaveform(WaveformMode mode, uint32_t stepSize = 512, float decayFactor = 0.95f);
 
 	virtual void SetVolume(float volume);
 	virtual float GetVolume();
@@ -55,6 +68,9 @@ public:
 
 	virtual void UpdateSource() {}
 	virtual void AttachToNode(ma_node* pNode, uint32_t index, uint32_t inputIndex);
+	void InternalUpdate();
+
+	std::vector<float>& GetFrequencyDomain() { return p_FrequencyDomain; }
 
 	void SetLooping(bool looping);
 	
@@ -65,6 +81,13 @@ public:
 	std::string Path;
 
 protected:
+
+	void OnSampleWrite(int16_t* pSamples, uint32_t sampleCount);
+
+	float p_DecayFactor;
+	std::vector<float> p_FrequencyDomain;
+	std::vector<float> p_SampleBuffer;
+	WaveformMode p_WaveformMode = WaveformMode::AMPLITUDE_DOMAIN;
 
 	AudioSourceParams p_Params;
 

@@ -1,5 +1,4 @@
 #include <cassert>
-#include <format>
 #include <fstream>
 #include <string>
 #include <string_view>
@@ -68,6 +67,13 @@ void as_RegisterUI(asIScriptEngine* engine)
 	engine->RegisterObjectType("UIComponent", sizeof(UIComponent), asOBJ_REF | asOBJ_NOCOUNT);
 	engine->RegisterFuncdef("void OnEvent(UIComponent@)");
 	engine->RegisterObjectProperty("UIComponent", "UIComponentType Type", asOFFSET(UIComponent, Type));
+	engine->RegisterObjectProperty("UIComponent", "bool boolValue", asOFFSET(UIComponent, Checkbox.value));
+	engine->RegisterObjectProperty("UIComponent", "string userData", asOFFSET(UIComponent, UserData));
+	engine->RegisterObjectProperty("UIComponent", "vec4 bgColor", asOFFSET(UIComponent, BgColor));
+	engine->RegisterObjectProperty("UIComponent", "vec4 fgColor", asOFFSET(UIComponent, FgColor));
+	engine->RegisterObjectProperty("UIComponent", "vec4 unhoveredColor", asOFFSET(UIComponent, Button.UnhoveredColor));
+	engine->RegisterObjectProperty("UIComponent", "vec4 hoveredColor", asOFFSET(UIComponent, Button.HoveredColor));
+	//engine->RegisterObjectProperty("UIComponent", "bool text", asOFFSET(UIComponent, Label.Text));
 	engine->RegisterObjectMethod("UIComponent", "UIComponent@ getParent()", asFUNCTION(GetParent), asCALL_CDECL_OBJFIRST);
 	engine->RegisterObjectMethod("UIComponent", "void addEventHandler(const string &in event, OnEvent @handler)", asFUNCTION(AddEventHandler), asCALL_CDECL_OBJFIRST);
 	engine->RegisterObjectMethod("UIComponent", "void removeEventHandler(const string &in event)", asFUNCTION(RemoveEventHandler), asCALL_CDECL_OBJFIRST);

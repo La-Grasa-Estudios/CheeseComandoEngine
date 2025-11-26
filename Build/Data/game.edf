@@ -142,7 +142,7 @@
 				{
 					"name": "IsGui",
 					"display": "In Gui Layer",
-					"description": "Is checked renders the sprite to another layer",
+					"description": "If checked renders the sprite to another layer",
 					"type": "bool"
 				},
 				{

@@ -23,7 +23,7 @@ void resetTotalAllocs()
 
 // #define DEBUG
 
-#ifdef DEBUG
+#ifdef DEBUG_ALLOCS
 
 void* operator new(std::size_t size) {
     totalAllocated += size;

@@ -1,5 +1,4 @@
 #include <cassert>
-#include <format>
 #include <fstream>
 #include <string>
 #include <string_view>
@@ -7,6 +6,7 @@
 
 #include <AngelScript/AngelScript.h>
 #include <angelscript.h>
+#include <format>
 
 template<typename T>
 void _cdecl GLMVectorConstructor(void* memory)
@@ -219,13 +219,4 @@ void as_RegisterMath(asIScriptEngine* engine)
 
     engine->RegisterGlobalFunction("float max(float a, float b)",
         asFUNCTIONPR(glm::max<float>, (float, float), float), asCALL_CDECL);
-
-    engine->RegisterGlobalFunction("float sin(float t)",
-        asFUNCTIONPR(glm::sin, (float), float), asCALL_CDECL);
-
-    engine->RegisterGlobalFunction("float cos(float t)",
-        asFUNCTIONPR(glm::cos, (float), float), asCALL_CDECL);
-
-    engine->RegisterGlobalFunction("float pow(float b, float e)",
-        asFUNCTIONPR(glm::pow, (float, float), float), asCALL_CDECL);
 }

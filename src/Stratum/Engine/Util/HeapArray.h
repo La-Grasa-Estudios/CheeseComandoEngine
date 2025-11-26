@@ -2,8 +2,6 @@
 
 #include "znmsp.h"
 
-#include <format>
-
 BEGIN_ENGINE
 
 template<typename type>
@@ -25,12 +23,13 @@ public:
 	}
 	~HeapArray()
 	{
-		delete[] m_Ptr;
+		if (m_Ptr)
+			delete[] m_Ptr;
 	}
 
 	type& operator [](int index)
 	{
-		if (index < 0 || index > m_Size - 1) throw new std::out_of_range(std::format("Tried to access element {} when array range is {}", index, m_Size));
+		if (index < 0 || index > m_Size - 1) throw new std::out_of_range("Tried to access out of range element");
 		return m_Ptr[index];
 	}
 

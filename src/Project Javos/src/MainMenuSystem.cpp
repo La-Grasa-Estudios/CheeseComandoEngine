@@ -20,6 +20,8 @@
 static Funkin::TimedActionSystem* pTimedActionSystem;
 static Stratum::ECS::edict_t camera;
 static Stratum::ECS::edict_t bgEntity;
+static Stratum::ECS::edict_t gpadCursor;
+static Stratum::ECS::edict_t gpadCursorEdges[4];
 
 struct MainMenuCharacter
 {
@@ -44,6 +46,8 @@ MainMenuCharacter characters[] = {
 	{ "ui/menu/char/ClassicNonsense.png", "ui/menu/char/ClassicNonsense.xml", "classicNonsense", { 900, 30 }, 1.6f, 24 },
 };
 
+std::vector<Stratum::ECS::edict_t> waveformEntities;
+
 enum MenuPanelType
 {
 	MP_INVALID = -1,
@@ -62,6 +66,10 @@ struct ControllerPrompt
 	SDL_GamepadType type = SDL_GAMEPAD_TYPE_MAX;
 	bool Active = false;
 };
+
+constexpr float bpm = 102.0f;
+constexpr float bps = (bpm / 60.0f);
+constexpr float bpmToSeconds = 1.0f / bps;
 
 std::vector<ControllerPrompt> gControllerPrompts;
 
@@ -84,6 +92,7 @@ public:
 	virtual void Hide(Stratum::Scene* scene) = 0;
 	virtual void Destroy(Stratum::Scene* scene) = 0;
 	virtual bool CanSwap(Stratum::Scene* scene) = 0;
+	virtual bool DoBeat() { return false; }
 };
 
 class MainMenuPanel : public MenuPanel
@@ -130,6 +139,8 @@ public:
 		{
 			SetPanel(MP_TITLE);
 			pMainSystem->CancelFxSource->Play();
+
+			scene->UI->HideUIPanel("main_menu");
 		}
 	}
 	void Show(Stratum::Scene* scene) override
@@ -153,7 +164,7 @@ public:
 			auto chara = characters[(rand() / 10) % size];
 			character = chara;
 
-			sprite.RenderLayer = 1;
+			sprite.RenderLayer = 2;
 			sprite.TextureHandle = scene->Resources.LoadTextureImage(chara.TexturePath);
 			sprite.Center = { 0.0f, 1.0f };
 
@@ -215,10 +226,6 @@ public:
 	bool finishedIntro = false;
 	Funkin::MainMenuSystem* pMainSystem;
 
-	float bpm = 102.0f;
-	float bps = (bpm / 60.0f);
-	float bpmToSeconds = 1.0f / bps;
-
 	TitleMenuPanel(Funkin::MainMenuSystem* pSystem)
 	{
 		pMainSystem = pSystem;
@@ -232,10 +239,6 @@ public:
 	}
 	void Update(Stratum::Scene* scene) override
 	{
-		
-		int32_t beat = glm::floor(bps * pMainSystem->MusicSource->PositionF() + 0.5f);
-		static int32_t lastBeat = -1;
-
 		auto& textAnchor = scene->GuiAnchors.Get(pressEnter);
 		auto& textTransform = scene->Transforms.Get(pressEnter);
 		auto& textSprite = scene->SpriteRenderers.Get(pressEnter);
@@ -246,6 +249,12 @@ public:
 		logoSprite.Rotation.x = 8.0f + glm::sin(pMainSystem->MusicSource->PositionF() * bps) * 2.0f;
 		auto& cam = scene->Cameras.Get(camera);
 
+		auto& animator = scene->SpriteAnimators.Get(bgChara);
+		animator.AnimationMap["idle"].FrameIndex = (int)glm::floor(bps * pMainSystem->MusicSource->PositionF() * 14.0f + 7.0f) % 14;
+
+		int32_t beat = glm::floor(bps * pMainSystem->MusicSource->PositionF() + 0.5f);
+		static int32_t lastBeat = -1;
+
 		if (lastBeat != beat)
 		{
 			lastBeat = beat;
@@ -253,12 +262,8 @@ public:
 			{
 				pTimedActionSystem->PushAction(&logoTransform.Scale, logoTransform.Scale, bpmToSeconds * 0.9f, Funkin::Easing::ElasticOut);
 				logoTransform.Scale += glm::vec3(0.03f);
-				cam.OrthographicZoom -= 0.03f;
 			}
 		}
-
-		auto& animator = scene->SpriteAnimators.Get(bgChara);
-		animator.AnimationMap["idle"].FrameIndex = (int)glm::floor(bps * pMainSystem->MusicSource->PositionF() * 14.0f + 7.0f) % 14;
 
 		textTransform.IsDirty = true;
 
@@ -453,6 +458,10 @@ public:
 	{
 		return doSwap;
 	}
+	bool DoBeat() override
+	{
+		return true;
+	}
 };
 
 class FreeplayMenuPanel : public MenuPanel
@@ -463,7 +472,19 @@ public:
 	{
 		std::string DisplayName;
 		std::string ChartPath;
+		std::string Category;
 		Stratum::Ref<Funkin::SongBase> SongScript;
+	};
+
+	struct FreeplayCategory
+	{
+		std::string Name;
+		std::string IconPath;
+		Stratum::ECS::edict_t Icon;
+		int SelectedIndex;
+		bool IsSelected;
+		std::vector<Stratum::ECS::edict_t> SongEntries;
+		std::vector<FreeplaySong*> Songs;
 	};
 
 	Funkin::MainMenuSystem* pMainSystem;
@@ -474,16 +495,21 @@ public:
 
 	std::vector<FreeplaySong> songs =
 	{
-		{ "Bite Fernan", "fnf/data/bite/bite-fernan.json", Stratum::CreateRef<Funkin::BiteFernanSong>() },
-		{ "Dad Battle", "fnf/data/dad-battle/dad-battle-hard.json", Stratum::CreateRef<Funkin::ErectDadBattleSong>() },
-		{ "Erect Dad Battle", "fnf/data/erect-dadbattle/erect-dadbattle-erect.json", Stratum::CreateRef<Funkin::ErectDadBattleSong>() },
+		{ "Bite Fernan", "fnf/data/bite/bite-fernan.json", "Fernan", Stratum::CreateRef<Funkin::BiteFernanSong>()},
+		{ "Dad Battle", "fnf/data/dad-battle/dad-battle-hard.json", "Dad", Stratum::CreateRef<Funkin::ErectDadBattleSong>()},
+		{ "Erect Dad Battle", "fnf/data/erect-dadbattle/erect-dadbattle-erect.json", "Dad", Stratum::CreateRef<Funkin::ErectDadBattleSong>()},
 	};
 
 	std::vector<Stratum::ECS::edict_t> songEntries;
+	std::vector<FreeplayCategory> categories =
+	{
+		{ "Fernan", "fnf/images/icons/icon-oalrepeataftercurly.png", 0, {} },
+		{ "Dad", "fnf/images/icons/icon-daddy-erect.png", 0, {} },
+	};
 	Stratum::ECS::edict_t whiteFlash;
 	Stratum::ECS::edict_t xmbWaves;
 
-	int index = 0;
+	int categoryIndex = 0;
 
 	FreeplayMenuPanel(Funkin::MainMenuSystem* pSystem)
 	{
@@ -491,12 +517,21 @@ public:
 	}
 	void Precache(Stratum::Scene* scene)
 	{
-
+		for (auto category : this->categories)
+		{
+			scene->Resources.LoadTextureImage(category.IconPath);
+		}
 	}
 	void Update(Stratum::Scene* scene)
 	{
-		if (index < 0) index = songs.size() - 1;
-		if (index > songs.size() - 1) index = 0;
+
+		auto& selectedCategory = categories[categoryIndex];
+
+		if (selectedCategory.SelectedIndex < 0) selectedCategory.SelectedIndex = selectedCategory.SongEntries.size() - 1;
+		if (selectedCategory.SelectedIndex > selectedCategory.SongEntries.size() - 1) selectedCategory.SelectedIndex = 0;
+
+		if (categoryIndex < 0) categoryIndex = categories.size() - 1;
+		if (categoryIndex > categories.size() - 1) categoryIndex = 0;
 
 		if (transitionOut)
 			time += Stratum::gpGlobals->deltaTime;
@@ -512,30 +547,51 @@ public:
 			transform.SetScale(glm::vec3(scaleFactor, 0.0f));
 		}
 		
-		for (int i = 0; i < songEntries.size(); i++)
+		for (int i = 0; i < categories.size(); i++)
 		{
-			auto entity = songEntries[i];
-			auto& anchor = scene->GuiAnchors.Get(entity);
-			auto& transform = scene->Transforms.Get(entity);
-			auto& renderer = scene->TextRenderers.Get(entity);
+			auto& category = categories[i];
+			auto& transform = scene->Transforms.Get(category.Icon);
+			auto& categoryAnchor = scene->GuiAnchors.Get(category.Icon);
 
-			anchor.Position.y = glm::mix(anchor.Position.y, (i - index + (p * songs.size() * 2.0f)) * -250.0f, Stratum::gpGlobals->deltaTime * 8.0f);
+			category.IsSelected = (i == categoryIndex);
+			categoryAnchor.Position.x = glm::mix(categoryAnchor.Position.x, (i - categoryIndex + (p * categories.size() * 3.0f)) * -600.0f, Stratum::gpGlobals->deltaTime * 8.0f);
 
-			float dist = glm::abs(anchor.Position.y);
-			float maxDistance = 1000.0f;     // beyond this, scale hits minimum
-			float minScale = 0.0f;          // lowest allowed scale
-			float scale = glm::max(1.0f - (dist / maxDistance), minScale);
+			for (int i = 0; i < category.SongEntries.size(); i++)
+			{
+				auto entity = category.SongEntries[i];
+				auto& anchor = scene->GuiAnchors.Get(entity);
+				auto& transform = scene->Transforms.Get(entity);
+				auto& renderer = scene->TextRenderers.Get(entity);
 
-			float radius = 2000.0f;
-			float distance = glm::clamp(dist, 0.0f, radius * glm::pi<float>());
-			float theta = distance / radius;
 
-			float x = radius * cos(theta); // this gives you the x-position
+				float f = 1.0f;
 
-			anchor.Position.x = x - 1500.0f;
+				if (i - category.SelectedIndex < 0)
+					f = -0.0f;
 
-			transform.SetScale(glm::vec3(scale * 1.3f));
-			renderer.Color.a = scale;
+				anchor.Position.y = glm::mix(anchor.Position.y, (i - category.SelectedIndex + f + (p * category.SongEntries.size() * 2.0f)) * -250.0f, Stratum::gpGlobals->deltaTime * 8.0f);
+
+				float dist = glm::abs(anchor.Position.y);
+				float maxDistance = 1000.0f;     // beyond this, scale hits minimum
+				float minScale = 0.0f;          // lowest allowed scale
+				float scale = glm::max(1.0f - (dist / maxDistance), minScale);
+
+				float radius = 2000.0f;
+				float distance = glm::clamp(dist, 0.0f, radius * glm::pi<float>());
+				float theta = distance / radius;
+
+				float x = radius * cos(theta); // this gives you the x-position
+
+				if (!category.IsSelected)
+					scale *= 0.5f;
+
+				anchor.Position.x = scene->GuiAnchors.Get(category.Icon).Position.x;
+
+				//anchor.Position.x = x - 1500.0f;
+
+				transform.SetScale(glm::vec3(scale * 1.3f));
+				renderer.Color.a = scale;
+			}
 		}
 
 		if (transitionPlay)
@@ -564,8 +620,8 @@ public:
 				if (time1 > 1.5f)
 				{
 					Funkin::LoadChartParams params;
-					params.ChartPath = songs[index].ChartPath;
-					params.SongScript = songs[index].SongScript;
+					params.ChartPath = selectedCategory.Songs[selectedCategory.SelectedIndex]->ChartPath;
+					params.SongScript = selectedCategory.Songs[selectedCategory.SelectedIndex]->SongScript;
 
 					auto scene1 = new Stratum::Scene();
 					scene->SwapScene(scene1);
@@ -584,15 +640,28 @@ public:
 
 			if (Stratum::Input::GetInputDown("menu_up"))
 			{
-				index--;
+				selectedCategory.SelectedIndex--;
 				scene->AudioEngine->PlayOneShot("fnf/sounds/scrollMenu.mp3", 0.5f);
 			}
 
 			if (Stratum::Input::GetInputDown("menu_down"))
 			{
-				index++;
+				selectedCategory.SelectedIndex++;
 				scene->AudioEngine->PlayOneShot("fnf/sounds/scrollMenu.mp3", 0.5f);
 			}
+
+			if (Stratum::Input::GetInputDown("menu_left"))
+			{
+				categoryIndex--;
+				scene->AudioEngine->PlayOneShot("fnf/sounds/scrollMenu.mp3", 0.5f);
+			}
+
+			if (Stratum::Input::GetInputDown("menu_right"))
+			{
+				categoryIndex++;
+				scene->AudioEngine->PlayOneShot("fnf/sounds/scrollMenu.mp3", 0.5f);
+			}
+
 			if (Stratum::Input::GetInputDown("menu_accept"))
 			{
 				transitionOut = true;
@@ -602,8 +671,7 @@ public:
 	}
 	void Show(Stratum::Scene* scene)
 	{
-		pMainSystem->CreateControllerPrompt(GamepadButton::DPAD_UP, L"Navigate Up");
-		pMainSystem->CreateControllerPrompt(GamepadButton::DPAD_DOWN, L"Navigate Down");
+		pMainSystem->CreateControllerPrompt(GamepadButton::DPAD, L"Navigate");
 		pMainSystem->CreateControllerPrompt(GamepadButton::A, L"Select");
 		pMainSystem->CreateControllerPrompt(GamepadButton::B, L"Back");
 		pMainSystem->CreateControllerPrompt(GamepadButton::BACK, L"Fullscreen");
@@ -613,7 +681,7 @@ public:
 		time = 0.0f;
 		time1 = 0.0f;
 
-		index = 0;
+		int index = 0;
 
 		for (auto& song : songs)
 		{
@@ -623,17 +691,50 @@ public:
 			auto& textRenderer = scene->TextRenderers.Create(entity);
 			auto& anchor = scene->GuiAnchors.Create(entity);
 
-			anchor.AnchorPoint = Stratum::GuiAnchorPoint::LEFT;
+			anchor.AnchorPoint = Stratum::GuiAnchorPoint::CENTER;
 
 			text.Text = Stratum::Utils::ToWideString(song.DisplayName);
 			text.Font = "vcr";
 			text.FontSize = 96.0f;
+			textRenderer.Alignment = 0.5f;
 			textRenderer.RenderLayer = 10;
 
 			anchor.Position = { 200.0f, -2000.0f + index * -250.0f };
 			index++;
 
+			auto category = &categories[0];
+			for (auto& cat : categories)
+			{
+				if (cat.Name == song.Category)
+				{
+					category = &cat;
+					break;
+				}
+			}
+
+			category->Songs.push_back(&song);
+			category->SongEntries.push_back(entity);
 			songEntries.push_back(entity);
+		}
+
+		for (auto& category : categories)
+		{
+			auto entity = scene->EntityManager.CreateEntity();
+			auto& transform = scene->Transforms.Create(entity);
+			auto& sprite = scene->SpriteRenderers.Create(entity);
+			auto& anchor = scene->GuiAnchors.Create(entity);
+
+			sprite.TextureHandle = scene->Resources.LoadTextureImage(category.IconPath);
+			sprite.Rect.position = {};
+			sprite.Rect.size = scene->Resources.GetImageHandle(sprite.TextureHandle)->GetSize();
+			sprite.Rect.size.x /= 2;
+			sprite.CameraLayer = 0;
+			sprite.RenderLayer = 20;
+
+			anchor.AnchorPoint = Stratum::GuiAnchorPoint::CENTER;
+
+			category.Icon = entity;
+			category.SelectedIndex = 0;
 		}
 
 		{
@@ -657,7 +758,7 @@ public:
 			pTimedActionSystem->PushAction(&sprite.SpriteColor.a, 1.0f, 1.0f, Funkin::Easing::Linear);
 			pTimedActionSystem->PushAction(&surface.PlaybackSpeed, 3.0f, 0.1f, Funkin::Easing::BackIn, [&]() {
 				pTimedActionSystem->PushAction(&surface.PlaybackSpeed, 1.0f, 1.8f, Funkin::Easing::BackOut);
-				});
+			});
 		}
 
 		index = 0;
@@ -674,6 +775,13 @@ public:
 	}
 	void Destroy(Stratum::Scene* scene)
 	{
+		for (auto& category : categories)
+		{
+			category.SongEntries.clear();
+			category.Songs.clear();
+			scene->EntityManager.DestroyEntity(category.Icon);
+		}
+
 		for (auto entity : songEntries)
 		{
 			scene->EntityManager.DestroyEntity(entity);
@@ -817,11 +925,17 @@ void Funkin::MainMenuSystem::Init(Stratum::Scene* scene)
 	Stratum::Input::BindAlias("menu_down", KeyCode::DOWN);
 	Stratum::Input::BindAlias("menu_down", GamepadButton::DPAD_DOWN);
 
+	Stratum::Input::BindAlias("menu_left", KeyCode::LEFT);
+	Stratum::Input::BindAlias("menu_left", GamepadButton::DPAD_LEFT);
+
+	Stratum::Input::BindAlias("menu_right", KeyCode::RIGHT);
+	Stratum::Input::BindAlias("menu_right", GamepadButton::DPAD_RIGHT);
+
 	gPanels[MP_TITLE] = Stratum::CreateRef<TitleMenuPanel>(this);
 	gPanels[MP_MAIN] = Stratum::CreateRef<MainMenuPanel>(this);
 	gPanels[MP_FREEPLAY] = Stratum::CreateRef<FreeplayMenuPanel>(this);
 	gPanels[MP_OPTIONS] = Stratum::CreateRef<OptionsMenuPanel>(this);
-
+	//:D
 	for (auto& panel : gPanels)
 	{
 		if (panel)
@@ -847,6 +961,49 @@ void Funkin::MainMenuSystem::Init(Stratum::Scene* scene)
 	ConfirmFxSource = Stratum::CreateRef<Stratum::MP3AudioSource>("fnf/sounds/confirmMenu.mp3", mScene->AudioEngine->GetEngine());
 	CancelFxSource = Stratum::CreateRef<Stratum::MP3AudioSource>("fnf/sounds/cancelMenu.mp3", mScene->AudioEngine->GetEngine());
 	MusicSource = Stratum::CreateRef<Stratum::MP3AudioSource>("fnf/music/freakyMenu.mp3", mScene->AudioEngine->GetEngine());
+	MusicSource->EnableWaveform(Stratum::WaveformMode::AMPLITUDE_DOMAIN, 1024);
+
+	auto sz = MusicSource->GetFrequencyDomain().size();
+
+	waveformEntities.clear();
+
+	for (size_t i = 0; i < sz; i++)
+	{
+		auto size = (scene->VirtualScreenSize.x / sz) * 2;
+		auto entity = scene->EntityManager.CreateEntity();
+		auto& transform = scene->Transforms.Create(entity);
+		auto& sprite = scene->SpriteRenderers.Create(entity);
+		sprite.RenderLayer = 1;
+		sprite.Center = { 0.0f, 1.0f };
+		sprite.Rect.size = { size / 2, 100 };
+		sprite.SpriteColor = glm::vec4(glm::vec3(0.6f, 1.0f, 1.0f) * ((i % 2) * 0.5f + 0.5f), 0.5f);
+		transform.SetPosition(glm::vec3(i * size - scene->VirtualScreenSize.x, -scene->VirtualScreenSize.y, 0.0f));
+		waveformEntities.push_back(entity);
+	}
+
+	{
+		auto entity = gpadCursor = scene->EntityManager.CreateEntity();
+		auto& transform = scene->Transforms.Create(entity);
+		auto& sprite = scene->SpriteRenderers.Create(entity);
+		sprite.RenderLayer = 50000;
+		sprite.CameraLayer = 0;
+		sprite.Rect.size = {};
+		sprite.SpriteColor = glm::vec4(1.0f, 1.0f, 1.0f, 0.1f);
+	}
+
+	for (int i = 0; i < 4; i++)
+	{
+		auto entity = gpadCursorEdges[i] = scene->EntityManager.CreateEntity();
+		auto& transform = scene->Transforms.Create(entity);
+		auto& sprite = scene->SpriteRenderers.Create(entity);
+		sprite.TextureHandle = scene->Resources.LoadTextureImage("ui/rsc/si.png");
+		sprite.Rotation.x = i * -90.0f;
+		sprite.RenderLayer = 50000+1;
+		sprite.CameraLayer = 0;
+		sprite.Rect.size = { 64, 64 };
+		sprite.UseNearestTextureFilter = true;
+		sprite.SpriteColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	}
 
 	mScene->AudioEngine->AddSource(ConfirmFxSource);
 	mScene->AudioEngine->AddSource(CancelFxSource);
@@ -947,15 +1104,113 @@ void Funkin::MainMenuSystem::Update(Stratum::Scene* scene)
 		}
 	}
 
+	int edgeScale = 0;
+
+	if (mScene->UI->hoveredComponent && mScene->UI->hoveredComponent->Type != Stratum::UIComponentType::RECT && mScene->UI->IsMouseHidden())
+	{
+		auto component = mScene->UI->hoveredComponent;
+		auto& sprite = mScene->SpriteRenderers.Get(gpadCursor);
+		auto& transform = mScene->Transforms.Get(gpadCursor);
+		auto lastSize = glm::vec2(transform.Scale);
+		auto sz = glm::vec2{ component->Width, component->Height };
+		sz /= 2;
+		sprite.Rect.size = { 1, 1 }; // glm::mix(lastSize, sz, 16.0f * Stratum::gpGlobals->deltaTime);
+		glm::vec2 pos = { component->GetPositionX(), component->GetPositionY() };
+		pos += mScene->VirtualScreenSize * glm::vec2(-1.0f, 1.0f);
+		pos += sz * glm::vec2(1.0f, -1.0f);
+		auto lastPos = transform.Position;
+		transform.SetPosition(glm::mix(lastPos, glm::vec3(pos, 0.0f), 16.0f * Stratum::gpGlobals->deltaTime));
+		transform.SetScale(glm::vec3(glm::mix(lastSize, sz, 10.0f * Stratum::gpGlobals->deltaTime), 0.0f));
+		edgeScale = 1;
+	}
+	else
+	{
+		auto& transform = mScene->Transforms.Get(gpadCursor);
+		auto& sprite = mScene->SpriteRenderers.Get(gpadCursor);
+		auto lastSize = glm::vec2(transform.Scale);
+		auto sz = glm::vec2{ 0, 0 };
+		sz /= 2;
+		transform.SetScale(glm::vec3(glm::mix(lastSize, sz, 10.0f * Stratum::gpGlobals->deltaTime), 0.0f));
+	}
+
+	for (int i = 0; i < 4; i++)
+	{
+		auto& transform = mScene->Transforms.Get(gpadCursor);
+		auto& sprite = mScene->SpriteRenderers.Get(gpadCursor);
+		auto edgeEntity = gpadCursorEdges[i];
+		auto& edgeSprite = mScene->SpriteRenderers.Get(edgeEntity);
+		auto& edgeTransform = mScene->Transforms.Get(edgeEntity);
+		glm::vec2 edgePos = transform.Position;
+		float mult = (fmod(Stratum::gpGlobals->elapsedTime, 1.0f) > 0.5f ? 1.0f : 0.0f);
+		auto scale = glm::vec2(transform.Scale);
+		glm::vec2 offsets[4] = {
+			glm::vec2(16, -16),
+			glm::vec2(-16, -16),
+			glm::vec2(-16, 16),
+			glm::vec2(16, 16)
+		};
+		if (i == 0) // Top Left
+		{
+			edgePos += glm::vec2(-sprite.Rect.size.x, sprite.Rect.size.y) * scale;
+		}
+		else if (i == 1) // Top Right
+		{
+			edgePos += glm::vec2(sprite.Rect.size.x, sprite.Rect.size.y) * scale;
+		}
+		else if (i == 2) // Bottom Right
+		{
+			edgePos += glm::vec2(sprite.Rect.size.x, -sprite.Rect.size.y) * scale;
+		}
+		else if (i == 3) // Bottom Left
+		{
+			edgePos += glm::vec2(-sprite.Rect.size.x, -sprite.Rect.size.y) * scale;
+		}
+		edgePos += offsets[i];
+		edgePos -= offsets[i] * mult;
+		edgeTransform.SetPosition(glm::vec3(edgePos, 0.0f));
+		edgeTransform.SetScale(glm::mix(edgeTransform.Scale, glm::vec3(edgeScale / 3.0f), 16.0f * Stratum::gpGlobals->deltaTime));
+	}
+
+	size_t index = 0;
+	for (auto entity : waveformEntities)
+	{
+		auto& transform = scene->Transforms.Get(entity);
+		auto& sprite = scene->SpriteRenderers.Get(entity);
+		auto& freq = MusicSource->GetFrequencyDomain();
+		if (index < freq.size())
+		{
+			float h = freq[index] * 300.0f;
+			//h = glm::clamp(h, 2.0f, 300.0f);
+			sprite.Rect.size.y = h;
+			sprite.SpriteColor.r = h / 600.0f;
+		}
+		index++;
+	}
+
 	if (gCurrentPanel)
 	{
 		gCurrentPanel->Update(scene);
 	}
 
+	int32_t beat = glm::floor(bps * this->MusicSource->PositionF() + 0.5f);
+	static int32_t lastBeat = -1;
+
+	if (lastBeat != beat)
+	{
+		lastBeat = beat;
+		if (beat % 1 == 0 && gCurrentPanel->DoBeat())
+		{
+			auto& cam = scene->Cameras.Get(camera);
+			cam.OrthographicZoom -= 0.03f;
+			if (beat % 2 == 0)
+				cam.OrthographicZoom -= 0.02f;
+		}
+	}
+
 	auto& transform = scene->Transforms.Get(camera);
 	auto& cam = scene->Cameras.Get(camera);
 
-	cam.OrthographicZoom = glm::mix(cam.OrthographicZoom, 0.95f, Stratum::gpGlobals->deltaTime * 8.0f);
+	cam.OrthographicZoom = glm::mix(cam.OrthographicZoom, mScene->UI->IsMouseHidden() ? 1.0f : 0.95f, Stratum::gpGlobals->deltaTime * 8.0f);
 
 	float hidden = (int)!mScene->UI->IsMouseHidden();
 

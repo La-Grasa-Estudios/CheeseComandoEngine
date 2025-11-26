@@ -97,7 +97,7 @@ void MP3AudioSource::UpdateSource()
 
     if (!m_AudioBuffer)
     {
-        m_AudioBuffer = new Stratum::RawAudioBuffer(m_Mp3DecCtx.info.hz, m_Mp3DecCtx.info.channels, ma_format_s16, m_Mp3DecCtx.info.hz / 4);
+        m_AudioBuffer = new Stratum::RawAudioBuffer(m_Mp3DecCtx.info.hz, m_Mp3DecCtx.info.channels, ma_format_s16, m_Mp3DecCtx.info.hz / 8);
         //m_CommitBufferPtr = new char[m_Mp3DecCtx.info.hz * sizeof(short) * m_Mp3DecCtx.info.channels * 8];
 
         ma_sound_init_from_data_source(m_Engine, m_AudioBuffer->GetDataSource(), 0, NULL, &p_Sound);
@@ -147,16 +147,16 @@ void MP3AudioSource::UpdateSource()
             samples = 0;
         }
 
-        size_t readed = mp3dec_ex_read(&m_Mp3DecCtx, buffer, alignedSize);
+        size_t read = mp3dec_ex_read(&m_Mp3DecCtx, buffer, alignedSize);
         
-        if (readed != alignedSize) /* normal eof or error condition */
+        if (read != alignedSize) /* normal eof or error condition */
         {
             
             if (m_Mp3DecCtx.last_error)
             {
                 break;
             }
-            if (readed == 0)
+            if (read == 0)
             {
                 if (p_Params.IsLooping)
                 {
@@ -182,8 +182,9 @@ void MP3AudioSource::UpdateSource()
             m_SeekTo = -1;
         }
 
-        m_AudioBuffer->Queue(buffer, readed);
-        samples += readed;
+		OnSampleWrite(buffer, (uint32_t)read);
+        m_AudioBuffer->Queue(buffer, read);
+        samples += read;
     }
 
     if (!samples)

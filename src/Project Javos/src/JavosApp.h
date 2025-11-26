@@ -9,6 +9,7 @@ namespace Funkin
 	public:
 		JavosApp(Stratum::ApplicationInfo appInfo);
 
+		void OnEarlyInit() override;
 		void OnInit();
 		void OnFrameUpdate();
 

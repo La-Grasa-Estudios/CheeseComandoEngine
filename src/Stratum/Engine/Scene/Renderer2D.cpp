@@ -17,8 +17,6 @@
 
 #include "Core/JobManager.h"
 
-#include <format>
-
 // #define DEBUG_RENDERER
 
 extern size_t totalAllocated;
@@ -74,6 +72,8 @@ Renderer2D::Renderer2D()
 	mCopyCmdBuffer = CreateRef<Render::CopyCommandBuffer>();
 
 	Render::PipelineDescription pipelineDesc{};
+
+	//Hola papus :D
 
 	pipelineDesc.ShaderPath = "shaders/2d/2d_sprite.cso";
 	pipelineDesc.BindingItems.push_back(nvrhi::BindingLayoutItem::PushConstants(0, sizeof(uint32_t)));

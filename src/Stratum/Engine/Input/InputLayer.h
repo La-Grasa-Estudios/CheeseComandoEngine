@@ -18,6 +18,7 @@ public:
 	virtual bool SetMouse(int click, bool press) = 0;
 	virtual bool SetGamepad(int button, bool press) = 0;
 	virtual bool SetGamepadAxis(int axis, int16_t value) = 0;
+	virtual void Update() {};
 };
 
 END_ENGINE

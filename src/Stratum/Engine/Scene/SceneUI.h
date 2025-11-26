@@ -48,6 +48,7 @@ enum class UIComponentType
 	LABEL,
 	BUTTON,
 	CHECKBOX,
+	SLIDER
 };
 
 enum class UINextElement
@@ -77,6 +78,14 @@ struct UICheckbox
 	bool value;
 };
 
+struct UISlider
+{
+	float value;
+	float min = 0.0f;
+	float max = 1.0f;
+	float step = 0.01f;
+};
+
 enum UIPanelTransitionState
 {
 	IDLE,
@@ -96,6 +105,8 @@ struct UIComponent
 	std::string Font = "Roboto";
 	float Width = 0.0f;
 	float Height = 0.0f;
+	float AlignX = 0.0f;
+	float AlignY = 0.0f;
 	float PaddingLeft = 0.0f;
 	float PaddingRight = 0.0f;
 	float PaddingTop = 0.0f;
@@ -113,6 +124,7 @@ struct UIComponent
 	UIButton Button;
 	UILabel Label;
 	UICheckbox Checkbox;
+	UISlider Slider;
 	std::vector<Ref<UIComponent>> Components;
 	std::unordered_map<std::string, VoidPtr> EventCallbacks;
 
@@ -138,6 +150,8 @@ struct UIComponent
 	std::string PadDown;
 	std::string PadLeft;
 	std::string PadRight;
+
+	std::string UserData;
 
 	bool Hovered = false;
 	t_userimage uimg;
@@ -174,6 +188,7 @@ struct UIPanel
 	std::string PadDefault;
 	glm::ivec2 PanelResolution;
 	std::vector<Ref<UIComponent>> Roots;
+	std::vector<VoidPtr> Scripts;
 };
 
 using UIFuncRenderPtr = void(*)(UIComponent*, Render2DInstance*);
@@ -244,8 +259,7 @@ private:
 	std::unordered_map<std::string, UIPanel> mPanels;
 
 	std::vector<std::string> mFocusedPanels;
-
-
+	std::vector<VoidPtr> mWatchers;
 
 };
 

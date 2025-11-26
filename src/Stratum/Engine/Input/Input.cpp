@@ -111,7 +111,7 @@ void Input::Init(SDL_Window* window)
 
 void Input::SetKey(int key, bool press)
 {
-	for (int i = sLayers.size() - 1; i >= 0; i--)
+	for (int i = 0; i < sLayers.size(); i++)
 	{
 		auto layer = sLayers[i];
 		if (layer->SetKey(key, press)) break;
@@ -120,7 +120,7 @@ void Input::SetKey(int key, bool press)
 
 void Input::SetMouse(int click, bool press)
 {
-	for (int i = sLayers.size() - 1; i >= 0; i--)
+	for (int i = 0; i < sLayers.size(); i++)
 	{
 		auto layer = sLayers[i];
 		if (layer->SetMouse(click, press)) break;
@@ -134,7 +134,7 @@ void Input::SetMousePos(glm::vec2 pos)
 
 void Input::SetGamepad(int button, bool press)
 {
-	for (int i = sLayers.size() - 1; i >= 0; i--)
+	for (int i = 0; i < sLayers.size(); i++)
 	{
 		auto layer = sLayers[i];
 		if (layer->SetGamepad(button, press)) break;
@@ -143,7 +143,7 @@ void Input::SetGamepad(int button, bool press)
 
 void Input::SetGamepadAxis(int axis, int16_t value)
 {
-	for (int i = sLayers.size() - 1; i >= 0; i--)
+	for (int i = 0; i < sLayers.size(); i++)
 	{
 		auto layer = sLayers[i];
 		if (layer->SetGamepadAxis(axis, value)) break;
@@ -370,6 +370,11 @@ void Input::Update()
 	//memcpy(m_Mouse, m_NextMouse, sizeof(m_Mouse));
 
 	memcpy(m_LastGamePadButtons, m_GamePadButtons, sizeof(m_GamePadButtons));
+
+	for (int i = 0; i < sLayers.size(); i++)
+	{
+		sLayers[i]->Update();
+	}
 
 	m_AnyKeyDown = false;
 	m_AnyGamepadDown = false;

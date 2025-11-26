@@ -18,6 +18,7 @@
 #include <queue>
 #include <zlib/izlibstream.h>
 #include <VFS/stb/stb_image.h>
+#include <Thirdparty/FileWatch.hpp>
 
 using namespace ENGINE_NAMESPACE;
 
@@ -123,6 +124,10 @@ SceneUI::SceneUI(Scene* scene)
 SceneUI::~SceneUI()
 {
 	mScriptExecutionCtx.As<asIScriptContext>()->Release();
+	for (auto watch : mWatchers)
+	{
+		delete watch.As<filewatch::FileWatch<std::string>>();
+	}
 }
 
 void SceneUI::AddComponentRenderer(UIComponentType type, UIFuncRenderPtr funcPtr, const char* rendertype)
@@ -136,7 +141,7 @@ void SceneUI::EarlyInit()
 	{
 		if (e.stage == "post")
 		{
-			// We need to load all the scripts in /scripts/easings
+			// We need to load all the scripts in "/scripts/easings"
 			auto& engine = AngelScriptEngine::Get();
 			auto scripts = ZVFS::GetAllOf(".as");
 			for (auto& sc : scripts)
@@ -159,7 +164,7 @@ void SceneUI::EarlyInit()
 
 					if (funcGetMatrix && funcGetColor)
 					{
-						s_UITransitionScripts[fileName] = t_uitransitionmeta(mod);
+						s_UITransitionScripts[fileName] = mod;
 					}
 				}
 			}
@@ -188,12 +193,28 @@ void SceneUI::CreateUIPanel(const std::string& panelName, const std::string& jso
 		CalculateLayout(root.get());
 	}
 
+	bool shouldAddWatcher = true;
 	if (mPanels.contains(panelName))
 	{
 		ReleasePanel(mPanels[panelName]);
+		shouldAddWatcher = false;
 	}
 
 	mPanels[panelName] = panel;
+
+	auto reloadFunc = [this, panelName](const std::string& file, const filewatch::Event event_type)
+	{
+		if (event_type == filewatch::Event::modified)
+		{
+			hoveredComponent = nullptr;
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
+			Z_INFO("Reloading UI Panel {}", panelName.c_str());
+			bool wasActive = mPanels[panelName].Active;
+			CreateUIPanel(panelName, mPanels[panelName].Path);
+			if (wasActive)
+				ShowUIPanel(panelName);
+		}
+	};
 
 	if (json.contains("scripts"))
 	{
@@ -218,11 +239,25 @@ void SceneUI::CreateUIPanel(const std::string& panelName, const std::string& jso
 					ctx->Execute();
 					ctx->Prepare(func);
 					ctx->Execute();
+					mPanels[panelName].Scripts.push_back(module);
 				}
 			}
-
+			if (auto str = ZVFS::GetCompletePath(src.c_str()); !str.empty() && shouldAddWatcher)
+			{
+				auto watch = new filewatch::FileWatch<std::string>(str, reloadFunc);
+				Z_INFO("Adding watcher for {}", str);
+				mWatchers.push_back(watch);
+			}
 		}
 	}
+
+	if (auto str = ZVFS::GetCompletePath(jsonFile.c_str()); !str.empty() && shouldAddWatcher)
+	{
+		auto watch = new filewatch::FileWatch<std::string>(str, reloadFunc);
+		Z_INFO("Adding watcher for {}", str);
+		mWatchers.push_back(watch);
+	}
+
 }
 
 void SceneUI::ReleasePanel(UIPanel& panel)
@@ -232,6 +267,11 @@ void SceneUI::ReleasePanel(UIPanel& panel)
 	for (auto& root : panel.Roots)
 	{
 		componentQueue.push(root);
+	}
+
+	for (auto scripts : panel.Scripts)
+	{
+		scripts.As<asIScriptModule>()->Discard();
 	}
 
 	while (!componentQueue.empty())
@@ -270,6 +310,17 @@ void SceneUI::ShowUIPanel(const std::string& panelName)
 	}
 
 	mFocusedPanels.push_back(panelName);
+
+	auto ctx = mScriptExecutionCtx.As<asIScriptContext>();
+	for (auto script : panel.Scripts)
+	{
+		auto func = script.As<asIScriptModule>()->GetFunctionByDecl("void show()");
+		if (func)
+		{
+			ctx->Prepare(func);
+			ctx->Execute();
+		}
+	}
 
 	static std::queue<UIComponent*> componentQueue;
 
@@ -322,6 +373,17 @@ void SceneUI::HideUIPanel(const std::string& panelName)
 		{
 			mFocusedPanels.erase(mFocusedPanels.begin() + i);
 			break;
+		}
+	}
+
+	auto ctx = mScriptExecutionCtx.As<asIScriptContext>();
+	for (auto script : panel.Scripts)
+	{
+		auto func = script.As<asIScriptModule>()->GetFunctionByDecl("void hide()");
+		if (func)
+		{
+			ctx->Prepare(func);
+			ctx->Execute();
 		}
 	}
 
@@ -492,6 +554,10 @@ void SceneUI::Update()
 	{
 		focus = mFocusedPanels.back();
 	}
+	else
+	{
+		lastFocus = "";
+	}
 
 	if ((Stratum::Input::AnyGamepadDown() &&
 		(!hoveredComponent || (hoveredComponent && 
@@ -500,8 +566,6 @@ void SceneUI::Update()
 		(focus != lastFocus && mIsMouseHidden))
 	{
 		hoveredComponent = nullptr;
-
-		lastFocus = focus;
 
 		if (mPanels.contains(focus))
 		{
@@ -521,6 +585,11 @@ void SceneUI::Update()
 					hoveredComponent = FindObject(panel.Name, panel.PadDefault);
 				}
 			}
+		}
+
+		if (hoveredComponent && hoveredComponent->TransitionState == UIPanelTransitionState::IDLE)
+		{
+			lastFocus = focus;
 		}
 
 		if (Stratum::Input::AnyGamepadDown())
@@ -560,8 +629,20 @@ void SceneUI::Update()
 			}
 		}
 
-		if (hoveredComponent->Type == UIComponentType::BUTTON && (Input::GetMouseButtonDown(0) || Stratum::Input::GetGamepadButtonDown(GamepadButton::A)))
+		if ((Input::GetMouseButtonDown(0) || Stratum::Input::GetGamepadButtonDown(GamepadButton::A)))
 		{
+			if (hoveredComponent->Type == UIComponentType::BUTTON)
+			{
+				AppUIEvent e;
+				e.ElementName = hoveredComponent->Name;
+				e.PanelName = hoveredComponent->PanelName;
+				e.EventName = hoveredComponent->Button.OnClick;
+				EventBus::InvokeEvent<AppUIEvent>(e);
+			}
+			if (hoveredComponent->Type == UIComponentType::CHECKBOX)
+			{
+				hoveredComponent->Checkbox.value = !hoveredComponent->Checkbox.value;
+			}
 			if (auto cb = hoveredComponent->EventCallbacks.find("click"); cb != hoveredComponent->EventCallbacks.end())
 			{
 				auto ctx = mScriptExecutionCtx.As<asIScriptContext>();
@@ -569,16 +650,6 @@ void SceneUI::Update()
 				ctx->SetArgObject(0, hoveredComponent);
 				ctx->Execute();
 			}
-			AppUIEvent e;
-			e.ElementName = hoveredComponent->Name;
-			e.PanelName = hoveredComponent->PanelName;
-			e.EventName = hoveredComponent->Button.OnClick;
-			EventBus::InvokeEvent<AppUIEvent>(e);
-		}
-
-		if (hoveredComponent->Type == UIComponentType::CHECKBOX && (Input::GetMouseButtonDown(0) || Stratum::Input::GetGamepadButtonDown(GamepadButton::A)))
-		{
-			hoveredComponent->Checkbox.value = !hoveredComponent->Checkbox.value;
 		}
 
 		hoveredComponent->Hovered = true;
@@ -699,7 +770,7 @@ void SceneUI::Render(RenderQueue2D* ppRenderQueues)
 		transform = glm::translate(transform, glm::vec3(mScene->VirtualScreenSize * glm::vec2(-1.0f, 1.0f), 0.0f));
 		transform = glm::translate(transform, glm::vec3(x, y, 0.0f));
 
-		auto t_render = &s_RenderFuncvtable[(int)component.Type];
+		auto t_render = &s_RenderFuncvtable[static_cast<int>(component.Type)];
 
 		if (component.Type == UIComponentType::RECT ||
 			(t_render->func && strncmp(t_render->rendertype, "rect", 4) == 0))
@@ -731,7 +802,7 @@ void SceneUI::Render(RenderQueue2D* ppRenderQueues)
 			ppRenderQueues[component.CameraLayer].Push(instance);
 		}
 
-		if (component.Type == UIComponentType::LABEL)
+		if (t_render->func && strncmp(t_render->rendertype, "text", 4) == 0)
 		{
 			Render2DInstance instance{};
 
@@ -761,7 +832,10 @@ void SceneUI::OnTextRender(Render2DInstance* pInstance)
 		mScene->TextComponents.Get(mTextEntity).FontSize = 0.0f;
 		return;
 	}
-	if (component->Type != UIComponentType::LABEL)
+
+	auto t_render = &s_RenderFuncvtable[static_cast<int>(component->Type)];
+
+	if (strncmp(t_render->rendertype, "text", 4))
 		return;
 
 	auto& target = mScene->TextComponents.Get(mTextEntity).Text;
@@ -860,6 +934,9 @@ void SceneUI::CalculateLayout(UIComponent* component)
 		component->Position.x += component->PaddingLeft;
 		component->Position.y -= component->PaddingTop;
 
+		component->Position.x -= component->AlignX * (component->Width);
+		component->Position.y += component->AlignY * (component->Height);
+
 		if (component->Anchor.compare("right") == 0)
 		{
 			component->Position.x += mScene->VirtualScreenSize.x * 2.0f;
@@ -885,6 +962,9 @@ void SceneUI::CalculateLayout(UIComponent* component)
 
 		pointer.x += component.TransformX;
 		pointer.y -= component.TransformY;
+
+		pointer.x -= component.AlignX * (component.Width);
+		pointer.y += component.AlignY * (component.Height);
 
 		component.Position = pointer;
 
@@ -981,7 +1061,10 @@ glm::vec2 SceneUI::ComputeComponentBBox(UIComponent* component)
 		glm::vec2 size = textRenderer.GetStringSize(component->Label.Text);
 		return size;
 	}
-	if (component->Type == UIComponentType::BUTTON || component->Type == UIComponentType::RECT || component->Type == UIComponentType::CHECKBOX)
+	if (component->Type == UIComponentType::BUTTON ||
+		component->Type == UIComponentType::RECT ||
+		component->Type == UIComponentType::CHECKBOX ||
+		component->Type == UIComponentType::SLIDER)
 	{
 		return { component->Width, component->Height };
 	}
@@ -1008,6 +1091,8 @@ void SceneUI::ParseTree(nlohmann::json& json, UIComponent* Parent, UIPanel& pane
 		component->FontSize = GetJsonValue<float>(comp, "font-size", component->GetRootEM());
 		component->Width = ParseUnits(GetJsonValue<std::string>(comp, "width", ""), parentWidth, component->GetRootEM(), component->FontSize);
 		component->Height = ParseUnits(GetJsonValue<std::string>(comp, "height", ""), parentHeight, component->GetRootEM(), component->FontSize);
+		component->AlignX = GetJsonValue<float>(comp, "align-x", 0.0f);
+		component->AlignY = GetJsonValue<float>(comp, "align-y", 0.0f);
 		component->PaddingTop = ParseUnits(GetJsonValue<std::string>(comp, "padding-top", ""), parentHeight, component->GetRootEM(), component->FontSize);
 		component->PaddingBottom = ParseUnits(GetJsonValue<std::string>(comp, "padding-bottom", ""), parentHeight, component->GetRootEM(), component->FontSize);
 		component->PaddingLeft = ParseUnits(GetJsonValue<std::string>(comp, "padding-left", ""), parentWidth, component->GetRootEM(), component->FontSize);
@@ -1019,6 +1104,16 @@ void SceneUI::ParseTree(nlohmann::json& json, UIComponent* Parent, UIPanel& pane
 		component->PadLeft = GetJsonValue<std::string>(comp, "left", "");
 		component->PadRight = GetJsonValue<std::string>(comp, "right", "");
 		component->Name = GetJsonValue<std::string>(comp, "name", "");
+
+		if (GetJsonValue<bool>(comp, "align-center", false))
+		{
+			component->AlignX = 0.5f;
+			component->AlignY = 0.5f;
+			if (component->TransformX == 0.0f)
+				component->TransformX = ParseUnits("50%", parentWidth, component->GetRootEM(), component->FontSize);
+			if (component->TransformY == 0.0f)
+				component->TransformY = ParseUnits("50%", parentHeight, component->GetRootEM(), component->FontSize);
+		}
 
 		if (comp.contains("uimg"))
 		{
@@ -1075,6 +1170,14 @@ void SceneUI::ParseTree(nlohmann::json& json, UIComponent* Parent, UIPanel& pane
 		{
 			component->Type = UIComponentType::CHECKBOX;
 			component->Checkbox.value = false;
+		}
+		else if (comp["type"] == "slider")
+		{
+			component->Type = UIComponentType::SLIDER;
+			component->Slider.min = GetJsonValue<float>(comp, "slider-min", 0.0f);
+			component->Slider.max = GetJsonValue<float>(comp, "slider-max", 1.0f);
+			component->Slider.value = GetJsonValue<float>(comp, "slider-default", 0.0f);
+			component->Slider.step = GetJsonValue<float>(comp, "slider-step", 0.05f);
 		}
 
 		if (comp.contains("next-element"))

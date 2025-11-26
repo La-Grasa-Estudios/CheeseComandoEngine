@@ -3,10 +3,52 @@
 #include "Thirdparty/imgui/imgui.h"
 #include "Thirdparty/imgui/imgui_internal.h"
 
+#include <Input/Input.h>
+
 #include "VarRegistry.h"
 #include "Input/Input.h"
 
 using namespace ENGINE_NAMESPACE;
+
+static bool g_ShouldConsoleCaptureKeyboard = false;
+
+class ConsoleInputLayer : public InputLayer_Interface
+{
+	static inline bool m_LastKeys[MAX_KEYS];
+	static inline bool m_Keys[MAX_KEYS];
+	static inline bool m_NextKeys[MAX_KEYS];
+	public:
+	ConsoleInputLayer()
+	{
+		memset(m_Keys, 0, sizeof(m_Keys));
+	}
+	bool SetKey(int key, bool press) override
+	{
+		if (g_ShouldConsoleCaptureKeyboard)
+			m_Keys[key] = press;
+		return g_ShouldConsoleCaptureKeyboard;
+	}
+	bool SetMouse(int click, bool press) override
+	{
+		return g_ShouldConsoleCaptureKeyboard;
+	}
+	bool SetGamepad(int button, bool press) override
+	{
+		return g_ShouldConsoleCaptureKeyboard;
+	}
+	bool SetGamepadAxis(int axis, int16_t value) override
+	{
+		return g_ShouldConsoleCaptureKeyboard;
+	}
+	static bool GetKeyDown(KeyCode keyCode)
+	{
+		return m_Keys[(int)keyCode] && !m_LastKeys[(int)keyCode];
+	}
+	void Update() override
+	{
+		memcpy(m_LastKeys, m_Keys, sizeof(m_Keys));
+	}
+};
 
 Console::Console()
 {
@@ -14,6 +56,7 @@ Console::Console()
 	Logger::SetLogger(this);
 	m_HasConsoleLogCallBack = false;
 	m_IsFocused = false;
+	Input::PushInputLayer(new ConsoleInputLayer());
 }
 
 bool Console::Draw()
@@ -58,10 +101,10 @@ bool Console::Draw()
 		
 		captureKeyboard = true;
 
-		if (Input::GetKeyDown(KeyCode::UP)) {
+		if (ConsoleInputLayer::GetKeyDown(KeyCode::UP)) {
 			cursor--;
 		}
-		if (Input::GetKeyDown(KeyCode::DOWN)) {
+		if (ConsoleInputLayer::GetKeyDown(KeyCode::DOWN)) {
 			cursor++;
 		}
 		if (cursor < 0) {
@@ -70,7 +113,7 @@ bool Console::Draw()
 		if (cursor > vars.size() - 1) {
 			cursor = 0;
 		}
-		if (Input::GetKeyDown(KeyCode::TAB) && !vars.empty()) {
+		if (ConsoleInputLayer::GetKeyDown(KeyCode::TAB) && !vars.empty()) {
 			std::string filter = vars[cursor];
 			size_t pos = filter.find_first_of(" ");
 			size_t seekPos = filter.size();
@@ -126,6 +169,7 @@ bool Console::Draw()
 	ImGui::End();
 	ImGui::PopStyleVar();
 	m_IsFocused = captureKeyboard;
+	g_ShouldConsoleCaptureKeyboard = captureKeyboard;
 	return captureKeyboard;
 }
 

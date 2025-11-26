@@ -52,6 +52,23 @@ void Funkin::StageEditorSystem::Init(Stratum::Scene* scene)
 {
 	mScene = scene;
 
+	{
+		auto entity = scene->EntityManager.CreateEntity();
+		auto& camera = scene->Cameras.Create(entity);
+		auto& transform = scene->Transforms.Create(entity);
+		camera.RendersToGui = true;
+		camera.Orthographic = true;
+	}
+
+	{
+		auto entity = scene->EntityManager.CreateEntity();
+		auto& camera = scene->Cameras.Create(entity);
+		auto& transform = scene->Transforms.Create(entity);
+		camera.RendersToGui = true;
+		camera.Orthographic = true;
+		camera.RenderLayer = 1;
+	}
+
 	mScene->RegisterCustomComponent(new Stratum::ECS::ComponentManager<PropMetadata>(), "prop_metadata");
 
 	CreateBf();
@@ -84,26 +101,6 @@ void Funkin::StageEditorSystem::RenderImGui(Stratum::Scene* scene)
 	static int frameRate = 0;
 
 	frameRate = (frameRate + (int)(1.0f / gpGlobals->deltaTime)) / 2;
-
-	ImGui::Begin("EngineStats");
-
-	float dtms = gpGlobals->deltaTime * 1000.0f;
-	float gpms = Time::GPUTime.load() * 1000.0f;
-
-	int gpuUsage = glm::min((int)((gpms / dtms) * 100.0f), 100);
-
-	ImGui::Text("Frametime: %.2fms, GPU: %.2fms Usage: %i%%, FPS: %i", dtms, gpms, gpuUsage, frameRate);
-	ImGui::Text("Vram: %.2fmb", (float)Render::RendererContext::s_Context->GetGraphicsDeviceProperties().UsedVideoMemory / 1024.0f / 1024.0f);
-	ImGui::Text("ECS Stats [Live/Max] %i/%i", mScene->EntityManager.LiveEntities, mScene->EntityManager.MaxEntities);
-
-	auto times = EngineStats::GetTimes();
-
-	for (auto& t : times)
-	{
-		ImGui::Text("%s: %.2fms", t.name, t.time);
-	}
-
-	ImGui::End();
 
 	DrawProps();
 	DrawPropManager();

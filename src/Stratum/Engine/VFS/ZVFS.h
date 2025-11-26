@@ -86,6 +86,7 @@ struct ZVFSFile {
 	std::ifstream* in;
 	std::string name;
 	std::string path;
+	std::string basePath;
 };
 
 struct ZVFSPackFile
@@ -107,6 +108,7 @@ public:
 	static void MountFile(std::string path);
 	static void MountEmbeddedFile(const char* filePath, int resourceId, const char* resourceType);
 
+	static std::string GetCompletePath(const char* file);
 	static RefBinaryStream GetFile(const char* file);
 	static PakStream GetFileStream(const char* file);
 

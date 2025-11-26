@@ -48,6 +48,7 @@ void AudioEngine::Update()
         if (m_Sources[i])
         {
             m_Sources[i]->UpdateSource();
+            m_Sources[i]->InternalUpdate();
 
             auto source = m_Sources[i].get();
 

@@ -1,5 +1,4 @@
 #include <cassert>
-#include <format>
 #include <fstream>
 #include <string>
 #include <string_view>

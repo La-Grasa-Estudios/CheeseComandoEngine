@@ -9,8 +9,7 @@
 		"name": "menu-container",
 		"width": "40%",
 		"height": "30%",
-		"transform-x": "30%",
-		"transform-y": "35%",
+		"align-center": true,
 		"background-color": [1.0, 1.0, 1.0, 1.0],
 		"camera-layer": 0,
 		"render-layer": 20000,
@@ -31,7 +30,7 @@
 		{
 			"type": "label",
 			"padding-top": "35%",
-			"transform-x": "50.0%",
+			"transform-x": "50%",
 			"text": "Not implemented",
 			"text-align": "50%",
 			"is-background": true
@@ -48,27 +47,36 @@
 			"type": "rect",
 			"width": "31%",
 			"height": "22%",
-			"transform-x": "34.5%",
-			"transform-y": "69%",
+			"align-center": true,
+			"transform-y": "80%",
 			"is-background": true,
-			"background-color": [0.0, 0.2, 0.5, 1.0]
-		},
-		{
-			"name": "ok-button",
-			"type": "button",
-			"width": "30%",
-			"height": "20%",
-			"transform-x": "35%",
-			"transform-y": "70%",
-			"unhovered-color": [0.5, 0.5, 0.5, 1.0],
-			"hovered-color": [0.70, 0.70, 0.70, 1.0],
+			"background-color": [0.0, 0.2, 0.5, 1.0],
 			"components": [
 			{
-				"type": "label",
-				"padding-top": "25%",
-				"transform-x": "50.0%",
-				"text": "Ok",
-				"text-align": "50%"
+				"type": "rect",
+				"width": "98%",
+				"height": "90%",
+				"align-center": true,
+				"is-background": true,
+				"background-color": [0.5, 0.5, 0.5, 1.0]	
+			},
+			{
+			"name": "ok-button",
+			"type": "button",
+			"width": "98%",
+			"height": "90%",
+			"align-center": true,
+			"unhovered-color": [0.5, 0.5, 0.5, 0.0],
+			"hovered-color": [0.70, 0.70, 0.70, 1.0],
+			"components": [
+				{
+					"type": "label",
+					"transform-y": "30.0%",
+					"align-center": true,
+					"text": "Ok",
+					"text-align": "50%"
+				}
+				]
 			}
 			]
 		}

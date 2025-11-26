@@ -163,6 +163,12 @@ class UIComponent{
 	void addEventHandler(const string&in event, OnEvent@ handler);
 	void removeEventHandler(const string&in event);
 	UIComponentType Type;
+	bool boolValue;
+	string userData;
+	vec4 bgColor;
+	vec4 fgColor;
+	vec4 unhoveredColor;
+	vec4 hoveredColor;
 }
 class UIManager{
 	UIComponent@ getElementByName(const string&in documentTitle, const string&in objectName) const;
@@ -178,16 +184,45 @@ string formatFloat(double val, const string&in options = "", uint width = 0, uin
 int64 parseInt(const string&in, uint base = 10, uint&out byteCount = 0);
 uint64 parseUInt(const string&in, uint base = 10, uint&out byteCount = 0);
 double parseFloat(const string&in, uint&out byteCount = 0);
+float fpFromIEEE(uint);
+uint fpToIEEE(float);
+double fpFromIEEE(uint64);
+uint64 fpToIEEE(double);
+bool closeTo(float, float, float = 0.00001f);
+bool closeTo(double, double, double = 0.0000000001);
+float cos(float);
+float sin(float);
+float tan(float);
+float acos(float);
+float asin(float);
+float atan(float);
+float atan2(float, float);
+float cosh(float);
+float sinh(float);
+float tanh(float);
+float log(float);
+float log10(float);
+float pow(float, float);
+float sqrt(float);
+float ceil(float);
+float abs(float);
+float floor(float);
+float fraction(float);
 void logInfo(const string&in);
+void setVsync(bool);
+void exit();
 mat4 perspective(float fov, float aspect, float near, float far);
 mat4 translate(const mat4&in mat, const vec3&in v);
 mat4 scale(const mat4&in mat, const vec3&in v);
 float mix(float a, float b, float t);
 float min(float a, float b);
 float max(float a, float b);
-float sin(float t);
-float cos(float t);
-float pow(float b, float e);
 namespace Audio { void playOneShot(const string&in path, float vol = 1.0f, float pitch = 1.0f, float pan = 0.5f); }
+namespace Funkin { bool getSettingsValue(const string&in key, bool def); }
+namespace Funkin { int getSettingsValue(const string&in key, int def); }
+namespace Funkin { float getSettingsValue(const string&in key, float def); }
+namespace Funkin { void setSettingsValue(const string&in key, bool value); }
+namespace Funkin { void setSettingsValue(const string&in key, int value); }
+namespace Funkin { void setSettingsValue(const string&in key, float value); }
 float deltaTime;
 float timeScale;

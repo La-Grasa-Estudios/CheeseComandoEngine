@@ -53,6 +53,12 @@ void RenderUI_CHECKBOX(UIComponent* pComponent, Render2DInstance* pInstance)
 }
 DECLARE_UI_COMPONENT_RENDERER(CHECKBOX, rect);
 
+void RenderUI_LABEL(UIComponent* pComponent, Render2DInstance* pInstance)
+{
+	// No special rendering for labels yet
+}
+DECLARE_UI_COMPONENT_RENDERER(LABEL, text);
+
 void RendererFuncs::Init()
 {
 	Z_INFO("UI Renderer vtable initialized");

@@ -627,7 +627,9 @@ void Funkin::BiteFernanSong::Update()
 		sprite.SpriteColor = glm::min(sprite.SpriteColor, glm::vec4(1.0f));
 	}
 
-	uint32_t seconds = mConductor->SongTime;
+	int32_t seconds = mConductor->SongTime;
+
+	seconds = glm::max(seconds, 0);
 
 	// Scale sprites to screen size
 	{

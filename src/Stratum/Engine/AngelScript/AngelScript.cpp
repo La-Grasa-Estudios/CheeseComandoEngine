@@ -2,6 +2,7 @@
 
 #include <Core/Logger.h>
 #include <Core/Time.h>
+#include <Core/VarRegistry.h>
 #include <Event/EventBus.h>
 #include <VFS/ZVFS.h>
 
@@ -9,14 +10,29 @@
 #include <scriptstdstring/scriptstdstring.h>
 #include <scriptbuilder/scriptbuilder.h>
 #include <scriptarray/scriptarray.h>
+#include <scriptmath/scriptmath.h>
 #include <cassert>
 
 using namespace ENGINE_NAMESPACE;
 
+static void setVsync(bool vsync)
+{
+	std::string str = std::format("r_vsync {}", vsync);
+	std::string log;
+	VarRegistry::ParseConsoleVar(str, log);
+}
+
 // From AS github
 extern void GenerateScriptPredefined(const asIScriptEngine* engine, const std::string& path);
 
+static void CloseEngine()
+{
+	Z_INFO("Exit called through script");
+	EventBus::InvokeEvent(ApplicationEvent{ ApplicationEvent::APP_EVENT_SHUTDOWN });
+}
+
 static void ENGINE_AS_CALL MessageCallback(const asSMessageInfo* msg, void* param)
+
 {
 	const char* type = "ERR ";
 	if (msg->type == asMSGTYPE_WARNING)
@@ -89,10 +105,13 @@ void AngelScriptEngine::Init()
 	engine->SetDefaultAccessMask(AS_ALL_MASK);
 
 	RegisterStdString(engine);
+	RegisterScriptMath(engine);
 	RegisterScriptArray(engine, true); // 'true' enables debug info
 
 	//engine->SetDefaultNamespace("Stratum");
 	AS_RETURN_CHECK(engine->RegisterGlobalFunction("void logInfo(const string &in)", asFUNCTION(asWrapper_LogInfo), asCALL_CDECL));
+	AS_RETURN_CHECK(engine->RegisterGlobalFunction("void setVsync(bool)", asFUNCTION(setVsync), asCALL_CDECL));
+	AS_RETURN_CHECK(engine->RegisterGlobalFunction("void exit()", asFUNCTION(CloseEngine), asCALL_CDECL));
 	AS_RETURN_CHECK(engine->RegisterGlobalProperty("const float deltaTime", &Time::DeltaTime));
 	AS_RETURN_CHECK(engine->RegisterGlobalProperty("float timeScale", &Time::TimeScale));
 	

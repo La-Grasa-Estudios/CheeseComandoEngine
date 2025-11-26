@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef _WIN32
+
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "zlibstatic.lib")
@@ -19,10 +21,14 @@
 #pragma comment(lib, "db/nvrhi_vk.lib")
 #pragma comment(lib, "db/SDL3.lib")
 #pragma comment(lib, "db/freetyped.lib")
+#pragma comment(lib, "db/kissfft-float.lib")
 #else
 #pragma comment(lib, "rel/nvrhi.lib")
 #pragma comment(lib, "rel/nvrhi_d3d12.lib")
 #pragma comment(lib, "rel/nvrhi_vk.lib")
 #pragma comment(lib, "rel/SDL3.lib")
 #pragma comment(lib, "rel/freetype.lib")
+#pragma comment(lib, "rel/kissfft-float.lib")
+#endif
+
 #endif

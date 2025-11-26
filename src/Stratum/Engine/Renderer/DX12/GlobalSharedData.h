@@ -58,6 +58,7 @@ namespace DX12
         HWND hWnd;
         ComPtr<ID3D12Device> Device;
         ComPtr<ID3D12CommandQueue> CommandQueue;
+        ComPtr<ID3D12CommandQueue> ComputeQueue;
         ComPtr<ID3D12CommandQueue> CopyQueue;
         ComPtr<IDXGISwapChain4> SwapChain;
 

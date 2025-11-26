@@ -81,7 +81,11 @@ void Application::Run(std::vector<std::string> args)
 	m_Console.Focused();
 	
 	ZVFS::Mount("Pak");
-	ZVFS::Mount("Data", true);
+	//ZVFS::Mount("Data", true);
+
+	VarRegistry::RegisterConsoleVar("", "quit", VarType::Void)->func = [&](ConsoleVar& var, std::string args) {
+		EventBus::InvokeEvent(ApplicationEvent{ ApplicationEvent::APP_EVENT_SHUTDOWN });
+	};
 
 	VarRegistry::RegisterConsoleVar("cl", "imgui", VarType::Bool)->set(m_AppInfo.IsImGuiEnabled);
 	VarRegistry::RegisterConsoleVar("cl", "api", VarType::Int)->set((int)m_AppInfo.graphicsAPI);
@@ -771,6 +775,25 @@ void Application::OnFrameRenderImGui()
 	
 	frameRate = (frameRate + (int)(1.0f / gpGlobals->deltaTime)) / 2;
 
+	m_Console.Draw();
+
+	static float frametimePlot[256] = {};
+	static float gputimePlot[256] = {};
+
+	for (int i = 255; i > 0; i--)
+	{
+		frametimePlot[i] = frametimePlot[i - 1];
+	}
+
+	frametimePlot[0] = gpGlobals->deltaTime * 1000.0f;
+
+	for (int i = 255; i > 0; i--)
+	{
+		gputimePlot[i] = gputimePlot[i - 1];
+	}
+
+	gputimePlot[0] = Time::GPUTime.load() * 1000.0f;
+
 	ImGui::Begin("EngineStats");
 
 	float dtms = gpGlobals->deltaTime * 1000.0f;
@@ -779,6 +802,9 @@ void Application::OnFrameRenderImGui()
 	int gpuUsage = glm::min((int)((gpms / dtms) * 100.0f), 100);
 
 	ImGui::Text("Frametime: %.2fms, GPU: %.2fms Usage: %i%%, FPS: %i", dtms, gpms, gpuUsage, frameRate);
+
+	ImGui::PlotLines("##frametime", frametimePlot, IM_ARRAYSIZE(frametimePlot), 0, NULL, 0.0f, 50.0f, ImVec2(0, 80));
+	ImGui::PlotLines("##gputime", gputimePlot, IM_ARRAYSIZE(gputimePlot), 0, NULL, 0.0f, 50.0f, ImVec2(0, 80));
 
 	auto times = EngineStats::GetTimes();
 

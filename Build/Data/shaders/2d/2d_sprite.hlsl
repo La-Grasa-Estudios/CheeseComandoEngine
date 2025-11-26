@@ -30,7 +30,7 @@ struct ConstantDataStruct
     uint BatchIndex;
 };
 
-VK_PUSH_CONSTANT ConstantBuffer <ConstantDataStruct>DrawData : REGISTER_CBUFFER(0, 0);
+VK_PUSH_CONSTANT ConstantBuffer<ConstantDataStruct> DrawData : REGISTER_CBUFFER(0, 0);
 
 static const int FLAG_NEAREST = 0x1;
 
@@ -40,7 +40,7 @@ StructuredBuffer<SpriteInstance> Instances : REGISTER_SRV(10, 0);
 
 cbuffer FrameData : register(b1)
 {
-    float4x4 ProjView[2];
+    float4x4 ProjView[16];
 };
 
 static const int uvLut[6] =

@@ -1,3 +1,4 @@
+require 'modules/android_studio/android_studio'
 
 workspace "Stratum Engine"
    configurations { "Debug", "Release" }
@@ -17,7 +18,7 @@ function base_config()
     cppdialect "C++20"
 	location "../projects"
 	language "C++"
-	includedirs { "../Dependencies/Include", 
+	includedirs { "../Dependencies/Include",
 	"../Dependencies/Thirdparty/angelscript/sdk/angelscript/include",
 	"../Dependencies/Thirdparty/angelscript/sdk/add_on",
 	"Stratum/Engine" }
@@ -28,11 +29,11 @@ function stratum_config() --every stratum project calls this
 	links { "Stratum-Core", "angelscript" }
 end
 	
-filter "action:vs*"
+filter "toolset:msc*"
     buildoptions { "/MP" }
 	defines { "_CRT_SECURE_NO_WARNINGS" }
-   
-project "Stratum-Core"
+	
+function stratum_core()
 	base_config()
 	kind "StaticLib"
 	links { "angelscript" }
@@ -51,6 +52,10 @@ project "Stratum-Core"
 	filter "configurations:Release"
 	defines { "NDEBUG" }
 	optimize "On"
+end
+   
+project "Stratum-Core"
+	stratum_core()
 	
 group "Apps"	
 

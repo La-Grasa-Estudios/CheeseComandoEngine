@@ -40,6 +40,23 @@ Funkin::BalatroSystem::BalatroSystem() :
 
 void Funkin::BalatroSystem::Init(Stratum::Scene* scene)
 {
+	{
+		auto cam = scene->EntityManager.CreateEntity();
+		auto& cam1 = scene->Cameras.Create(cam);
+		scene->Transforms.Create(cam);
+		cam1.Orthographic = true;
+		cam1.RendersToGui = true;
+	}
+
+	{
+		auto cam = scene->EntityManager.CreateEntity();
+		auto& cam1 = scene->Cameras.Create(cam);
+		scene->Transforms.Create(cam);
+		cam1.Orthographic = true;
+		cam1.RendersToGui = true;
+		cam1.RenderLayer = 1;
+	}
+
 	mCanDissolve = true;
 	mScene = scene;
 
@@ -296,7 +313,7 @@ void Funkin::BalatroSystem::Update(Stratum::Scene* scene)
 	if (!card.grabbed)
 		card.position = transform.Position;
 
-	//mNextCardTimer += Stratum::gpGlobals->deltaTime;
+	mNextCardTimer += Stratum::gpGlobals->deltaTime;
 
 	if (mNextCardTimer > 5.0f && !mCurrentGrab && mCanDissolve)
 	{
@@ -1103,7 +1120,7 @@ Stratum::ECS::edict_t Funkin::BalatroSystem::CreateCard(CardType type, CardSuit 
 		sprite.Rect.size = { 142, 190 };
 		sprite.Rect.position = { 142 * enhancementX, 190 * enhancementY };
 		sprite.UseNearestTextureFilter = false;
-		sprite.RenderLayer = 1;
+		sprite.RenderLayer = 10;
 		sprite.CameraLayer = 0;
 		sprite.FlipX = false;
 		sprite.Center = { 0.0f, 0.0f };
@@ -1120,7 +1137,7 @@ Stratum::ECS::edict_t Funkin::BalatroSystem::CreateCard(CardType type, CardSuit 
 		sprite.Rect.size = { 142, 190 };
 		sprite.Rect.position = { 142 * enhancementX, 190 * enhancementY };
 		sprite.UseNearestTextureFilter = false;
-		sprite.RenderLayer = 0;
+		sprite.RenderLayer = 9;
 		sprite.CameraLayer = 0;
 		sprite.FlipX = false;
 		sprite.Center = { 0.0f, 0.0f };
@@ -1138,7 +1155,7 @@ Stratum::ECS::edict_t Funkin::BalatroSystem::CreateCard(CardType type, CardSuit 
 		sprite.Rect.size = { 142, 190 };
 		sprite.Rect.position = { 142 * cardX, 190 * cardY };
 		sprite.UseNearestTextureFilter = false;
-		sprite.RenderLayer = 1;
+		sprite.RenderLayer = 10;
 		sprite.CameraLayer = 0;
 		sprite.FlipX = false;
 		sprite.Center = { 0.0f, 0.0f };

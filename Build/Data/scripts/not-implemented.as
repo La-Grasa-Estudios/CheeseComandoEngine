@@ -7,6 +7,6 @@ void close(UIComponent@ component)
 
 void setup()
 {
-    UIComponent@ element = document.getElementByName(documentId, "ok-button");
-    element.addEventHandler("click", cast<OnEvent>(close));
+    auto element = document.getElementByName(documentId, "ok-button");
+    element.addEventHandler("click", close);
 }

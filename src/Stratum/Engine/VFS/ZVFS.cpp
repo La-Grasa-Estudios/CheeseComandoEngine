@@ -127,6 +127,7 @@ void ENGINE_NAMESPACE::ZVFS::Mount(std::string directory, bool root)
                 file.globalResourceData = NULL;
                 file.name = root ? p.c_str() + (directory.size() + 1) : p;
                 file.path = path.string();
+                file.basePath = path.string();
                 filesystem->files[file.name] = file;
 
                 count++;
@@ -164,6 +165,38 @@ void ZVFS::MountFile(std::string path)
 void ZVFS::MountEmbeddedFile(const char* filePath, int resourceId, const char* resourceType)
 {
     
+}
+
+std::string ZVFS::GetCompletePath(const char* file)
+{
+    std::string sfile = file;
+
+    if (sfile.starts_with("/"))
+    {
+        sfile = sfile.substr(1);
+    }
+    if (sfile.starts_with("./"))
+    {
+        sfile = sfile.substr(2);
+    }
+
+    for (int i = 0; i < sfile.size(); i++) {
+        if (sfile[i] == '\\') {
+            sfile[i] = '/';
+        }
+    }
+
+    std::transform(sfile.begin(), sfile.end(), sfile.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+
+    if (m_Instance->files.contains(sfile))
+    {
+        ZVFSFile& zfile = m_Instance->files[sfile];
+
+        return zfile.basePath;
+    }
+
+    return "";
 }
 
 RefBinaryStream ZVFS::GetFile(const char* file)
