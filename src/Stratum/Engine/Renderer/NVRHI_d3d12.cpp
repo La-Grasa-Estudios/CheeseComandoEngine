@@ -204,6 +204,8 @@ void Render::BackendInitializerD3D12::InitializeBackend(Internal::Window* pWindo
         }
     }
 
+    // MessageBox(NULL, L"Inserte mensaje aqui", L"Mensaje Critico", MB_YESNO | MB_ICONQUESTION);
+
     if (!dxgiAdapter4)
     {
         error = "A graphics card with Microsoft DirectX 12 (Feature Level 11.0, SM 6.5, Tier 2) is required.";

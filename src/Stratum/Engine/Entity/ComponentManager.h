@@ -47,6 +47,7 @@ namespace ECS
 
 		Component& Create(edict_t edict)
 		{
+			assert(!HasComponent(edict));
 			mAllocatedArray[edict - 1] = true;
 
 			mLookup[edict] = mEntities.size();

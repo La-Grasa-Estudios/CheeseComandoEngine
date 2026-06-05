@@ -214,15 +214,6 @@ void Funkin::BalatroSystem::Update(Stratum::Scene* scene)
 				cardTransform.SetPosition(card.position);
 
 				auto& transform1 = mScene->Transforms.Get(mCardEntity);
-				auto& transform2 = mScene->Transforms.Get(card.bgEntity);
-				auto& transform3 = mScene->Transforms.Get(card.bgShadowEntity);
-
-				auto& sprite1 = mScene->SpriteRenderers.Get(mCardEntity);
-				auto& sprite2 = mScene->SpriteRenderers.Get(card.bgEntity);
-				auto& sprite3 = mScene->SpriteRenderers.Get(card.bgShadowEntity);
-
-				transform2.SetPosition(transform1.Position);
-				transform3.Position = transform1.Position;
 
 				mDissolveTime = 1.0f;
 				mBalatroCrumple->Play();
@@ -1125,7 +1116,8 @@ Stratum::ECS::edict_t Funkin::BalatroSystem::CreateCard(CardType type, CardSuit 
 		sprite.FlipX = false;
 		sprite.Center = { 0.0f, 0.0f };
 		sprite.pCustomShader = mBalatroDissolveShader.get();
-		transform.SetScale(glm::vec3(1.55f));
+		transform.SetScale(glm::vec3(1.0f));
+		transform.Parent = cardEntity;
 
 		card.bgEntity = entity;
 	}
@@ -1143,7 +1135,9 @@ Stratum::ECS::edict_t Funkin::BalatroSystem::CreateCard(CardType type, CardSuit 
 		sprite.Center = { 0.0f, 0.0f };
 		sprite.SpriteColor = { 0.0f, 0.0f, 0.0f, 0.5f };
 		sprite.pCustomShader = mBalatroDissolveShader.get();
-		transform.SetScale(glm::vec3(1.55f));
+		transform.SetScale(glm::vec3(1.0f));
+		transform.SetPosition(glm::vec3(8.0f, -8.0f, 0.0f));
+		transform.Parent = cardEntity;
 
 		card.bgShadowEntity = entity1;
 	}

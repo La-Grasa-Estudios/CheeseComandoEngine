@@ -604,6 +604,8 @@ void Render::GraphicsPipeline::UpdatePipeline()
         .setPixelShader(pixelShader)
         .setRenderState(renderState);
 
+	pipelineDesc.primType = desc.PrimType;
+
     pipelineDesc.addBindingLayout(bindingLayout);
 
     if (enableBindless)

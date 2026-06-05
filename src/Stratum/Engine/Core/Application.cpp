@@ -375,10 +375,10 @@ void Application::MainLoop()
 		Time::ClearGPU();
 
 #ifndef TRACY_ENABLE
-		if (!m_Window->IsWindowActive()) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			LogStutters = false;
-		}
+		//if (!m_Window->IsWindowActive()) {
+		//	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		//	LogStutters = false;
+		//}
 #endif
 
 		EngineStats::Reset();
@@ -420,11 +420,11 @@ void Application::MainLoop()
 			mCurrentScene->PostUpdate();
 		}
 
-		Input::Update();
-
 		OnFramePrepare();
 
 		OnFrameRender();
+
+		Input::Update();
 
 		glm::mat4 projection = glm::perspective(glm::radians(70.0f), m_Window->GetWidth() / (float)m_Window->GetHeight(), 0.01f, 100.0f);
 		glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 3.0f, -5.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -433,13 +433,13 @@ void Application::MainLoop()
 
 		if (mCurrentScene)
 		{
-
+		
 			m_RenderPath3D->PreRender(mCurrentScene, m_Window->GetFramebuffer().get());
 			m_RenderPath2D->PreRender(mCurrentScene, m_Window->GetFramebuffer().get());
-
+		
 			m_RenderPath3D->Render(mCurrentScene, m_Window->GetFramebuffer().get());
 			m_RenderPath2D->Render(mCurrentScene, m_Window->GetFramebuffer().get());
-
+		
 			m_RenderPath2D->Submit();
 		}
 

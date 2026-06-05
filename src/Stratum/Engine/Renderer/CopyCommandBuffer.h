@@ -29,6 +29,9 @@ namespace Render {
 		void SetQueueInstance(CommandListQueueInstance queue); 
 		void TriggerWaitOnExecutionQueue(CommandQueue queue);
 
+		void SignalEvent(nvrhi::EventQueryHandle event);
+		void WriteBuffer(Buffer* buffer, void* data, size_t dataSize, size_t destOffset = 0);
+
 		// Vulkan specific barriers, does not work on D3D12
 		void RequireTextureState(ImageResource* pImage, ResourceState before, ResourceState after, nvrhi::TextureSubresourceSet subResources = nvrhi::AllSubresources);
 		void RequireBufferState(Buffer* pBuffer, ResourceState before, ResourceState after);

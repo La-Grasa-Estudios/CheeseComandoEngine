@@ -29,7 +29,6 @@ void setup()
     UIComponent@ storyButton = document.getElementByName(documentId, "story-button");
     UIComponent@ promoButton = document.getElementByName(documentId, "promo-button");
     UIComponent@ creditsButton = document.getElementByName(documentId, "credits-button");
-     
     array<UIComponent@> buttons = {
         freeplayButton,
         optionsButton,

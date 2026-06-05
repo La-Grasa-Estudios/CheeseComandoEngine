@@ -46,6 +46,7 @@ struct ComponentObjectDef
 {
 	std::string Name;
 	std::string Description;
+	std::string SerializableName;
 	std::vector<std::string> Dependencies;
 	std::vector<ComponentFieldDef> Fields;
 };
@@ -59,6 +60,8 @@ public:
 	ComponentLibrary();
 
 	uint32_t GetValueForEnum(std::string_view enumname, std::string_view name);
+	ComponentObjectDef& GetComponentDefinition(std::string_view name);
+	std::vector<std::string>& GetComponentList();
 
 private:
 	void ParseEntityDefinitionFile(std::string_view path);
@@ -66,6 +69,7 @@ private:
 	void ParseComponent(nlohmann::json_abi_v3_11_2::json& component);
 	std::unordered_map<std::string, ComponentTypedef> mDataTypes;
 	std::unordered_map<std::string, ComponentObjectDef> mComponents;
+	std::vector<std::string> mComponentList;
 };
 
 END_ENGINE

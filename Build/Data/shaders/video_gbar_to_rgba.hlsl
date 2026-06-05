@@ -32,7 +32,7 @@ SamplerState videoSampler : REGISTER_SAMPLER(0, 0);
 Texture2D videoSurface : REGISTER_SRV(0, 0);
 
 float4 main(v2f input) : SV_Target {
-	return videoSurface.Sample(videoSampler, input.TexCoord).gbar;
+	return videoSurface.Sample(videoSampler, input.TexCoord).rgba;
 }
 
 #endif

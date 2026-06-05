@@ -130,6 +130,7 @@ namespace Render {
 		/// </summary>
 		/// <param name="vp">The viewport</param>
 		void SetViewport(Viewport* vp);
+		Viewport GetViewport();
 
 		void Draw(uint32_t count, uint32_t offset);
 		void DrawInstanced(uint32_t count, uint32_t offset, uint32_t instanceCount, uint32_t baseInstance);

@@ -60,6 +60,7 @@ class Input {
 
 	static inline bool m_AnyKeyDown;
 	static inline bool m_AnyGamepadDown;
+	static inline int m_ScrollDelta = 0;
 
 	static inline uint8_t m_GamepadCount = 0;
 
@@ -81,6 +82,7 @@ public:
 	static void SetGamepad(int button, bool press);
 	static void SetGamepadAxis(int axis, int16_t value);
 	static void SetGamepadRumble(float left_intensity, float right_intensity, uint32_t duration);
+	static int GetScrollDelta();
 
 	// Legacy Stuff
 

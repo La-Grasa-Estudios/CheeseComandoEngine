@@ -1313,7 +1313,6 @@ void Funkin::MainMenuSystem::CreateControllerPrompt(GamepadButton button, const 
 	auto& buttonAnchor = mScene->GuiAnchors.Create(buttonPrompt);
 
 	auto textEntity = mScene->EntityManager.CreateEntity();
-	auto& textComp = mScene->TextComponents.Create(textEntity);
 	auto& textComponent = mScene->TextComponents.Create(textEntity);
 	auto& textRenderer = mScene->TextRenderers.Create(textEntity);
 	auto& textTransform = mScene->Transforms.Create(textEntity);

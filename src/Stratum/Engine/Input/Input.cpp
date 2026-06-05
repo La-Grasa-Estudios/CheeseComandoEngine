@@ -100,6 +100,9 @@ void Input::Init(SDL_Window* window)
 		case SDL_EVENT_MOUSE_MOTION:
 			Input::s_ThreadedMousePos = glm::vec2(e.motion.x, e.motion.y);
 			break;
+		case SDL_EVENT_MOUSE_WHEEL:
+				m_ScrollDelta += e.wheel.y;
+			break;
 		default:
 			break;
 		}
@@ -159,6 +162,11 @@ void Input::SetGamepadRumble(float left_intensity, float right_intensity, uint32
 			SDL_RumbleGamepad(gpad.second, (uint16_t)(glm::clamp(left_intensity, 0.0f, 1.0f) * 0xFFFF), (uint16_t)(glm::clamp(right_intensity, 0.0f, 1.0f) * 0xFFFF), duration);
 		}
 	}
+}
+
+int Input::GetScrollDelta()
+{
+	return m_ScrollDelta;
 }
 
 void Input::SetInputMode(MouseInputMode mode)
@@ -363,6 +371,8 @@ void Input::PopInputLayer()
 
 void Input::Update()
 {
+	m_ScrollDelta = 0;
+
 	memcpy(m_LastKeys, m_Keys, sizeof(m_Keys));
 	//memcpy(m_Keys, m_NextKeys, sizeof(m_Keys));
 

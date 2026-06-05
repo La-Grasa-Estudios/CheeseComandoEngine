@@ -133,6 +133,8 @@ namespace Render {
 		int32_t y = 0;
 		int32_t width = 0;
 		int32_t height = 0;
+		float minDepth = 0.0f;
+		float maxDepth = 1.0f;
 
 	};
 

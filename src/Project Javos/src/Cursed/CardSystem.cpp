@@ -72,8 +72,6 @@ void Funkin::CardSystem::Update(Stratum::Scene* scene)
 
 		auto& card = cardManager->Get(entity);
 		auto& transform1 = mScene->Transforms.Get(entity);
-		auto& transform2 = mScene->Transforms.Get(card.bgEntity);
-		auto& transform3 = mScene->Transforms.Get(card.bgShadowEntity);
 
 		auto& sprite1 = mScene->SpriteRenderers.Get(entity);
 		auto& sprite2 = mScene->SpriteRenderers.Get(card.bgEntity);
@@ -106,8 +104,6 @@ void Funkin::CardSystem::Update(Stratum::Scene* scene)
 		auto lastPos = transform1.Position;
 
 		transform1.SetPosition(clampMix(transform1.Position, position, Stratum::Time::UnscaledDeltaTime * card.moveSpeed));
-		transform2.SetPosition(transform1.Position);
-		transform3.Position = transform1.Position;
 
 		auto newPos = transform1.Position;
 
@@ -119,10 +115,8 @@ void Funkin::CardSystem::Update(Stratum::Scene* scene)
 		card.rotation = clampMix(card.rotation, rotation, Stratum::Time::UnscaledDeltaTime * 32.0f);
 
 		transform1.SetRotation(glm::vec3(glm::radians(tiltX + card.tiltX), glm::radians(tiltY + card.tiltY), glm::radians(card.rotation)));
-		transform2.SetRotation(transform1.Rotation);
-		transform3.Rotation = transform1.Rotation;
 
-		transform3.ModelMatrix = glm::translate(transform1.ModelMatrix, glm::vec3(9.0f, -9.0f, 0.0f));
+		//transform3.ModelMatrix = glm::translate(transform1.ModelMatrix, glm::vec3(9.0f, -9.0f, 0.0f));
 
 		AABB cardAABB = {
 			transform1.Position.x - sprite1.Rect.size.x * transform1.Scale.x,
@@ -169,7 +163,7 @@ void Funkin::CardSystem::Update(Stratum::Scene* scene)
 		scale *= 1.0f + glm::sin(card.grabTimer * glm::pi<float>() * 12.0f) * 0.02f;
 
 		transform1.SetScale(scale * card.scaleFactor);
-		transform2.SetScale(transform1.Scale);
+		//transform2.SetScale(transform1.Scale);
 
 	}
 

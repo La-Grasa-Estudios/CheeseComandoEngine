@@ -132,6 +132,7 @@ SceneUI::~SceneUI()
 
 void SceneUI::AddComponentRenderer(UIComponentType type, UIFuncRenderPtr funcPtr, const char* rendertype)
 {
+	Z_INFO("Registering UI Renderer for type {} with function ptr {:#x}", (int)type, (uintptr_t)funcPtr);
 	s_RenderFuncvtable[(int)type] = { funcPtr, rendertype };
 }
 

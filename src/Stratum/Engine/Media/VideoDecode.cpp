@@ -14,9 +14,9 @@ VideoDecode::VideoDecode(std::string_view path, AudioEngine* pEngine)
 	m_Initialized = false;
 	m_Finished = false;
 
-	m_Reader = av::StreamReader::create(path.data(), false).value();
 
 	bool AudioEnabled = pEngine;
+	m_Reader = av::StreamReader::create(path.data(), AudioEnabled).value();
 
 	if (!m_Reader) {
 		m_Reader = av::StreamReader::create(path.data(), false).value();

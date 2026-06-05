@@ -47,7 +47,7 @@ void Window::Create(int width, int height)
 
 	s_instance = this;
 
-	uint32_t flags = 0;
+	uint32_t flags = SDL_WINDOW_RESIZABLE;
 	if (this->StartMaximized) {
 		flags |= SDL_WINDOW_MAXIMIZED;
 	}

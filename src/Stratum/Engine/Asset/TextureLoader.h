@@ -64,7 +64,7 @@ namespace Render
 
 	public:
 
-		static Ref<ImageResource> LoadFileToImage(const std::string& path, bool* bIsTransparent, float fRequestedLevelOfDetail = 1.0f);
+		static Ref<ImageResource> LoadFileToImage(const std::string& path, bool* bIsTransparent = NULL, float fRequestedLevelOfDetail = 1.0f);
 
 	};
 }

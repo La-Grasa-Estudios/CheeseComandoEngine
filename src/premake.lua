@@ -1,5 +1,3 @@
-require 'modules/android_studio/android_studio'
-
 workspace "Stratum Engine"
    configurations { "Debug", "Release" }
    platforms { "x64" }
@@ -111,6 +109,28 @@ project "ResourceCompiler"
 		"ResourceCompiler/**.cpp",
 		"ResourceCompiler/**.h*",
 		"ResourceCompiler/**.hpp"
+	}
+
+	filter "configurations:Debug"
+	defines { "_DEBUG" }
+	symbols "On"
+	
+	filter "configurations:Release"
+	defines { "NDEBUG" }
+	optimize "On"
+	
+project "Editor"
+
+	stratum_config()
+	links { "zlibstatic" }
+	
+	kind "ConsoleApp"
+	
+	files {
+		"Editor/**.c",
+		"Editor/**.cpp",
+		"Editor/**.h*",
+		"Editor/**.hpp"
 	}
 
 	filter "configurations:Debug"

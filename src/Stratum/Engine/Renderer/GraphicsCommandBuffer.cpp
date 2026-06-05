@@ -319,8 +319,20 @@ void Render::GraphicsCommandBuffer::SetIndirectBuffer(Buffer* buffer)
 
 void Render::GraphicsCommandBuffer::SetViewport(Viewport* vp)
 {
-	mSetViewport = nvrhi::ViewportState().addViewportAndScissorRect(nvrhi::Viewport(vp->x, vp->width, vp->y, vp->height, 0.0f, 1.0f));
+	mSetViewport = nvrhi::ViewportState().addViewportAndScissorRect(nvrhi::Viewport(vp->x, vp->width, vp->y, vp->height, vp->minDepth, vp->maxDepth));
 	mGraphicsStateDirty = true;
+}
+
+Render::Viewport Render::GraphicsCommandBuffer::GetViewport()
+{
+	return Viewport{
+		(int32_t)mSetViewport.viewports[0].minX,
+		(int32_t)mSetViewport.viewports[0].minY,
+		(int32_t)mSetViewport.viewports[0].maxX,
+		(int32_t)mSetViewport.viewports[0].maxY,
+		mSetViewport.viewports[0].minZ,
+		mSetViewport.viewports[0].maxZ
+	};
 }
 
 void Render::GraphicsCommandBuffer::Draw(uint32_t count, uint32_t offset)

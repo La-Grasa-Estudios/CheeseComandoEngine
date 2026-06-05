@@ -20,6 +20,7 @@ namespace Render {
 	/// Static vector to define static bindings used by the pipeline
 	/// </summary>
 	using StaticBindingTable = nvrhi::static_vector<nvrhi::BindingSetItem, 64>;
+	using PrimitiveType = nvrhi::PrimitiveType;
 
 	enum class VertexType {
 
@@ -91,6 +92,7 @@ namespace Render {
 		uint32_t NumRenderTargets; // Unused
 		Framebuffer* RenderTarget = NULL; // The render target to be used with the pipeline cannot be null once SetGraphicsPipeline is set
 		ImageFormat DepthTargetFormat = ImageFormat::DEPTH16;
+		PrimitiveType PrimType = PrimitiveType::TriangleList;
 
 		bool UseStaticBinding = false;
 		bool UseBindless = false;

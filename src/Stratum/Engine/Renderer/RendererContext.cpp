@@ -224,6 +224,8 @@ void RendererContext::ImGuiShutdown()
 
 void RendererContext::VideoMemoryAdd(size_t size)
 {
+    if (!s_Context)
+        return;
     s_Context->mUsedVideoMemory.fetch_add(size);
     return;
     if (size <= 4096)
@@ -236,6 +238,8 @@ void RendererContext::VideoMemoryAdd(size_t size)
 
 void RendererContext::VideoMemorySub(size_t size)
 {
+    if (!s_Context)
+        return;
     s_Context->mUsedVideoMemory.fetch_sub(size);
     return;
     if (size <= 4096)

@@ -54,6 +54,16 @@ void Render::CopyCommandBuffer::TriggerWaitOnExecutionQueue(CommandQueue queue)
 	RendererContext::GetDevice()->queueWaitForCommandList(queue, CommandQueue::Copy, mCmdInstance);
 }
 
+void Render::CopyCommandBuffer::SignalEvent(nvrhi::EventQueryHandle event)
+{
+	RendererContext::GetDevice()->setEventQuery(event.Get(), CommandQueue::Copy);
+}
+
+void Render::CopyCommandBuffer::WriteBuffer(Buffer* buffer, void* data, size_t dataSize, size_t destOffset)
+{
+	mCommandList->writeBuffer(buffer->Handle, data, dataSize, destOffset);
+}
+
 void Render::CopyCommandBuffer::RequireTextureState(ImageResource* pImage, ResourceState before, ResourceState after, nvrhi::TextureSubresourceSet subResources)
 {
 	if (RendererContext::get_api() != Render::RendererAPI::VULKAN)

@@ -1,6 +1,7 @@
 #include "ComponentLibrary.h"
 
 #include <VFS/ZVFS.h>
+#include <Core/Logger.h>
 
 using namespace ENGINE_NAMESPACE;
 
@@ -30,7 +31,20 @@ uint32_t ComponentLibrary::GetValueForEnum(std::string_view enumname, std::strin
 		}
 	}
 
+	Z_WARN("Invalid enum value lookup for enum '{}' and value '{}'", enumname, name);
+
 	return 0;
+}
+
+ComponentObjectDef& ComponentLibrary::GetComponentDefinition(std::string_view name)
+{
+	std::string n = name.data();
+	return mComponents[n];
+}
+
+std::vector<std::string>& ComponentLibrary::GetComponentList()
+{
+	return mComponentList;
 }
 
 void ComponentLibrary::ParseEntityDefinitionFile(std::string_view path)
@@ -173,4 +187,5 @@ void ComponentLibrary::ParseComponent(nlohmann::json_abi_v3_11_2::json& componen
 	}
 
 	mComponents[def.Name] = def;
+	mComponentList.push_back(def.Name);
 }

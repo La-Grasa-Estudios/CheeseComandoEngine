@@ -338,6 +338,38 @@ void Scene::SwapScene(Scene* scene)
 	NextScenePtr = scene;
 }
 
+static glm::mat4 GetParentTransform(Scene& scene, ECS::edict_t entity)
+{
+	if (entity == ECS::C_INVALID_ENTITY || !scene.EntityManager.IsValid(entity) || !scene.Transforms.HasComponent(entity))
+		return glm::identity<glm::mat4>();
+	auto& transform = scene.Transforms.Get(entity);
+	if (transform.Parent == ECS::C_INVALID_ENTITY)
+		return glm::identity<glm::mat4>();
+	if (!scene.Transforms.HasComponent(transform.Parent))
+		return glm::identity<glm::mat4>();
+	auto& parentTransform = scene.Transforms.Get(transform.Parent);
+	glm::mat4 parentModel = GetParentTransform(scene, transform.Parent);
+	glm::mat4 model = glm::translate(parentModel, parentTransform.Position);
+	model *= glm::mat4_cast(parentTransform.Rotation);
+	model = glm::scale(model, parentTransform.Scale);
+	return model;
+}
+
+static bool HasParentChanged(Scene& scene, ECS::edict_t entity)
+{
+	if (entity == ECS::C_INVALID_ENTITY || !scene.EntityManager.IsValid(entity) || !scene.Transforms.HasComponent(entity))
+		return false;
+	auto& transform = scene.Transforms.Get(entity);
+	if (transform.Parent == ECS::C_INVALID_ENTITY)
+		return false;
+	if (!scene.Transforms.HasComponent(transform.Parent))
+		return false;
+	auto& parentTransform = scene.Transforms.Get(transform.Parent);
+	if (parentTransform.IsDirty)
+		return true;
+	return HasParentChanged(scene, transform.Parent);
+}
+
 void Scene::UpdateTransforms()
 {
 	Z_PROFILE_SCOPE("Scene::UpdateTransforms");
@@ -348,14 +380,26 @@ void Scene::UpdateTransforms()
 	{
 		auto& transform = Transforms.Get(entity);
 
-		if (transform.IsDirty)
+		if (transform.IsDirty || HasParentChanged(*this, entity))
 		{
-			glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), transform.Position);
+			auto model = GetParentTransform(*this, entity);
+			model = glm::translate(model, transform.Position);
 			model *= glm::mat4_cast(transform.Rotation);
 			model = glm::scale(model, transform.Scale);
 			transform.ModelMatrix = model;
+		}
+	}
 
+	for (auto entity : transforms)
+	{
+		auto& transform = Transforms.Get(entity);
+		if (transform.IsDirty)
+		{
 			transform.IsDirty = false;
+		}
+		if (transform.Parent != ECS::C_INVALID_ENTITY && !EntityManager.IsValid(transform.Parent))
+		{
+			EntityManager.DestroyEntity(entity);
 		}
 	}
 }

@@ -81,7 +81,7 @@
 			"fields": [
 				{
 					"name": "Path",
-					"description": "Path to the model file (MDL [Recommended], GLTF)",
+					"description": "Path to the model file (MDL [Recommended], GLTF/GLB)",
 					"type": "string"
 				}
 			]

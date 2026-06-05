@@ -474,6 +474,42 @@ Ref<ImageResource> TextureLoader::LoadFileToImage(const std::string& path, bool*
 
 	TextureIO.path = path;
 
+	if (TextureIO.path.ends_with("rtex"))
+	{
+		auto zf = Stratum::ZVFS::GetFile(path.c_str());
+
+		if (zf)
+		{
+			auto file = zf->Stream();
+
+			int w = 0;
+			int h = 0;
+			int c = 0;
+
+			file->read((char*)&w, 4);
+			file->read((char*)&h, 4);
+			file->read((char*)&c, 4);
+
+			size_t sz = w * h * c;
+			uint8_t* rawPixels = new uint8_t[sz];
+			file->read((char*)rawPixels, sz);
+
+			ImageDescription imageDesc{};
+			imageDesc.Width = w;
+			imageDesc.Height = h;
+			imageDesc.MipLevels = 1;
+			imageDesc.ArraySize = 1;
+			imageDesc.Format = ImageFormat::RGBA8_UNORM;
+			imageDesc.DefaultData.push_back(ImageResourceData(rawPixels, w * 4));
+
+			Ref<ImageResource> image = CreateRef<ImageResource>(imageDesc);
+
+			delete[] rawPixels;
+
+			return image;
+		}
+	}
+
 	if (TextureIO.path.ends_with("ctex"))
 	{
 
@@ -538,6 +574,7 @@ Ref<ImageResource> TextureLoader::LoadFileToImage(const std::string& path, bool*
 	}
 
 	if (!data || width < 0 || height < 0) {
+		Z_ERROR("Failed to load texture {}", TextureIO.path);
 		return NULL;
 	}
 

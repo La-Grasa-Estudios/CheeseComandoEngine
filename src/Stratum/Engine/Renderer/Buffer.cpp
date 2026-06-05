@@ -102,6 +102,8 @@ Render::Buffer::Buffer(const BufferDescription& desc)
 
 Render::Buffer::~Buffer()
 {
+	if (!RendererContext::GetDevice())
+		return;
 	RendererContext::VideoMemorySub(RendererContext::GetDevice()->getBufferMemoryRequirements(Handle).size);
 }
 
